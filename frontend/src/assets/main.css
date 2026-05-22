@@ -1,0 +1,54 @@
+/* ==========================================================================
+   1. GLOBAL VARIABLES & DESIGN TOKENS
+   ========================================================================== */
+:root {
+  /* Nature Glassmorphism Color Palette */
+  --primary-green: #198754;      /* Vibrant Accent Green */
+  --dark-forest: #0b1f15;        /* Deep, rich contrast color for headings */
+  --moss-green: #2c5e43;         /* Medium body text green */
+  --mint-light: #e8f5e9;         /* Very soft background tint */
+  
+  /* Glassmorphism Structural Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(14px);
+  --glass-shadow: 0 8px 32px 0 rgba(11, 31, 21, 0.06);
+
+  /* Aesthetic Noise Overlay Pattern */
+  --noise-overlay: url("data:image/svg+xml,%3Csvg viewBox='0%25 0%25 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+}
+
+/* ==========================================================================
+   2. IMMERSIVE BASE SHELL & RESETS
+   ========================================================================== */
+html, 
+body, 
+#app {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overscroll-behavior: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  position: relative;
+  /* Core Background Layer Setup */
+  background-image: 
+    url('@/assets/bg.jpeg'); /* Dynamically maps to your assets folder */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* The Subtle Noise Aesthetic Layer */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--noise-overlay);
+  pointer-events: none;
+  z-index: 999; /* Floats over everything to texture the screen lightly */
+}

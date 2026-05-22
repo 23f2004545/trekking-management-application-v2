@@ -3,8 +3,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from controller.extensions import bcrypt,db
 from controller.models import User,Role
 from datetime import datetime, timezone
-import os
-import re
+import os , re
 
 auth_bp = Blueprint('auth', __name__)
 

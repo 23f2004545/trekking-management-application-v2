@@ -1,6 +1,6 @@
 from flask import Flask 
 from controller.extensions import db, jwt, bcrypt
-from controller.models import *
+from controller.models import User, Role
 from config import config
 
 
