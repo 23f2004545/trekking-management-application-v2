@@ -25,14 +25,18 @@
               required
               placeholder="name@domain.com"
               class="auth-clean-input"
+              @input="validateEmail"
             >
+          </div>
+          <div v-if="emailError" class="input-label my-2 text-warning">
+            {{ emailError }}
           </div>
         </div>
 
         <div class="input-group-container mb-4">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <label class="input-label mb-0">Password</label>
-            <a href="#" @click.prevent="triggerForgotPassword" class="helper-link">Forgot password?</a>
+            <RouterLink to="/forgot-password" class="helper-link">Forgot password?</RouterLink>
           </div>
           <div class="input-field-wrapper">
             <span class="field-icon">🔒</span>
@@ -58,36 +62,86 @@
 
       <p class="switch-auth-text m-0">
         Don't have an account? 
-        <a href="#" @click.prevent="$router.push('/register')" class="action-link fw-bold">Sign Up</a>
+        <RouterLink to="/register" class="action-link fw-bold">Sign Up</RouterLink>
       </p>
 
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'LoginView',
-  data() {
-    return {
-      email: '',
-      password: ''
-    }
-  },
-  methods: {
-    handleLogin() {
-      // Form values are reactive and ready for your Flask auth request payload
-      console.log('Dispatching credentials to Flask payload:', {
-        email: this.email,
-        password: this.password
-      });
-      // This is where your fetch('/api/login') logic will execute shortly
-    },
-    triggerForgotPassword() {
-      alert('Forgot password functionality utilizing Redis tasks will be configured next!');
+<script setup>
+  import {ref} from 'vue';
+  import { useRouter } from 'vue-router';
+  import { showToast } from '../utils/toast'
+
+  const router = useRouter();
+
+  const email = ref('');
+  const password = ref('');
+
+  const emailError = ref('');
+
+  function validateEmail() {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email.value)) {
+      emailError.value = 'Please enter a valid email address.';
+      return false;
+    } else { 
+        emailError.value = '';
+        return true;
     }
   }
-}
+
+  
+  async function handleLogin() {
+    if (!validateEmail()) {
+      showToast('Please enter a valid email address.', 'error');
+      return;
+    }
+    
+    if (email.value === '' || password.value === '') {
+      showToast('Please fill in all fields.', 'error');
+      return;
+    }
+    
+    const user = {
+      email: email.value,
+      password: password.value
+    }
+
+    const response = await fetch("http://127.0.0.1:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(user)
+    })
+
+    if(!response.ok) {
+      const errorData = await response.json();
+      showToast(`${errorData.message}`, 'error')
+      return;
+    } else {
+      const responseData = await response.json();
+
+      sessionStorage.setItem('access_token', responseData.access_token) // Short-lived (Wipes when tab closes)
+      localStorage.setItem('refresh_token', responseData.refresh_token) // Long-lived (Persists across tabs)
+      sessionStorage.setItem('user_role', responseData.role)
+
+
+      showToast(`Login successful! Welcome, ${responseData.role}`, 'success');
+      
+      if (responseData.role === 'admin') {
+        router.push('/admin/dashboard')
+      } else if (responseData.role === 'trek_staff') {
+        router.push('/staff/dashboard')
+      } else {
+        router.push('/trekker/dashboard')
+      }
+
+    }
+
+  }
 </script>
 
 <style scoped>

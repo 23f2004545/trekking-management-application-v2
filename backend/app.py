@@ -2,6 +2,7 @@ from flask import Flask
 from controller.extensions import db, jwt, bcrypt
 from controller.models import User, Role
 from config import config
+from flask_cors import CORS
 
 
 @jwt.user_lookup_loader
@@ -44,7 +45,7 @@ def create_app():
             admin = User(
                 name='admin',
                 email='admin@gmail.com',
-                password=bcrypt.generate_password_hash('admin').decode('utf-8'),
+                password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
                 contact='1234567890',
                 profile_pic="/static/Profile_pics/admin.png",
                 role=admin_role,
@@ -56,6 +57,7 @@ def create_app():
     return app
 
 app = create_app()
+CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5000"])
 
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 

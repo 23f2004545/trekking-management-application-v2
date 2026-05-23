@@ -13,20 +13,26 @@
         <p class="auth-subtitle">Set up your profile to start exploring paths, secure high-alpine slot bookings, and track safety logs.</p>
       </div>
 
-      <form @submit.prevent="handleRegistration" class="auth-form text-start">
+      <form @submit.prevent="handleRegistration" class="auth-form text-start" enctype="multipart/form-data">
         
         <div class="form-row-grid mb-3">
           <div class="input-group-container">
             <label class="input-label">Full Name</label>
             <div class="input-field-wrapper">
-              <input v-model="name" type="text" required placeholder="Alex Mercer" class="auth-clean-input">
+              <input v-model="name" type="text" required placeholder="Alex Mercer" class="auth-clean-input" @input="validateName">
+            </div>
+            <div v-if="nameError" class="input-label my-2 text-warning">
+              {{ nameError }}
             </div>
           </div>
 
           <div class="input-group-container">
             <label class="input-label">Contact Number</label>
             <div class="input-field-wrapper">
-              <input v-model="contact" type="tel" required placeholder="+91 98765..." class="auth-clean-input">
+              <input v-model="contact" type="tel" required placeholder="+91 98765..." class="auth-clean-input" @input="validateContact">
+            </div>
+            <div v-if="contactError" class="input-label my-2 text-warning">
+              {{ contactError }}
             </div>
           </div>
         </div>
@@ -34,7 +40,10 @@
         <div class="input-group-container mb-3">
           <label class="input-label">Email Address</label>
           <div class="input-field-wrapper">
-            <input v-model="email" type="email" required placeholder="name@domain.com" class="auth-clean-input">
+            <input v-model="email" type="email" required placeholder="name@domain.com" class="auth-clean-input" @input="validateEmail">
+          </div>
+          <div v-if="emailError" class="input-label my-2 text-warning">
+            {{ emailError }}
           </div>
         </div>
 
@@ -42,14 +51,20 @@
           <div class="input-group-container">
             <label class="input-label">Password</label>
             <div class="input-field-wrapper">
-              <input v-model="password" type="password" required placeholder="Create password" class="auth-clean-input">
+              <input v-model="password" type="password" required placeholder="Create password" class="auth-clean-input" @input="validatePassword">
+            </div>
+            <div v-if="passwordError" class="input-label my-2 text-warning">
+              {{ passwordError }}
             </div>
           </div>
 
           <div class="input-group-container">
             <label class="input-label">Confirm Password</label>
             <div class="input-field-wrapper" :class="{ 'error-border': passwordMismatch }">
-              <input v-model="confirmPassword" type="password" required placeholder="Retype password" class="auth-clean-input">
+              <input v-model="confirmPassword" type="password" required placeholder="Retype password" class="auth-clean-input" @input="validatePassword">
+            </div>
+            <div v-if="passwordMismatch" class="input-label my-2 text-warning">
+              ⚠️ Passwords do not match.
             </div>
           </div>
         </div>
@@ -68,13 +83,12 @@
             <label for="profile_pic" class="file-custom-btn">Choose file</label>
             <span class="file-name-label">{{ fileNameDisplay }}</span>
           </div>
+          <div v-if="fileError" class="input-label my-2 text-warning">
+            {{ fileError }}
+          </div>
         </div>
 
-        <div v-if="passwordMismatch" class="validation-warning mb-3">
-          ⚠️ Passwords do not match.
-        </div>
-
-        <button type="submit" :disabled="passwordMismatch" class="btn-auth-submit w-100 py-3 mb-4 fw-bold">
+        <button type="submit" class="btn-auth-submit w-100 py-3 mb-4 fw-bold">
           Create Account
         </button>
 
@@ -86,71 +100,154 @@
 
       <p class="switch-auth-text m-0">
         Have an account? 
-        <a href="#" @click.prevent="$router.push('/login')" class="action-link fw-bold">Sign In</a>
+        <RouterLink to="/login" class="action-link fw-bold">Sign In</RouterLink>
       </p>
 
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RegisterView',
-  data() {
-    return {
-      name: '',
-      email: '',
-      contact: '',
-      password: '',
-      confirmPassword: '',
-      profileFile: null,
-      fileNameDisplay: 'No file chosen'
-    }
-  },
-  computed: {
-    passwordMismatch() {
-      if (!this.confirmPassword) return false;
-      return this.password !== this.confirmPassword;
-    }
-  },
-  methods: {
-    handleFileSelection(event) {
-      const file = event.target.files[0];
-      if (file) {
-        if (file.size > 2 * 1024 * 1024) {
-          alert("File is too large! Maximum limit is 2MB.");
-          this.clearFileInput();
-          return;
-        }
-        this.profileFile = file;
-        this.fileNameDisplay = file.name;
-      } else {
-        this.clearFileInput();
-      }
-    },
-    clearFileInput() {
-      this.profileFile = null;
-      this.fileNameDisplay = 'No file chosen';
-      if (this.$refs.fileInput) this.$refs.fileInput.value = '';
-    },
-    handleRegistration() {
-      if (this.passwordMismatch) return;
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { showToast } from '../utils/toast'
 
-      const formData = new FormData();
-      formData.append('name', this.name);
-      formData.append('email', this.email);
-      formData.append('contact', this.contact);
-      formData.append('password', this.password);
-      
-      if (this.profileFile) {
-        formData.append('profile_pic', this.profileFile);
-      }
+const router = useRouter()
 
-      console.log('Multipart FormData compiled payload successfully.');
-      alert('Registration successful! Moving back to the base authorization gate.');
-      this.$router.push('/login');
-    }
+// Core Form State Input Variables
+const name = ref('')
+const email = ref('')
+const contact = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const profileFile = ref(null)
+const fileNameDisplay = ref('No file chosen')
+
+// Dedicated Field Error Messages 
+const nameError = ref('')
+const emailError = ref('')
+const contactError = ref('')
+const passwordError = ref('')
+const fileError = ref('')
+const serverError = ref('')
+
+
+// Validation Functions for Each Input Field 
+function validateName() {
+  // Regex ensures text strictly contains characters and space breaks (no numbers/specials)
+  const namePattern = /^[a-zA-Z\s]+$/
+  if (!namePattern.test(name.value)) {
+    nameError.value = 'Name should only contain letters.'
+  } else {
+    nameError.value = ''
   }
+}
+
+function validateEmail() {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailPattern.test(email.value)) {
+    emailError.value = 'Please enter a valid email address.'
+  } else {
+    emailError.value = ''
+  }
+}
+
+function validateContact() {
+  // Verifies the field contains exactly 10 numeric units
+  const contactPattern = /^\d{10}$/
+  if (!contactPattern.test(contact.value)) {
+    contactError.value = 'Number must be exactly 10 digits.'
+  } else {
+    contactError.value = ''
+  }
+}
+
+function validatePassword() {
+  if (password.value.length < 8) {
+    passwordError.value = 'Atleast 8 characters required.'
+  } else {
+    passwordError.value = ''
+  }
+}
+
+const passwordMismatch = computed(() => {
+  if (!confirmPassword.value) return false
+  return password.value !== confirmPassword.value
+})
+
+const isFormInvalid = computed(() => {
+  return (
+    !!nameError.value ||
+    !!emailError.value ||
+    !!contactError.value ||
+    !!passwordError.value ||
+    !!fileError.value ||
+    passwordMismatch.value ||
+    !name.value ||
+    !email.value ||
+    !contact.value ||
+    !password.value
+  )
+})
+
+function handleFileSelection(event) {
+  const file = event.target.files[0]
+  fileError.value = ''
+  
+  if (file) {
+    // 1MB constraints safety check threshold (1 * 1024 * 1024 bytes)
+    if (file.size > 1 * 1024 * 1024) {
+      fileError.value = 'Max file size should not exceed 1MB'
+      profileFile.value = null
+      fileNameDisplay.value = 'No file chosen'
+      event.target.value = '' // Clear input channel element
+      return
+    }
+    profileFile.value = file
+    fileNameDisplay.value = file.name
+  } else {
+    profileFile.value = null
+    fileNameDisplay.value = 'No file chosen'
+  }
+}
+
+async function handleRegistration() {
+  // Final safeguard pass-check execution loop
+  validateName()
+  validateEmail()
+  validateContact()
+  validatePassword()
+  
+  if (isFormInvalid.value) return
+  serverError.value = ''
+
+  // Using FormData wrapper object to map request payload properties perfectly
+  const formData = new FormData()
+  formData.append('name', name.value)
+  formData.append('email', email.value)
+  formData.append('contact', contact.value)
+  formData.append('password', password.value)
+  
+  if (profileFile.value) {
+    formData.append('profile_pic', profileFile.value)
+  }
+
+  const response = await fetch("http://127.0.0.1:5000/api/auth/register", {
+      method: "POST",
+      // Important: When using FormData, the browser automatically sets the correct Content-Type header with boundary, so we should NOT set it manually.
+      body: formData
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      // Catches your backend checks (e.g., 'Email already registered')
+      serverError.value = data.error || data.message || 'Registration anomaly detected.'
+      return
+    }
+
+    showToast('Profile activated successfully!', 'success')
+    router.push('/login')
 }
 </script>
 
@@ -383,4 +480,5 @@ export default {
   color: rgba(255, 255, 255, 0.75);
   font-size: 0.88rem;
 }
+
 </style>

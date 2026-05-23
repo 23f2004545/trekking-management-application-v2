@@ -5,26 +5,26 @@
       <div class="nav-container">
         
         <div class="logo-zone">
-          <a @click.prevent="$router.push('/')" class="brand-logo" href="#">
+          <RouterLink to="/" class="brand-logo">
             <span class="logo-wrapper">
               <img src="@/assets/logo.png" alt="Apex Logo" height="62px" class="apex-brand-img"/>
             </span>
-          </a>
+          </RouterLink>
         </div>
         
         <nav class="center-glass-nav">
           <ul class="nav-links-list">
-            <li><a href="#" class="nav-item-link ">Explore</a></li>
-            <li><a href="#" class="nav-item-link">Difficulty</a></li>
-            <li><a href="#" class="nav-item-link">Safety</a></li>
-            <li><a href="#" class="nav-item-link">Community</a></li>
+            <li><RouterLink to="/explore" class="nav-item-link">Explore</RouterLink></li>
+            <li><RouterLink to="/difficulty" class="nav-item-link">Difficulty</RouterLink></li>
+            <li><RouterLink to="/safety" class="nav-item-link">Safety</RouterLink></li>
+            <li><RouterLink to="/community" class="nav-item-link">Community</RouterLink></li>
           </ul>
         </nav>
 
         <div class="action-zone ">
-          <button @click="$router.push('/login')" class="btn-get-started-glass" type="button">
+          <RouterLink to="/login" class="btn-get-started-glass" type="button">
             Get Started
-          </button>
+          </RouterLink>
         </div>
 
       </div>
@@ -64,7 +64,7 @@
     </main>
 
     <footer class="clean-footer">
-      © 2026 PATHFINDER PORTAL. TAILORED FOR WILDERNESS CODES & CLEAR PATHWAYS.
+      © 2026 APEX PORTAL. TAILORED FOR WILDERNESS CODES & CLEAR PATHWAYS.
     </footer>
   </div>
 </template>
@@ -219,6 +219,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.4);
   font-size: 0.88rem;
   font-weight: 600;
+  text-decoration: none;
   border-radius: 30px;
   padding: 8px 20px;
   cursor: pointer;

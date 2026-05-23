@@ -10,21 +10,21 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(email=data.get('email')).first()
-
+    user = User.query.filter_by(email=data.get("email")).first()
+    
     # Check if user exists and password hash matches
-    if user and bcrypt.check_password_hash(user.password, data.get('password')):
+    if user and bcrypt.check_password_hash(user.password, data.get("password")):
         # Create the token using the user's ID as the "subject" (sub)
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
-        
+
         user.last_login_at = datetime.now(timezone.utc)
         db.session.commit()
         
-        # Send it to VueJS
+        
         return make_response(jsonify({"access_token": access_token, "refresh_token": refresh_token, "role": user.role.name}), 200)
 
-    return make_response(jsonify({"error": "Invalid email or password"}), 401)
+    return make_response(jsonify({"message": "Invalid email or password"}), 401)
 
 
 @auth_bp.route('/refresh', methods=['POST'])
@@ -71,29 +71,29 @@ def register():
     
     # BACKEND VALIDATION LAYER 
     if not name or not email or not password or not contact :
-        return make_response(jsonify({"error": "All fields are required"}), 400)
+        return make_response(jsonify({"message": "All fields are required"}), 400)
 
     # Regex for standard email format
     pattern = r'^[\w\.-]+@[\w\.-]+\.[\w]{2,}$'
     if re.match(pattern, email) is  None:
-        return make_response(jsonify({"error": "Invalid email format"}), 400)
+        return make_response(jsonify({"message": "Invalid email format"}), 400)
         return redirect(url_for('auth_bp.register'))
     
     if not name.replace(" ", "").isalpha():
-        return make_response(jsonify({"error": "Name must contain only alphabetic characters and spaces"}), 400)
+        return make_response(jsonify({"message": "Name must contain only alphabetic characters and spaces"}), 400)
         return redirect(url_for('auth_bp.register'))
     
     if not(contact.isdigit() and len(contact) == 10):
-        return make_response(jsonify({"error": "Contact number must be exactly 10 digits"}), 400)
+        return make_response(jsonify({"message": "Contact number must be exactly 10 digits"}), 400)
         return redirect(url_for('auth_bp.register'))
     
     if len(password) < 8:
-        return make_response(jsonify({"error": "Password must be at least 8 characters long"}), 400)
+        return make_response(jsonify({"message": "Password must be at least 8 characters long"}), 400)
         return redirect(url_for('auth_bp.register'))
     
     # Check if user with the same email already exists
     if User.query.filter_by(email=email).first():
-        return make_response(jsonify({"error": "Email already registered"}), 400)
+        return make_response(jsonify({"message": "Email already registered"}), 400)
     
     # Hash the password before storing
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
