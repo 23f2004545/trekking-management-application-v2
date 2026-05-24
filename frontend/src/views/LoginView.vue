@@ -20,12 +20,11 @@
           <div class="input-field-wrapper">
             <span class="field-icon">✉️</span>
             <input 
-              v-model="email"
-              type="email" 
-              required
+              v-model.lazy="email"
+              type="text" 
               placeholder="name@domain.com"
               class="auth-clean-input"
-              @input="validateEmail"
+              @change="validateEmail"
             >
           </div>
           <div v-if="emailError" class="input-label my-2 text-warning">
@@ -43,7 +42,6 @@
             <input 
               v-model="password"
               type="password" 
-              required
               placeholder="••••••••"
               class="auth-clean-input"
             >
@@ -72,9 +70,10 @@
 <script setup>
   import {ref} from 'vue';
   import { useRouter } from 'vue-router';
-  import { showToast } from '../utils/toast'
+  import { useAlertStore } from '@/stores/alert';
 
   const router = useRouter();
+  const alertStore = useAlertStore();
 
   const email = ref('');
   const password = ref('');
@@ -95,12 +94,12 @@
   
   async function handleLogin() {
     if (!validateEmail()) {
-      showToast('Please enter a valid email address.', 'error');
+      alertStore.showAlert('Please enter a valid email address.', 'danger');
       return;
     }
     
-    if (email.value === '' || password.value === '') {
-      showToast('Please fill in all fields.', 'error');
+    if (password.value === '') {
+      alertStore.showAlert('Please enter your password.', 'danger');
       return;
     }
     
@@ -119,7 +118,7 @@
 
     if(!response.ok) {
       const errorData = await response.json();
-      showToast(`${errorData.message}`, 'error')
+      alertStore.showAlert(`${errorData.message}`, 'danger')
       return;
     } else {
       const responseData = await response.json();
@@ -129,7 +128,7 @@
       sessionStorage.setItem('user_role', responseData.role)
 
 
-      showToast(`Login successful! Welcome, ${responseData.role}`, 'success');
+      alertStore.showAlert(`Login successful! Welcome, ${responseData.role}`, 'success');
       
       if (responseData.role === 'admin') {
         router.push('/admin/dashboard')
@@ -172,7 +171,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Perfect Glassmorphic Pod Shell sizing matching your reference image structure */
+
 .glass-login-card {
   background: rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(25px) !important;

@@ -1,25 +1,26 @@
 <template>
   <Transition name="slide-fade">
-    <div v-if="state.visible" class="glass-toast-card" :class="state.type">
+    <div v-if="alertStore.visible" class="glass-toast-card " :class="alertStore.type">
       <div class="toast-content d-flex align-items-center gap-2">
-        <span class="toast-icon">{{ icon }}</span>
-        <span class="toast-msg fw-medium text-white">{{ state.message }}</span>
-        <button @click="state.visible = false" class="btn-close-toast">✕</button>
+          <span class="toast-icon">{{ icon }}</span>
+          <span class="toast-msg fw-medium text-white">{{ alertStore.message }}</span>
+          <button @click="alertStore.dismissAlert" class="btn-close-toast">✕</button>
       </div>
     </div>
   </Transition>
+
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { toastState } from '../utils/toast'
+import { useAlertStore } from '../stores/alert'
 
-const state = toastState
+const alertStore = useAlertStore()
 
 const icon = computed(() => {
-  switch (state.value.type) {
+  switch (alertStore.type) {
     case 'success': return '✨'
-    case 'error': return '🚨'
+    case 'danger': return '🚨'
     case 'warning': return '⚠️'
     default: return 'ℹ️'
   }
@@ -32,19 +33,19 @@ const icon = computed(() => {
   top: 24px;
   right: 24px;
   z-index: 999999;
-  background: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(20px) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   padding: 12px 20px;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
   max-width: 380px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Dynamic Boundary Accents */
 .success { border: 1px solid rgba(25, 135, 84, 0.6); box-shadow: 0 8px 32px rgba(25, 135, 84, 0.15); }
-.error { border: 1px solid rgba(220, 53, 69, 0.6); box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15); }
+.danger { border: 1px solid rgba(220, 53, 69, 0.6); box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15); }
 .warning { border: 1px solid rgba(255, 193, 7, 0.6); box-shadow: 0 8px 32px rgba(255, 193, 7, 0.15); }
 .info { border: 1px solid rgba(255, 255, 255, 0.35); }
 
@@ -65,4 +66,5 @@ const icon = computed(() => {
 /* Dynamic Vue Lifecycle Transitions */
 .slide-fade-enter-from { transform: translateX(120%) scale(0.9); opacity: 0; }
 .slide-fade-leave-to { transform: translateX(120%) scale(0.9); opacity: 0; }
-</style>
+</style> 
+

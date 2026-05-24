@@ -12,14 +12,14 @@
           </RouterLink>
         </div>
         
-        <nav class="center-glass-nav">
+        <!-- <nav class="center-glass-nav">
           <ul class="nav-links-list">
             <li><RouterLink to="/explore" class="nav-item-link">Explore</RouterLink></li>
             <li><RouterLink to="/difficulty" class="nav-item-link">Difficulty</RouterLink></li>
             <li><RouterLink to="/safety" class="nav-item-link">Safety</RouterLink></li>
             <li><RouterLink to="/community" class="nav-item-link">Community</RouterLink></li>
           </ul>
-        </nav>
+        </nav> -->
 
         <div class="action-zone ">
           <RouterLink to="/login" class="btn-get-started-glass" type="button">

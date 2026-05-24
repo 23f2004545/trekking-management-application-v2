@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LandingView from '@/views/LandingView.vue'
-import { showToast } from '../utils/toast'
+import { useAlertStore } from '@/stores/alert'
+
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,29 +23,39 @@ const router = createRouter({
       component: () => import('../views/RegisterView.vue')
     },
     {
-      path: '/admin',
-      component: () => import('../layouts/AdminLayout.vue'), // The shared layout parent shell
-      meta: { requiresAuth: true, role: 'admin' },
+      path: '/portal',
+      component: () => import('../layouts/DashboardLayout.vue'), // One parent layout shell for all dashboard operations
+      meta: { requiresAuth: true },
       children: [
-        { path: 'dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue') }
+        { path: '/admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' } },
+        { path: '/staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+        { path: '/trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } }
       ]
     },
-    {
-      path: '/staff',
-      component: () => import('../layouts/StaffLayout.vue'),
-      meta: { requiresAuth: true, role: 'trek_staff' }, // Adjusted to match your exact DB Enum names later
-      children: [
-        { path: 'dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue') }
-      ]
-    },
-    {
-      path: '/trekker',
-      component: () => import('../layouts/TrekkerLayout.vue'),
-      meta: { requiresAuth: true, role: 'trekker' },
-      children: [
-        { path: 'dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue') }
-      ]
-    }
+    // {
+    //   path: '/admin',
+    //   component: () => import('../layouts/AdminLayout.vue'), // The shared layout parent shell
+    //   meta: { requiresAuth: true, role: 'admin' },
+    //   children: [
+    //     { path: 'dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue') }
+    //   ]
+    // },
+    // {
+    //   path: '/staff',
+    //   component: () => import('../layouts/StaffLayout.vue'),
+    //   meta: { requiresAuth: true, role: 'trek_staff' }, // Adjusted to match your exact DB Enum names later
+    //   children: [
+    //     { path: 'dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue') }
+    //   ]
+    // },
+    // {
+    //   path: '/trekker',
+    //   component: () => import('../layouts/TrekkerLayout.vue'),
+    //   meta: { requiresAuth: true, role: 'trekker' },
+    //   children: [
+    //     { path: 'dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue') }
+    //   ]
+    // }
   ],
 })
 
@@ -57,6 +69,7 @@ function getRoleDashboard(role) {
 }
 
 router.beforeEach((to, from, next) => {
+  const alertStore = useAlertStore()
   // Grab tokens from memory storage layers
   const token = sessionStorage.getItem('access_token')
   const userRole = sessionStorage.getItem('user_role') // Make sure your login sets this exact variable name
@@ -75,13 +88,13 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth) {
     // Condition A: User is not logged in at all
     if (!token) {
-      showToast('Login required', 'error')
+      alertStore.showAlert('Login required', 'error')
       return next({ name: 'login' })
     }
 
     // Condition B: User is logged in, but their role does not match route meta clearance
     if (requiredRole && userRole !== requiredRole) {
-      showToast('Access denied: Unauthorized access.', 'error')
+      alertStore.showAlert('Access denied: Unauthorized access.', 'error')
       return next(getRoleDashboard(userRole)) // Send them back to landing safely
     }
   }

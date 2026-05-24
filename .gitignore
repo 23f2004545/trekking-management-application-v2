@@ -3,7 +3,6 @@
 .venv
 *.db
 instance/
-static/
 __pycache__/
 *.pyc
 

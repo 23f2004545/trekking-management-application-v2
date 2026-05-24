@@ -19,7 +19,7 @@
           <div class="input-group-container">
             <label class="input-label">Full Name</label>
             <div class="input-field-wrapper">
-              <input v-model="name" type="text" required placeholder="Alex Mercer" class="auth-clean-input" @input="validateName">
+              <input v-model.lazy="name" type="text" placeholder="Alex Mercer" class="auth-clean-input" @change="validateName">
             </div>
             <div v-if="nameError" class="input-label my-2 text-warning">
               {{ nameError }}
@@ -27,9 +27,9 @@
           </div>
 
           <div class="input-group-container">
-            <label class="input-label">Contact Number</label>
+            <label class="input-label">Contact</label>
             <div class="input-field-wrapper">
-              <input v-model="contact" type="tel" required placeholder="+91 98765..." class="auth-clean-input" @input="validateContact">
+              <input v-model.lazy="contact" type="tel" placeholder="+91 98765..." class="auth-clean-input" @change="validateContact">
             </div>
             <div v-if="contactError" class="input-label my-2 text-warning">
               {{ contactError }}
@@ -40,7 +40,7 @@
         <div class="input-group-container mb-3">
           <label class="input-label">Email Address</label>
           <div class="input-field-wrapper">
-            <input v-model="email" type="email" required placeholder="name@domain.com" class="auth-clean-input" @input="validateEmail">
+            <input v-model.lazy="email" type="text" placeholder="name@domain.com" class="auth-clean-input" @change="validateEmail">
           </div>
           <div v-if="emailError" class="input-label my-2 text-warning">
             {{ emailError }}
@@ -51,7 +51,7 @@
           <div class="input-group-container">
             <label class="input-label">Password</label>
             <div class="input-field-wrapper">
-              <input v-model="password" type="password" required placeholder="Create password" class="auth-clean-input" @input="validatePassword">
+              <input v-model.lazy="password" type="password" placeholder="Create password" class="auth-clean-input" @change="validatePassword">
             </div>
             <div v-if="passwordError" class="input-label my-2 text-warning">
               {{ passwordError }}
@@ -61,7 +61,7 @@
           <div class="input-group-container">
             <label class="input-label">Confirm Password</label>
             <div class="input-field-wrapper" :class="{ 'error-border': passwordMismatch }">
-              <input v-model="confirmPassword" type="password" required placeholder="Retype password" class="auth-clean-input" @input="validatePassword">
+              <input v-model.lazy="confirmPassword" type="password" placeholder="Retype password" class="auth-clean-input" @change="validatePassword">
             </div>
             <div v-if="passwordMismatch" class="input-label my-2 text-warning">
               ⚠️ Passwords do not match.
@@ -110,9 +110,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from '../utils/toast'
+import { useAlertStore } from '@/stores/alert'
 
 const router = useRouter()
+const alertStore = useAlertStore()
 
 // Core Form State Input Variables
 const name = ref('')
@@ -195,7 +196,6 @@ function handleFileSelection(event) {
   fileError.value = ''
   
   if (file) {
-    // 1MB constraints safety check threshold (1 * 1024 * 1024 bytes)
     if (file.size > 1 * 1024 * 1024) {
       fileError.value = 'Max file size should not exceed 1MB'
       profileFile.value = null
@@ -218,6 +218,11 @@ async function handleRegistration() {
   validateContact()
   validatePassword()
   
+  if (email.value === '' || password.value === '' || name.value === '' || contact.value === '' || confirmPassword.value === '') {
+  alertStore.showAlert('Please fill in all fields.', 'error');
+  return;
+  }
+
   if (isFormInvalid.value) return
   serverError.value = ''
 
@@ -243,10 +248,11 @@ async function handleRegistration() {
     if (!response.ok) {
       // Catches your backend checks (e.g., 'Email already registered')
       serverError.value = data.error || data.message || 'Registration anomaly detected.'
+      alertStore.showAlert(serverError.value, 'error')
       return
     }
 
-    showToast('Profile activated successfully!', 'success')
+    alertStore.showAlert('Profile activated successfully!', 'success')
     router.push('/login')
 }
 </script>
