@@ -22,7 +22,7 @@ const icon = computed(() => {
     case 'success': return '✨'
     case 'danger': return '🚨'
     case 'warning': return '⚠️'
-    default: return 'ℹ️'
+    case 'info': return 'ℹ️'
   }
 })
 </script>
@@ -47,7 +47,7 @@ const icon = computed(() => {
 .success { border: 1px solid rgba(25, 135, 84, 0.6); box-shadow: 0 8px 32px rgba(25, 135, 84, 0.15); }
 .danger { border: 1px solid rgba(220, 53, 69, 0.6); box-shadow: 0 8px 32px rgba(220, 53, 69, 0.15); }
 .warning { border: 1px solid rgba(255, 193, 7, 0.6); box-shadow: 0 8px 32px rgba(255, 193, 7, 0.15); }
-.info { border: 1px solid rgba(255, 255, 255, 0.35); }
+.info { border: 1px solid rgba(55, 132, 179, 0.6); box-shadow: 0 8px 32px rgba(55, 132, 179, 0.15); }
 
 .toast-icon { font-size: 1.2rem; }
 .toast-msg { font-size: 0.92rem; letter-spacing: 0.2px; }

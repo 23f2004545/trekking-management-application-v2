@@ -1,5 +1,5 @@
 <template>
-  <div class="login-viewport w-100 min-vh-100 d-flex align-items-center justify-content-center p-3">
+  <div class="public-bg-wrapper w-100 min-vh-100 d-flex align-items-center justify-content-center p-3">
     
     <button @click="$router.push('/')" class="btn-back-home">
       ← Back to Main
@@ -144,8 +144,18 @@
 </script>
 
 <style scoped>
-/* Viewport Wrapper leveraging your global background layers safely */
-.login-viewport {
+
+.public-bg-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(
+      rgba(0, 0, 0, 0.15), 
+      rgba(0, 0, 0, 0.3)
+    ), 
+    url('@/assets/bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   position: relative;
   z-index: 10;
   box-sizing: border-box;

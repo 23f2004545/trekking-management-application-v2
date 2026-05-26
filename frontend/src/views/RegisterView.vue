@@ -1,5 +1,5 @@
 <template>
-  <div class="register-viewport w-100 min-vh-100 d-flex align-items-center justify-content-center p-2 p-md-3">
+  <div class="public-bg-wrapper w-100 min-vh-100 d-flex align-items-center justify-content-center p-2 p-md-3">
     
     <button @click="$router.push('/')" class="btn-back-home">
       ← Back to Main
@@ -212,14 +212,9 @@ function handleFileSelection(event) {
 }
 
 async function handleRegistration() {
-  // Final safeguard pass-check execution loop
-  validateName()
-  validateEmail()
-  validateContact()
-  validatePassword()
   
   if (email.value === '' || password.value === '' || name.value === '' || contact.value === '' || confirmPassword.value === '') {
-  alertStore.showAlert('Please fill in all fields.', 'error');
+  alertStore.showAlert('Please fill in all fields.', 'danger');
   return;
   }
 
@@ -248,7 +243,7 @@ async function handleRegistration() {
     if (!response.ok) {
       // Catches your backend checks (e.g., 'Email already registered')
       serverError.value = data.error || data.message || 'Registration anomaly detected.'
-      alertStore.showAlert(serverError.value, 'error')
+      alertStore.showAlert(serverError.value, 'danger')
       return
     }
 
@@ -258,8 +253,21 @@ async function handleRegistration() {
 </script>
 
 <style scoped>
-/* Base positioning layer */
-.register-viewport {
+
+.public-bg-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(
+      rgba(0, 0, 0, 0.15), 
+      rgba(0, 0, 0, 0.3)
+    ), 
+    url('@/assets/bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  z-index: 10;
+  box-sizing: border-box;
   position: relative;
   z-index: 10;
   box-sizing: border-box;

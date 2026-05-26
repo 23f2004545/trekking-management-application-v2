@@ -31,16 +31,11 @@ body,
   overscroll-behavior: none;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
-
 body {
   position: relative;
-  /* Core Background Layer Setup */
-  background-image: 
-    url('@/assets/bg.jpeg'); /* Dynamically maps to your assets folder */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  /* Clean, aesthetic dashboard-friendly light background */
+  background-color: #fcfdfe;
+  color: #212529;
 }
 
 /* The Subtle Noise Aesthetic Layer */
@@ -50,5 +45,5 @@ body::before {
   top: 0; left: 0; right: 0; bottom: 0;
   background: var(--noise-overlay);
   pointer-events: none;
-  z-index: 999; /* Floats over everything to texture the screen lightly */
+  z-index: 9999; 
 }

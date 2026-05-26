@@ -29,8 +29,17 @@ const router = createRouter({
       children: [
         { path: '/admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' } },
         { path: '/staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
-        { path: '/trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } }
+
+        { path: '/trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
+        { path: '/trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },
+        { path: '/trekker/treks', name: 'trekker-treks', component: () => import('../views/trekker/TrekkerTreks.vue'), meta: { role: 'trekker' } },      
+        { path: '/trekker/bookings', name: 'trekker-bookings', component: () => import('../views/trekker/TrekkerBookings.vue'), meta: { role: 'trekker' } }
       ]
+    },
+    {
+      path: '/:pathMatch(.*)*', // Matches anything not defined previously
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue') // Triggers the customized 404 Lost Trail view
     },
     // {
     //   path: '/admin',
@@ -88,13 +97,13 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth) {
     // Condition A: User is not logged in at all
     if (!token) {
-      alertStore.showAlert('Login required', 'error')
+      alertStore.showAlert('Login required', 'danger')
       return next({ name: 'login' })
     }
 
     // Condition B: User is logged in, but their role does not match route meta clearance
     if (requiredRole && userRole !== requiredRole) {
-      alertStore.showAlert('Access denied: Unauthorized access.', 'error')
+      alertStore.showAlert('Access denied: Unauthorized access.', 'danger')
       return next(getRoleDashboard(userRole)) // Send them back to landing safely
     }
   }

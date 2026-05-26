@@ -16,18 +16,19 @@ export const useAuthStore = defineStore('auth', {
       
       const menus = {
         admin: [
-          { label: '📊 Overview', route: '/admin/dashboard' },
-          { label: '🗺️ Routes', route: '/admin/routes' },
-          { label: '👥 Staff', route: '/admin/staff' }
+          { label: 'Overview', route: '/admin/dashboard' },
+          { label: 'Routes', route: '/admin/routes' },
+          { label: 'Staff', route: '/admin/staff' }
         ],
         trek_staff: [
-          { label: '🌲 My Treks', route: '/staff/dashboard' },
-          { label: '📋 Registrations', route: '/staff/participants' }
+          { label: 'My Treks', route: '/staff/dashboard' },
+          { label: 'Registrations', route: '/staff/participants' }
         ],
         trekker: [
-          { label: '🏔️ Explore paths', route: '/trekker/dashboard' },
-          { label: '🎒 Bookings', route: '/trekker/history' },
-          { label: '👤 Profile', route: '/trekker/profile' }
+          { label: 'Home', route: '/trekker/dashboard' },
+          { label: 'Treks', route: '/trekker/treks' },
+          { label: 'Bookings', route: '/trekker/bookings' },
+          { label: 'History', route: '/trekker/history' },
         ]
       }
       return menus[state.role] || []

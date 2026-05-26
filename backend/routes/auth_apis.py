@@ -14,6 +14,10 @@ def login():
     
     # Check if user exists and password hash matches
     if user and bcrypt.check_password_hash(user.password, data.get("password")):
+        
+        if not user.is_active:
+           return make_response(jsonify({"message": "This account is restricted by Administration."}), 403)
+    
         # Create the token using the user's ID as the "subject" (sub)
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))

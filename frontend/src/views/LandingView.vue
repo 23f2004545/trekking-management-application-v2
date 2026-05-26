@@ -1,5 +1,5 @@
 <template>
-  <div class="landing-viewport w-100 min-vh-100 d-flex flex-column justify-content-between p-3">
+  <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-3">
     
     <header class="custom-header w-100 px-4 pt-2">
       <div class="nav-container">
@@ -63,8 +63,76 @@
 
     </main>
 
-    <footer class="clean-footer">
-      © 2026 APEX PORTAL. TAILORED FOR WILDERNESS CODES & CLEAR PATHWAYS.
+    <footer class="persistent-footer mt-auto px-3 px-md-5 pb-4">
+      <div class="glass-footer-card container-fluid p-4 p-lg-5 rounded-4 border border-white border-opacity-10 shadow-lg text-white">
+        
+        <div class="row align-items-center justify-content-between pb-4 mb-4 border-bottom border-white border-opacity-10">
+          <div class="col-lg-7 col-md-8 text-start mb-3 mb-md-0">
+            <h3 class="fw-bold tracking-tight m-0 mb-1">Secure your spot on the next alpine expedition today.</h3>
+            <p class="m-0 text-white-50 small">Spaces are highly restricted per seasonal route to preserve environmental stability and guide ratios.</p>
+          </div>
+          <div class="col-auto">
+            <button @click="$router.push('/portal/trekker/dashboard')" class="btn-footer-cta rounded-pill px-4 py-2 fw-semibold fs-8">
+              Explore Open Trails →
+            </button>
+          </div>
+        </div>
+
+        <div class="row text-start g-4">
+          
+          <div class="col-lg-4 col-md-12">
+            <div class="d-flex align-items-center mb-3">
+              <img src="@/assets/logo.png" alt="Apex Logo" class="footer-brand-img me-2"/>
+            </div>
+            <p class="text-white-50 small max-w-xs lh-base">
+              Mute the digital noise. Swap infinite scrolling for pristine mountain horizons. Engineered for clean air and precise tracking.
+            </p>
+          </div>
+
+          <div class="col-6 col-md-3 col-lg-2 ms-lg-auto">
+            <h6 class="fw-bold small tracking-wider mb-3 text-uppercase opacity-50">Main Tracks</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2 fs-9">
+              <li><a href="#" class="footer-link">Alpine Paths</a></li>
+              <li><a href="#" class="footer-link">Forest Ridges</a></li>
+              <li><a href="#" class="footer-link">Glacier Passes</a></li>
+              <li><a href="#" class="footer-link">Seasonal Maps</a></li>
+            </ul>
+          </div>
+
+          <div class="col-6 col-md-3 col-lg-2">
+            <h6 class="fw-bold small tracking-wider mb-3 text-uppercase opacity-50">Safety Desk</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2 fs-9">
+              <li><a href="#" class="footer-link">Gear Checklist</a></li>
+              <li><a href="#" class="footer-link">Weather Monitoring</a></li>
+              <li><a href="#" class="footer-link">Emergency Protocols</a></li>
+              <li><a href="#" class="footer-link">Medical Clearance</a></li>
+            </ul>
+          </div>
+
+          <div class="col-6 col-md-3 col-lg-2">
+            <h6 class="fw-bold small tracking-wider mb-3 text-uppercase opacity-50">Portal Utility</h6>
+            <ul class="list-unstyled d-flex flex-column gap-2 fs-9">
+              <li><a href="#" class="footer-link">My Basecamp</a></li>
+              <li><a href="#" class="footer-link">Staff Directories</a></li>
+              <li><a href="#" class="footer-link">System Metrics</a></li>
+              <li><a href="#" class="footer-link">Route Licensing</a></li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="row align-items-center justify-content-between pt-4 mt-4 border-top border-white border-opacity-10 fs-9 text-white-50">
+          <div class="col-auto">
+            <span>© 2026 APEX APP SYSTEMS. DESIGNED FOR WILDERNESS OPERATIONS & CODES.</span>
+          </div>
+          <div class="col-auto d-flex gap-3 fs-7">
+            <a href="#" class="text-white-50 hover-white text-decoration-none">🌐</a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none">📸</a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none">🕊️</a>
+          </div>
+        </div>
+
+      </div>
     </footer>
   </div>
 </template>
@@ -79,13 +147,19 @@ export default {
 /* ==========================================================================
    1. STRUCTURAL BREAKDOWN LAYOUTS
    ========================================================================== */
-.landing-viewport {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
+
+.public-bg-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(
+      rgba(0, 0, 0, 0.15), 
+      rgba(0, 0, 0, 0.3)
+    ), 
+    url('@/assets/bg.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
 }
 
 .custom-header {
@@ -347,12 +421,39 @@ export default {
 }
 
 /* Footer layout anchoring */
-.clean-footer {
-  text-align: center;
-  padding: 15px 0;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.5px;
+.glass-footer-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
+
+.footer-brand-img {
+  height: 38px;
+  object-fit: contain;
+}
+
+.btn-footer-cta {
+  background: #ffffff;
+  color: #0b1f15;
+  border: none;
+  transition: all 0.25s ease;
+}
+.btn-footer-cta:hover {
+  background: #e8f5e9;
+  transform: translateY(-1px);
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.footer-link:hover {
+  color: #ffffff;
+}
+
+.hover-white:hover { color: #ffffff !important; }
+.max-w-xs { max-width: 280px; }
+.tracking-wider { letter-spacing: 0.8px; }
 </style>
