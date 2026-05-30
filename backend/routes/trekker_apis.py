@@ -1,24 +1,62 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db
-from controller.models import User, Trek, Booking
+from controller.models import User, Trek, Booking , MedicalRecord
 from controller.decorators import trekker_required
 from datetime import datetime, timezone
+import os
 
 trekker_bp = Blueprint('trekker', __name__)
 
 # ==========================================================================
-# 1. PROFILE MANAGEMENT (Targeted Field Mutations)
+# 1. PROFILE MANAGEMENT 
 # ==========================================================================
+
+@trekker_bp.route('/profile', methods=['GET'])
+@jwt_required()
+@trekker_required
+def get_profile_data():
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    
+    # Formats timestamps to match the UI visual parameters cleanly
+    created_formatted = user.created_at.strftime("%B %d, %Y") 
+    
+    # Calculate a simple human-readable delta for last login matrix tracking
+    last_login_str = "Just now"
+    if user.last_login_at:
+        delta = datetime.now(timezone.utc) - user.last_login_at.replace(tzinfo=timezone.utc)
+        if delta.seconds < 60:
+            last_login_str = "Seconds ago"
+        elif delta.seconds < 3600:
+            last_login_str = f"{delta.seconds // 60} minutes ago"
+        else:
+            last_login_str = user.last_login_at.strftime("%Y-%m-%d %H:%M")
+
+    return make_response(jsonify({
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "contact": user.contact,
+        "is_active": user.is_active,
+        "blacklisted": user.blacklisted, # Fallback safety check
+        "created_at": created_formatted,
+        "last_login_at": last_login_str,
+        "profile_pic": user.profile_pic 
+    }), 200)
+
+
 @trekker_bp.route('/profile', methods=['PATCH'])
 @jwt_required()
 @trekker_required
 def update_profile():
-    """Allows a trekker to update single fields like name or contact reactively."""
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
     
-    data = request.get_json()
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form     
     
     if 'name' in data:
         name_val = data.get('name').strip().title()
@@ -33,12 +71,111 @@ def update_profile():
             user.contact = contact_val
         else:
             return make_response(jsonify({"message": "Contact number must be exactly 10 digits."}), 400)
+        
+    if 'profile_pic' in request.files:
+        file = request.files['profile_pic']
+        if file and file.filename != '':
+            # Secure file names safely to prevent path injection attacks
+            filename = f"user_{user.id}_{os.path.basename(file.filename)}"
+            save_path = os.path.join('static/' , 'Profile_pics', filename)
             
-    db.session.commit()
+            # Ensure folder structure exists
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+
+            # Store the serving endpoint static assets path inside the database column
+            user.profile_pic = f"/static/Profile_pics/{filename}"
+            
+    try:
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Profile metrics modified successfully.",
+            "user": {
+                "name": user.name, 
+                "contact": user.contact, 
+                "email": user.email,
+                "profile_pic": user.profile_pic
+            }
+        }), 200)
+    except Exception as e:
+        db.session.rollback()
+        return make_response(jsonify({"message": f"Database commit failure: {str(e)}"}), 500)
+
+
+# ==========================================================================
+# 2. MEDICAL TELEMETRY MATRIX MANAGEMENT (GET / POST)
+# ==========================================================================
+
+
+@trekker_bp.route('/medical', methods=['GET'])
+@jwt_required()
+@trekker_required
+def get_medical_record():
+    user_id = get_jwt_identity()
+    record = MedicalRecord.query.filter_by(trekker_id=user_id).first()
+    
+    if not record:
+        return make_response(jsonify({"message": "No medical record found." , "has_data": False}), 404)
+        
     return make_response(jsonify({
-        "message": "Profile updated successfully.",
-        "user": {"name": user.name, "contact": user.contact, "email": user.email}
+        "has_data": True,
+        "blood_group": record.blood_group,
+        "diagonisis": record.diagonisis,
+        "allergies": record.allergies,
+        "medications": record.medications,
+        "emergency_name": record.emergency_name,
+        "emergency_phone": record.emergency_contact,
+        "emergency_relation": record.emergency_relation,
+        "updated_at": record.updated_at.strftime("%b %d, %Y %H:%M") 
     }), 200)
+
+
+@trekker_bp.route('/medical', methods=['POST'])
+@jwt_required()
+@trekker_required
+def save_medical_record():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    emergency_name = data.get('emergency_name', '').strip()
+    emergency_phone = data.get('emergency_phone', '').strip()
+    
+    if not emergency_name or not emergency_phone:
+        return make_response(jsonify({"message": "Emergency contact name and phone integers are mandatory."}), 400)
+        
+    if len(emergency_phone) != 10 or not emergency_phone.isdigit():
+        return make_response(jsonify({"message": "Emergency phone must contain exactly 10 digits."}), 400)
+
+    record = MedicalRecord.query.filter_by(trekker_id=user_id).first()
+    
+    if not record:
+        record = MedicalRecord(
+                    trekker_id=user_id,
+                    blood_group=data.get('blood_group', '').strip().upper(),
+                    diagonisis=data.get('diagonisis', '').strip(),
+                    allergies=data.get('allergies', '').strip(),
+                    medications=data.get('medications', '').strip(),
+                    emergency_name=emergency_name.title(),
+                    emergency_contact=emergency_phone,
+                    emergency_relation=data.get('emergency_relation', '').strip().title()
+                )
+        db.session.add(record)
+        
+    record.blood_group = data.get('blood_group', '').strip().upper()
+    record.diagonisis = data.get('diagonisis', '').strip()
+    record.allergies = data.get('allergies', '').strip()
+    record.medications = data.get('medications', '').strip()
+    record.emergency_name = emergency_name.title()
+    record.emergency_contact = emergency_phone
+    record.emergency_relation = data.get('emergency_relation', '').strip().title()
+    
+    try:
+        db.session.commit()
+        return make_response(jsonify({"message": "Medical telemetry metrics committed successfully."}), 200)
+    except Exception as e:
+        db.session.rollback()
+        return make_response(jsonify({"message": f"Database mutation failed: {str(e)}"}), 500)
+
 
 # ==========================================================================
 # 2. DISCOVER, SEARCH, & FILTER OPEN TREKS

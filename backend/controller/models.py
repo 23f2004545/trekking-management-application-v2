@@ -55,6 +55,7 @@ class Trek(db.Model):
     # Relationships
     bookings = db.relationship('Booking', backref='trek', lazy=True, cascade='all, delete-orphan')
     assigned_staff = db.relationship('StaffProfile', backref='trek', foreign_keys=[assigned_staff_id])
+    images = db.relationship('TrekImage', backref='trek', lazy=True, cascade="all, delete-orphan")
  
 
 
@@ -74,8 +75,8 @@ class Booking(db.Model):
     
     booking_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id'), nullable=False)
-    booking_date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id'), nullable=False) 
+    booking_date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp()) # remove , same as created_at
     status = db.Column(db.String(20), default='Booked', nullable=False)  # Booked, Cancelled, Completed
     payment_status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Paid, Refunded
     number_of_persons = db.Column(db.Integer, default=1, nullable=False)
@@ -123,3 +124,11 @@ class TrekReview(db.Model):
     author = db.relationship('User', backref='trek_review')
     trek = db.relationship('Trek', backref='trek_review')
     reviewed_staff = db.relationship('StaffProfile', backref='trek_review', foreign_keys=[staff_id])
+    
+    
+class TrekImage(db.Model):
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id', ondelete='CASCADE'), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

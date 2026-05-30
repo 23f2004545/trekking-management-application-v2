@@ -26,7 +26,7 @@ def login():
         db.session.commit()
         
         
-        return make_response(jsonify({"access_token": access_token, "refresh_token": refresh_token, "role": user.role.name}), 200)
+        return make_response(jsonify({"access_token": access_token, "refresh_token": refresh_token, "role": user.role.name , "name": user.name , "profile_pic": user.profile_pic}), 200)
 
     return make_response(jsonify({"message": "Invalid email or password"}), 401)
 
@@ -60,7 +60,7 @@ def register():
         file = request.files['profile_pic']
         if file and file.filename != '':
             filename = os.path.basename(file.filename) 
-            save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'Profile_pics', filename)
+            save_path = os.path.join('static/', 'Profile_pics', filename)
             file.save(save_path)
 
             profile_pic = f"/static/Profile_pics/{filename}"

@@ -1,10 +1,11 @@
 <template>
   <div class="treks-exploration-viewport text-white text-start">
-    
+  
     <div class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">Discover Expedition Trails</h2>
       <p class="m-0 text-white-50 fs-8 mt-1">Browse open mountain coordinates, check altitude parameters, and examine verified safety guide telemetry.</p>
     </div>
+
 
     <div class="row g-4">
       <div v-for="trek in tracksList" :key="trek.trek_id" class="col-xl-4 col-md-6">
@@ -32,7 +33,7 @@
                 <span class="d-block fs-9 text-white-50 opacity-50 fw-semibold">VALUED AT</span>
                 <strong class="fs-6 text-success">₹{{ trek.price_per_person }}</strong>
               </div>
-              <button @click="openDetailedOverlay(trek)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fs-8 fw-bold text-dark">
+              <button @click="$router.push('/portal/trek/view/' + trek.id)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fs-8 fw-bold text-dark">
                 View Details
               </button>
             </div>
@@ -170,6 +171,7 @@ function executeBookingAction(id) {
 </script>
 
 <style scoped>
+
 .trek-glass-card {
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(20px);

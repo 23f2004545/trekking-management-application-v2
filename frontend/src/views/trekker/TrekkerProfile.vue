@@ -18,7 +18,7 @@
         <div class="glass-profile-panel text-center p-4 rounded-4 border border-white border-opacity-10 h-100 shadow-sm">
           
           <div class="avatar-edit-cluster position-relative d-inline-block mx-auto mb-3">
-            <img :src="userProfile.profile_pic" alt="Avatar User" class="profile-main-avatar shadow border border-white border-opacity-20" />
+            <img :src="backend_url + userProfile.profile_pic" alt="Avatar User" class="profile-main-avatar shadow border border-white border-opacity-20" />
             <label class="avatar-upload-badge" title="Change Avatar Image">
               <i class="bi bi-pencil" style="font-size: 1rem;"></i>
               <input type="file" accept="image/*" class="d-none" @change="uploadAvatarImage">
@@ -38,15 +38,15 @@
               </span>
             </div>
             <div class="log-item d-flex justify-content-between">
-              <span>System ID Code:</span>
+              <span>System ID:</span>
               <span class="fw-bold text-white">#APX-{{ userProfile.id }}</span>
             </div>
             <div class="log-item d-flex justify-content-between">
-              <span>Created Coordinates:</span>
+              <span>Created:</span>
               <span class="fw-bold text-white">{{ userProfile.created_at }}</span>
             </div>
             <div class="log-item d-flex justify-content-between">
-              <span>Last Network Entry:</span>
+              <span>Last Login:</span>
               <span class="fw-bold text-success text-glow">● {{ userProfile.last_login_at }}</span>
             </div>
           </div>
@@ -226,87 +226,227 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
+import { useAuthStore } from '../../stores/auth'
 
 const alertStore = useAlertStore()
+const authStore = useAuthStore()
+const backend_url = import.meta.env.VITE_BACKEND_URL
 
-// State parameters managing profile fields configurations
-const hasMedicalData = ref(false) // Toggle to TRUE locally to view the read-only dashboard card instantly
+const API_BASE = 'http://127.0.0.1:5000/api/trekker'
+
+// Structural layout reactive visibility boundaries variables
+const hasMedicalData = ref(false)
 const medicalModalVisible = ref(false)
 
+// Synchronized state containers matching backend model configurations
 const userProfile = ref({
-  id: 1042,
-  name: 'Alex Mercer',
-  email: 'alex.mercer@apex.com',
-  contact: '9876543210',
+  id: '',
+  name: '',
+  email: '',
+  contact: '',
   is_active: true,
-  created_at: 'May 14, 2026',
-  last_login_at: '3 minutes ago',
-  profile_pic: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+  created_at: '',
+  last_login_at: '',
+  profile_pic: '',
   blacklisted: false
 })
 
-// Database model field mappings for empty display states fallback
 const medicalProfile = ref({
   blood_group: '',
   diagonisis: '',
   allergies: '',
+  medications: '',
   emergency_name: '',
   emergency_phone: '',
   emergency_relation: '',
   updated_at: ''
 })
 
-// Input proxy state variables inside the popup overlay wrapper
 const medicalFormFields = ref({
   blood_group: '',
   diagonisis: '',
   allergies: '',
+  medications: '',
   emergency_name: '',
   emergency_phone: '',
   emergency_relation: ''
 })
 
-function openMedicalModal() {
-  // Populate form with existing data if editing
-  medicalFormFields.value = { ...medicalProfile.value }
-  medicalModalVisible.value = true
+// ==========================================================================
+// 3. NETWORK DATA ORCHESTRATION PIPELINES (Fetch Engine)
+// ==========================================================================
+async function fetchProfileAndMedicalData() {
+  try {
+    const headers = {
+      'Authorization': `Bearer ${authStore.token}`,
+      'Content-Type': 'application/json'
+    }
+
+    // 1. Dispatch Core User Profile Retrieval Request
+    const profileRes = await fetch(`${API_BASE}/profile`, { method: 'GET', headers })
+    if (profileRes.ok) {
+      const pData = await profileRes.json()// Debug log for profile data
+      userProfile.value = pData
+    } else {
+      const errorData = await profileRes.json();
+      alertStore.showAlert(errorData.message || 'Could not sync user profile metrics from backend.', 'danger')
+    }
+
+    // 2. Dispatch Adaptive Medical Telemetry Record Retrieval Request
+    const medicalRes = await fetch(`${API_BASE}/medical`, { method: 'GET', headers })
+    if (medicalRes.ok) {
+      const mData = await medicalRes.json()
+      if (mData.has_data) {
+        hasMedicalData.value = true
+        medicalProfile.value = mData
+      } else {
+        hasMedicalData.value = false
+      }
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network tracking error: ${err.message}`, 'danger')
+  }
 }
 
-function submitMedicalForm() {
-  const contactPattern = /^\d{10}$/
-  if (!contactPattern.test(medicalFormFields.value.emergency_phone)) {
-    alertStore.showAlert('Validation Warning: Contact phone must contain exactly 10 digits.', 'danger')
+async function saveProfileFields() {
+  // Input structural constraints checkpoints
+  const namePattern = /^[a-zA-Z\s]+$/
+  if (!namePattern.test(userProfile.value.name)) {
+    alertStore.showAlert('Validation Error: Name fields must contain alpha values only.', 'danger')
+    return
+  }
+  if (userProfile.value.contact.length !== 10 || !/^\d+$/.test(userProfile.value.contact)) {
+    alertStore.showAlert('Validation Error: Contact field requires exactly 10 digits.', 'danger')
     return
   }
 
-  // Simulate a successful API response capture handler
-  medicalProfile.value = {
-    ...medicalFormFields.value,
-    updated_at: 'Just now'
+  try {
+    const res = await fetch(`${API_BASE}/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: userProfile.value.name,
+        contact: userProfile.value.contact
+      })
+    })
+
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert(data.message || 'Profile patches committed successfully.', 'success')
+      // Sync local Pinia global user naming registry coordinate values
+      if (authStore.userName) {
+        authStore.userName = userProfile.value.name
+        sessionStorage.setItem('user_name', userProfile.value.name)
+      }
+    } else {
+      alertStore.showAlert(data.message || 'Profile updates rejected.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network transaction error: ${err.message}`, 'danger')
   }
-  
-  hasMedicalData.value = true
-  medicalModalVisible.value = false
-  alertStore.showAlert('Success: Multi-part medical metrics saved to database matrix.', 'success')
 }
 
-function saveProfileFields() {
-  alertStore.showAlert('Success: Base profile credentials patched.', 'success')
+async function submitMedicalForm() {
+  if (medicalFormFields.value.emergency_phone.length !== 10 || !/^\d+$/.test(medicalFormFields.value.emergency_phone)) {
+    alertStore.showAlert('Validation Error: Emergency contact phone requires exactly 10 digits.', 'danger')
+    return
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/medical`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(medicalFormFields.value)
+    })
+
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert(data.message || 'Medical profile updated successfully.', 'success')
+      medicalModalVisible.value = false
+      await fetchProfileAndMedicalData() // Trigger a clean network re-fetch to draw the populated card view
+    } else {
+      alertStore.showAlert(data.message || 'Medical tracking payload rejected.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network transaction error: ${err.message}`, 'danger')
+  }
+}
+
+function openMedicalModal() {
+  // Deep copy the active values into input proxies so cancel operations keep historical metrics safe
+  medicalFormFields.value = hasMedicalData.value ? { ...medicalProfile.value } : {
+    blood_group: '', diagonisis: '', allergies: '', medications: '', emergency_name: '', emergency_phone: '', emergency_relation: ''
+  }
+  medicalModalVisible.value = true
 }
 
 function triggerPasswordReset() {
-  alertStore.showAlert('Security Matrix Alert: OTP code dispatcher initializing via Celery + Redis workers sequence.', 'warning')
+  alertStore.showAlert('Security Key Protocol: OTP deployment queue initialized via Celery channels.', 'warning')
 }
 
-function uploadAvatarImage(event) {
+async function uploadAvatarImage(event) {
   const file = event.target.files[0]
-  if (file) {
-    userProfile.value.profile_pic = URL.createObjectURL(file)
-    alertStore.showAlert('Success: Avatar image cache sync verified.', 'success')
+  if (!file) return
+
+  // ===================================================================
+  // SECURE FRONTEND 1MB CAPACITY CONSTRAINT VALIDATION (Matches Register)
+  // ===================================================================
+  const MAX_SIZE = 1 * 1024 * 1024 // Exactly 1 Megabyte in bytes
+  if (file.size > MAX_SIZE) {
+    alertStore.showAlert('Avatar upload bounds exceeded! Maximum limit is exactly 1MB.', 'danger')
+    event.target.value = '' // Flush the input buffer cache channel element
+    return
+  }
+
+  // Construct a multipart FormData payload context layer
+  const formData = new FormData()
+  formData.append('profile_pic', file)
+
+  try {
+    alertStore.showAlert('Syncing new profile picture coordinates...', 'info')
+    
+    const res = await fetch(`${API_BASE}/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      },
+      body: formData
+    })
+
+    const data = await res.json()
+    
+    if (res.ok) {
+      alertStore.showAlert('Avatar image updated successfully!', 'success')
+      
+      // Update local state reactively so the changes display immediately on screen
+      userProfile.value.profile_pic = data.user.profile_pic
+      authStore.updateLocalAvatar(data.user.profile_pic) 
+      
+      // Update parent fallback links if necessary
+      await fetchProfileAndMedicalData() 
+    } else {
+      alertStore.showAlert(data.message || 'Avatar update rejected by backend matrix.', 'danger')
+    }
+  } catch (err) {
+    console.error('File sync handshake broken:', err)
+    alertStore.showAlert(`Upload connection drops detected: ${err.message}`, 'danger')
+  } finally {
+    event.target.value = '' 
   }
 }
+
+// Global Lifecycle Mounting Gate Execution Node
+onMounted(() => {
+  fetchProfileAndMedicalData()
+})
 </script>
 
 <style scoped>
@@ -350,7 +490,7 @@ function uploadAvatarImage(event) {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(10, 20, 15, 0.55) !important;
   backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 99999999 !important;
+  z-index: 999 !important;
 }
 
 .glass-modal-card {

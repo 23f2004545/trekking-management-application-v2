@@ -71,9 +71,11 @@
   import {ref} from 'vue';
   import { useRouter } from 'vue-router';
   import { useAlertStore } from '@/stores/alert';
+  import { useAuthStore } from '@/stores/auth';
 
   const router = useRouter();
   const alertStore = useAlertStore();
+  const authStore = useAuthStore();
 
   const email = ref('');
   const password = ref('');
@@ -123,19 +125,17 @@
     } else {
       const responseData = await response.json();
 
-      sessionStorage.setItem('access_token', responseData.access_token) // Short-lived (Wipes when tab closes)
-      localStorage.setItem('refresh_token', responseData.refresh_token) // Long-lived (Persists across tabs)
-      sessionStorage.setItem('user_role', responseData.role)
+      authStore.loginUser(responseData);
 
 
       alertStore.showAlert(`Login successful! Welcome, ${responseData.role}`, 'success');
       
       if (responseData.role === 'admin') {
-        router.push('/admin/dashboard')
+        router.push('/portal/admin/dashboard')
       } else if (responseData.role === 'trek_staff') {
-        router.push('/staff/dashboard')
+        router.push('/portal/staff/dashboard')
       } else {
-        router.push('/trekker/dashboard')
+        router.push('/portal/trekker/dashboard')
       }
 
     }
@@ -274,7 +274,6 @@
 
 /* High Contrast Solid Submit Button */
 .btn-auth-submit {
-  background-color: #ffffff;
   color: #0b1f15; /* Deep contrast dark-forest green font color */
   border: none;
   border-radius: 12px;

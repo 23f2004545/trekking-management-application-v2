@@ -27,13 +27,23 @@ const router = createRouter({
       component: () => import('../layouts/DashboardLayout.vue'), // One parent layout shell for all dashboard operations
       meta: { requiresAuth: true },
       children: [
-        { path: '/admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' } },
-        { path: '/staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+        { path: 'admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' } },
+        { path: 'admin/treks', name: 'admin-treks', component: () => import('../views/admin/AdminTreks.vue'), meta: { role: 'admin' } },
+        { path: 'admin/staff', name: 'admin-staff', component: () => import('../views/admin/AdminStaff.vue'), meta: { role: 'admin' } },
+        { path: 'admin/trekkers', name: 'admin-trekkers', component: () => import('../views/admin/AdminTrekkers.vue'), meta: { role: 'admin' } },
+        { path: 'admin/bookings', name: 'admin-bookings', component: () => import('../views/admin/AdminBookings.vue'), meta: { role: 'admin' } },
 
-        { path: '/trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
-        { path: '/trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },
-        { path: '/trekker/treks', name: 'trekker-treks', component: () => import('../views/trekker/TrekkerTreks.vue'), meta: { role: 'trekker' } },      
-        { path: '/trekker/bookings', name: 'trekker-bookings', component: () => import('../views/trekker/TrekkerBookings.vue'), meta: { role: 'trekker' } }
+
+        { path: 'staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+
+        { path: 'trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
+        { path: 'trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },
+        { path: 'trekker/treks', name: 'trekker-treks', component: () => import('../views/trekker/TrekkerTreks.vue'), meta: { role: 'trekker' } },      
+        { path: 'trekker/bookings', name: 'trekker-bookings', component: () => import('../views/trekker/TrekkerBookings.vue'), meta: { role: 'trekker' } },
+        { path: 'trekker/history', name: 'trekker-history', component: () => import('../views/trekker/TrekkerHistory.vue'), meta: { role: 'trekker' } }, 
+
+        
+        { path: 'trek/view/:id', name: 'trek-details', component: () => import('../views/TrekDetailView.vue'), meta: { requiresAuth: true } }
       ]
     },
     {
@@ -70,9 +80,9 @@ const router = createRouter({
 
 function getRoleDashboard(role) {
   switch (role) {
-    case 'admin': return '/admin/dashboard'
-    case 'trek_staff': return '/staff/dashboard'
-    case 'trekker': return '/trekker/dashboard'
+    case 'admin': return '/portal/admin/dashboard'
+    case 'trek_staff': return '/portal/staff/dashboard'
+    case 'trekker': return '/portal/trekker/dashboard'
     default: return '/'
   }
 }

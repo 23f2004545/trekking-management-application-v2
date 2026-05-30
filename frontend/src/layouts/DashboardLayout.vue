@@ -10,7 +10,7 @@
         
         <nav class="center-links-array">
           <ul class="navbar-nav d-flex flex-row align-items-center gap-1.5 m-0 p-0">
-            <li v-for="item in authStore.navigationMenu" :key="item.label" class="nav-item mx-1">
+            <li v-for="item in reactiveMenu" :key="item.label" class="nav-item mx-1">
               <router-link :to="item.route" class="nav-link glass-link px-1.5 py-1 fw-medium fs-6" active-class="active">
                 {{ item.label }}
               </router-link>
@@ -24,8 +24,8 @@
             <i class="bi bi-bell text-white-50" style="font-size: 1.25rem;"></i>
           </button>
 
-          <div @click="$router.push('/trekker/profile')" class="avatar-capsule-wrapper d-flex align-items-center cursor-pointer" title="My Profile Settings">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Profile" class="nav-avatar-img" />
+          <div @click="$router.push(`/portal/${authStore.role}/profile`)" class="avatar-capsule-wrapper d-flex align-items-center cursor-pointer" title="My Profile Settings">
+            <img :src="authStore.activeAvatarUrl" alt="Profile" class="nav-avatar-img" />
           </div>
 
           <button class="icon-utility-btn" @click="confirmStore.ask('Are you ready to break camp and sign out of your current tracking session?', handleSignOut)"  title="Sign Out Session">
@@ -50,7 +50,7 @@
             <p class="m-0 text-white-50 small">Spaces are highly restricted per seasonal route to preserve environmental stability and guide ratios.</p>
           </div>
           <div class="col-auto">
-            <button @click="$router.push('/portal/trekker/dashboard')" class="btn-footer-cta rounded-pill px-4 py-2 fw-semibold fs-8">
+            <button @click="$router.push(`/${authStore.role}/treks`)" class="btn-footer-cta rounded-pill px-4 py-2 fw-semibold fs-8">
               Explore Open Trails →
             </button>
           </div>
@@ -104,9 +104,9 @@
             <span>© 2026 APEX APP SYSTEMS. DESIGNED FOR WILDERNESS OPERATIONS & CODES.</span>
           </div>
           <div class="col-auto d-flex gap-3 fs-7">
-            <a href="#" class="text-white-50 hover-white text-decoration-none">🌐</a>
-            <a href="#" class="text-white-50 hover-white text-decoration-none">📸</a>
-            <a href="#" class="text-white-50 hover-white text-decoration-none">🕊️</a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-twitter"></i></a>
           </div>
         </div>
 
@@ -118,7 +118,8 @@
 
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth' // <-- ENSURE PATH IS CORRECT
+import { computed, ref , onMounted} from 'vue'
+import { useAuthStore } from '../stores/auth' 
 import { useAlertStore } from '../stores/alert'
 import { useConfirmStore } from '../stores/confirm'
 
@@ -128,12 +129,44 @@ const alertStore = useAlertStore()
 const confirmStore = useConfirmStore()
 
 // This variable will be used to offset the scrolling content below the fixed header
-const NAV_MARGIN = '100px';
+// const NAV_MARGIN = '100px';
+
+const reactiveMenu = computed(() => authStore.navigationMenu)
+
+const API_BASE = `http://127.0.0.1:5000/api/${authStore.role}` 
+const profile_pic = ref('')
 
 function handleSignOut() {
   authStore.logoutUser() // Pinia action cleans session keys
   router.push('/')
 }
+
+async function handleProfilePic() {
+  try {
+    const headers = {
+      'Authorization': `Bearer ${authStore.token}`,
+      'Content-Type': 'application/json'
+    }
+
+    // 1. Dispatch Core User Profile Retrieval Request
+    const profileRes = await fetch(`${API_BASE}/profile`, { method: 'GET', headers })
+    if (profileRes.ok) {
+      const pData = await profileRes.json() // Debug log for profile data
+      profile_pic.value = pData.profile_pic || '' // Update reactive profile picture state
+    } else {
+      const errorData = await profileRes.json();
+      alertStore.showAlert(errorData.message || 'Could not sync user profile metrics from backend.', 'danger')
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
+    alertStore.showAlert('An unexpected error occurred while fetching your profile data.', 'danger')
+  }
+}
+
+onMounted(() => {
+  handleProfilePic()
+})
+
 </script>
 
 <style scoped>
