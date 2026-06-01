@@ -192,7 +192,7 @@ const staffOptions = ref([])
 const updateGalleryFiles = ref([])
 const editForm = ref({})
 
-const form = ref({ adults: 1, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
+const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
 
 const totalPassengers = computed(() => form.value.adults + form.value.children + form.value.seniors)
 const computedTotalPrice = computed(() => {
@@ -221,7 +221,7 @@ async function fetchLiveTrekDetails() {
 
 async function submitBookingRequest() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/staff`, {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/bookings`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ trek_id: trekData.value.trek_id, ...form.value })
@@ -258,6 +258,7 @@ async function openModifyFormModal() {
   })
   if (staffRes.ok) staffOptions.value = await staffRes.json()
 
+
   // Seed model input proxies with active row values context mapping fields perfectly
   editForm.value = {
     trek_name: trekData.value.trek_name, location: trekData.value.location,
@@ -265,8 +266,9 @@ async function openModifyFormModal() {
     available_slots: trekData.value.available_slots, status: trekData.value.status,
     start_date: trekData.value.start_date, end_date: trekData.value.end_date,
     max_altitude: trekData.value.max_altitude, price_per_person: trekData.value.price_per_person,
-    description: trekData.value.description, assigned_staff_id: trekData.value.staff?.id || null
+    description: trekData.value.description, assigned_staff_id: trekData.value.staff.id  || null
   }
+
   updateGalleryFiles.value = []
   modifyModalActive.value = true
 }

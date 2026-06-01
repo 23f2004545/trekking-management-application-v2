@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import bcrypt,db
 from controller.models import * 
 from controller.decorators import admin_required
-from datetime import datetime, timezone
+from datetime import datetime, timezone , timedelta
+from sqlalchemy import func
 import os
 
 
@@ -50,14 +51,86 @@ def get_profile_data():
 @jwt_required()
 @admin_required
 def get_dashboard_stats():
+    """Compiles operational counters, ratings insights, and graphing trends."""
+    
+    # 1. CORE COUNTERS (Fallback to 0 naturally if empty)
+    total_treks = Trek.query.count()
+    total_bookings = Booking.query.count()
+    
+    # Count specific roles safely using relationships
+    total_staff = User.query.filter(User.role.has(name='trek_staff')).count()
+    total_trekkers = User.query.filter(User.role.has(name='trekker')).count()
+
+    # 2. POPULAR TREKS (Top 3 by booking volume)
+    popular_treks_query = db.session.query(
+        Trek.trek_name, func.count(Booking.booking_id).label('booking_count')
+    ).join(Booking, Booking.trek_id == Trek.trek_id)\
+     .group_by(Trek.trek_id)\
+     .order_by(func.count('booking_count').desc()).limit(3).all()
+     
+    popular_treks = [{"name": row[0], "bookings": row[1]} for row in popular_treks_query]
+
+    # 3. RATING INSIGHTS (Averages & Top Performers)
+    # Global Average Trek Rating
+    avg_rating_raw = db.session.query(func.avg(TrekReview.trek_rating)).scalar()
+    global_avg_rating = round(avg_rating_raw, 1) if avg_rating_raw else 0.0
+
+    # Highest Rated Trek
+    top_trek_query = db.session.query(
+        Trek.trek_name, func.avg(TrekReview.trek_rating).label('avg')
+    ).join(TrekReview, TrekReview.trek_id == Trek.trek_id)\
+     .group_by(Trek.trek_id)\
+     .order_by(func.avg('avg').desc()).first()
+     
+    top_trek = {"name": top_trek_query[0], "rating": round(top_trek_query[1], 1)} if top_trek_query else None
+
+    # Highest Rated Staff Guide
+    top_staff_query = db.session.query(
+        User.name, func.avg(TrekReview.staff_rating).label('avg')
+    ).join(StaffProfile, StaffProfile.user_id == User.id)\
+     .join(TrekReview, TrekReview.staff_id == StaffProfile.staff_id)\
+     .group_by(User.id).order_by(func.avg('avg').desc()).first()
+
+    top_staff = {"name": top_staff_query[0], "rating": round(top_staff_query[1], 1)} if top_staff_query else None
+
+    # 4. BOOKING TRENDS (Last 6 Months)
+    booking_trends = []
+    current_date = datetime.now(timezone.utc)
+    
+    # Walk backwards 5 months + current month
+    for i in range(5, -1, -1):
+        target_date = current_date - timedelta(days=i*30)
+        month_label = target_date.strftime("%b %Y")
         
-    stats = {
-        "total_treks": Trek.query.count(),
-        "total_users": User.query.join(Role).filter(Role.name == 'trekker').count(),
-        "total_staff": User.query.join(Role).filter(Role.name == 'trek_staff').count(),
-        "total_bookings": Booking.query.count()
-    }
-    return make_response(jsonify(stats), 200)
+        # Count bookings for this specific month/year
+        monthly_count = Booking.query.filter(
+            func.extract('month', Booking.created_at) == target_date.month,
+            func.extract('year', Booking.created_at) == target_date.year
+        ).count()
+        
+        booking_trends.append({"month": month_label, "count": monthly_count})
+
+    # Total summation check to see if we have ANY data to chart
+    has_chart_data = sum([t['count'] for t in booking_trends]) > 0
+
+    return make_response(jsonify({
+        "counters": {
+            "treks": total_treks,
+            "trekkers": total_trekkers,
+            "staff": total_staff,
+            "bookings": total_bookings
+        },
+        "insights": {
+            "global_avg_rating": global_avg_rating,
+            "top_trek": top_trek,
+            "top_staff": top_staff
+        },
+        "charts": {
+            "has_data": has_chart_data,
+            "trends": booking_trends,
+            "popular": popular_treks
+        }
+    }), 200)
 
 # ==========================================================================
 # 2. MANAGE TREKKING ROUTES (CRUD)
@@ -174,41 +247,6 @@ def create_trek():
         db.session.rollback()
         return make_response(jsonify({"message": f"Database transaction aborted: {str(e)}"}), 500)
 
-
-# @admin_bp.route('/treks/<int:trek_id>', methods=['PUT', 'DELETE'])
-# @jwt_required()
-# @admin_required
-# def manage_trek_by_id(trek_id):
-        
-#     trek = Trek.query.get_or_404(trek_id)
-
-#     if request.method == 'DELETE':
-#         try:
-#             db.session.delete(trek)
-#             db.session.commit()
-#             return make_response(jsonify({"message": "Trekking route removed successfully"}), 200)
-#         except Exception as e:
-#             db.session.rollback()
-#             return make_response(jsonify({"message": f"Database dependency error: {str(e)}"}), 400)
-
-#     # PUT Method Execution
-#     data = request.get_json()
-#     trek.name = data.get('name', trek.name).strip()
-#     trek.location = data.get('location', trek.location).strip()
-#     trek.difficulty = data.get('difficulty', trek.difficulty)
-#     trek.duration = int(data.get('duration', trek.duration))
-#     trek.available_slots = int(data.get('available_slots', trek.available_slots))
-#     trek.status = data.get('status', trek.status) # Pending/Approved/Open/Closed/Completed
-    
-#     if data.get('start_date'):
-#         trek.start_date = datetime.strptime(data.get('start_date'), "%Y-%m-%d").date()
-#     if data.get('end_date'):
-#         trek.end_date = datetime.strptime(data.get('end_date'), "%Y-%m-%d").date()
-
-#     db.session.commit()
-#     return make_response(jsonify({"message": "Trekking route updated successfully"}), 200)
-
-
 @admin_bp.route('/treks/<int:trek_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 @admin_required
@@ -319,6 +357,7 @@ def trek_details(trek_id):
         "updated_at": trek.updated_at.strftime("%B %d, %Y") if hasattr(trek, 'updated_at') and trek.updated_at else "N/A",
         "images": gallery_images,
         "staff": {
+            "id" : staff_user.id,
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
             "experience": "5+ Years" if staff_user else "0 Years",
             "last_login_at": "Active Now" if staff_user else "Offline",
@@ -335,6 +374,7 @@ def trek_details(trek_id):
 # ==========================================================================
 # 3. ADD AND MANAGE TREK STAFF / USER BLACKLISTS
 # ==========================================================================
+
 @admin_bp.route('/staff', methods=['POST'])
 @jwt_required()
 @admin_required
@@ -454,12 +494,9 @@ def toggle_user_blacklist_status(user_id):
 
 
 # ==========================================================================
-# 4. ASSIGN STAFF TO TREKS
-# ==========================================================================
-
-# ==========================================================================
 # 4. ASSIGN OR INTERCHANGE STAFF OPERATIONS GATEWAY
 # ==========================================================================
+
 @admin_bp.route('/assign-staff-override', methods=['PATCH'])
 @jwt_required()
 @admin_required
@@ -496,25 +533,6 @@ def assign_staff_override():
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({"message": f"Mutation failed: {str(e)}"}), 500)
-
-
-# @admin_bp.route('/treks/<int:trek_id>/assign-staff', methods=['PATCH'])
-# @jwt_required()
-# @admin_required
-# def assign_staff_to_trek(trek_id):
-        
-#     data = request.get_json()
-#     staff_id = data.get('staff_id')
-    
-#     trek = Trek.query.get_or_404(trek_id)
-#     staff_user = User.query.get_or_404(staff_id)
-
-#     if staff_user.role.name != 'trek_staff':
-#         return make_response(jsonify({"message": "Assigned user must possess Trek Staff clearance"}), 400)
-
-#     trek.assigned_staff_id = staff_user.id
-#     db.session.commit()
-#     return make_response(jsonify({"message": f"Trek successfully assigned to staff: {staff_user.name}"}), 200)
 
 # ==========================================================================
 # 5. SEARCH & AUDIT CORE ENGINE (Treks, Staff, Users, Bookings)

@@ -38,11 +38,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     activeAvatarUrl: (state) => {
-      if (!state.profile_pic) {
-        return ''
-      }
-      
+
       const backendBaseUrl = import.meta.env.VITE_BACKEND_URL;
+
+      if (state.profile_pic == "null") {
+        return `${backendBaseUrl}/static/Profile_pics/${state.role}.png`
+      }
       
       // CONCATENATION GATEWAY
       return `${backendBaseUrl}${state.profile_pic}`

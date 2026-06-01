@@ -1,121 +1,289 @@
 <template>
-  <div class="admin-dashboard-canvas text-white">
+  <div class="admin-dashboard-canvas text-white text-start pb-5 animate-fade-in">
     
-    <div class="header-section text-center py-5">
-      <h1 class="dashboard-headline display-3 fw-bold tracking-tight mb-2">
-        Dashboard Overview
-      </h1>
-      <p class="lead opacity-75 max-w-lg mx-auto fw-medium text-shadow-subtle fs-8">
-        Live coordinates, operational counts, and secure tracking logs for your superuser coordinates.
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-4 py-4 border-bottom border-white border-opacity-10 mb-5">
+      <div>
+        <h1 class="display-5 fw-bold tracking-tight m-0 text-shadow-deep">System Command Center</h1>
+        <p class="opacity-75 m-0 mt-2 fs-8 max-w-lg lh-base">
+          Monitor ecosystem telemetry, evaluate guide performance, and audit global booking vectors.
+        </p>
+      </div>
+
+      <div class="d-flex gap-3">
+        <button @click="$router.push('/portal/admin/treks')" class="btn-glass-action rounded-pill px-4 py-2 fs-8 fw-semibold text-white">
+          🗺️ Add Trek Route
+        </button>
+        <button @click="$router.push('/portal/admin/staff')" class="btn-glass-action rounded-pill px-4 py-2 fs-8 fw-semibold text-white">
+          👥 Add Staff Guide
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+      <div class="col-xl-3 col-md-6">
+        <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="metric-icon">🏔️</div>
+            <h6 class="card-title-lbl m-0 uppercase tracking-wider">Total Treks</h6>
+          </div>
+          <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.treks }}</p>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6">
+        <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="metric-icon">🎒</div>
+            <h6 class="card-title-lbl m-0 uppercase tracking-wider">Live Bookings</h6>
+          </div>
+          <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.bookings }}</p>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6">
+        <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="metric-icon">👨‍✈️</div>
+            <h6 class="card-title-lbl m-0 uppercase tracking-wider">Verified Guides</h6>
+          </div>
+          <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.staff }}</p>
+        </div>
+      </div>
+      <div class="col-xl-3 col-md-6">
+        <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="metric-icon">🥾</div>
+            <h6 class="card-title-lbl m-0 uppercase tracking-wider">System Users</h6>
+          </div>
+          <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.trekkers }}</p>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="fw-bold tracking-tight fs-5 mb-4">⭐ Ecosystem Reputation Insights</h5>
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="insight-glass-card p-4 rounded-4 d-flex align-items-center gap-4">
+          <h2 class="display-5 fw-bold text-warning m-0">{{ stats.insights.global_avg_rating }}</h2>
+          <div>
+            <h6 class="m-0 fw-bold tracking-tight">Platform Average</h6>
+            <p class="m-0 fs-9 text-white-50 mt-1">Overall Trek Ratings</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-glass-card p-4 rounded-4">
+          <h6 class="fs-9 text-white-50 uppercase tracking-wider mb-2">Highest Rated Trek</h6>
+          <div v-if="stats.insights.top_trek">
+            <h5 class="fw-bold text-success m-0">{{ stats.insights.top_trek.name }}</h5>
+            <span class="text-warning fs-9 fw-bold">⭐ {{ stats.insights.top_trek.rating }} / 5.0</span>
+          </div>
+          <div v-else class="text-white-50 italic fs-9 mt-2">Not enough review data.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-glass-card p-4 rounded-4">
+          <h6 class="fs-9 text-white-50 uppercase tracking-wider mb-2">Top Performing Guide</h6>
+          <div v-if="stats.insights.top_staff">
+            <h5 class="fw-bold text-success m-0">{{ stats.insights.top_staff.name }}</h5>
+            <span class="text-warning fs-9 fw-bold">⭐ {{ stats.insights.top_staff.rating }} / 5.0</span>
+          </div>
+          <div v-else class="text-white-50 italic fs-9 mt-2">Not enough review data.</div>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="fw-bold tracking-tight fs-5 mb-4">📈 Growth & Analytics Matrix</h5>
+    
+    <div v-if="!stats.charts.has_data" class="empty-data-glass p-5 rounded-4 text-center border border-white border-opacity-10 mb-4">
+      <div class="fs-1 mb-3 opacity-50">📊</div>
+      <h5 class="fw-bold tracking-tight">Analytics Awaiting Telemetry</h5>
+      <p class="text-white-50 fs-8 max-w-md mx-auto">
+        Visual growth charts and popularity indices will populate here automatically once trekkers begin booking slots and completing routes.
       </p>
     </div>
 
-    <div class="stats-grid-container container-fluid px-0 py-4">
-      <div class="row g-4 mx-0 justify-content-center">
-        
-        <div class="col-xl-3 col-md-6">
-          <div class="stats-glass-card p-4 text-center d-flex flex-column h-100 rounded-3 shadow-sm border border-white border-opacity-15">
-            <div class="card-icon mb-2 fs-2">🗺️</div>
-            <h5 class="card-title fw-semibold small opacity-90 tracking-wide m-0">ACTIVE EXPEDITIONS</h5>
-            <p class="card-value display-5 fw-bold m-0 tracking-tighter">{{ stats.total_treks }}</p>
+    <div v-else class="row g-4 mb-4">
+      
+      <div class="col-lg-8">
+        <div class="analytics-glass-container p-4 p-md-5 rounded-4 shadow-sm h-100">
+          <h6 class="fw-bold tracking-tight mb-4 border-bottom border-white border-opacity-10 pb-2">6-Month Booking Velocity</h6>
+          <div class="chart-canvas-wrapper position-relative" style="height: 280px;">
+            <canvas ref="trendChartCanvas"></canvas>
           </div>
         </div>
-
-        <div class="col-xl-3 col-md-6">
-          <div class="stats-glass-card p-4 text-center d-flex flex-column h-100 rounded-3 shadow-sm border border-white border-opacity-15">
-            <div class="card-icon mb-2 fs-2">🎒</div>
-            <h5 class="card-title fw-semibold small opacity-90 tracking-wide m-0">LIVE BOOKINGS</h5>
-            <p class="card-value display-5 fw-bold m-0 tracking-tighter">{{ stats.total_bookings }}</p>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-          <div class="stats-glass-card p-4 text-center d-flex flex-column h-100 rounded-3 shadow-sm border border-white border-opacity-15">
-            <div class="card-icon mb-2 fs-2">👥</div>
-            <h5 class="card-title fw-semibold small opacity-90 tracking-wide m-0">VERIFIED GUIDES</h5>
-            <p class="card-value display-5 fw-bold m-0 tracking-tighter">{{ stats.total_staff }}</p>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-          <div class="stats-glass-card p-4 text-center d-flex flex-column h-100 rounded-3 shadow-sm border border-white border-opacity-15">
-            <div class="card-icon mb-2 fs-2">🔔</div>
-            <h5 class="card-title fw-semibold small opacity-90 tracking-wide m-0">SYSTEM USERS</h5>
-            <p class="card-value display-5 fw-bold m-0 tracking-tighter">{{ stats.total_users }}</p>
-          </div>
-        </div>
-
       </div>
-    </div>
 
-    <div class="container-fluid p-0 mt-5">
-      <div class="map-placeholder glass-map-wrapper p-4 rounded-3 shadow d-flex align-items-center justify-content-center text-secondary">
-         Operational Coordinates Map Canvas Loading...
+      <div class="col-lg-4">
+        <div class="analytics-glass-container p-4 p-md-5 rounded-4 shadow-sm h-100 d-flex flex-column">
+          <h6 class="fw-bold tracking-tight mb-4 border-bottom border-white border-opacity-10 pb-2">Most Popular Routes</h6>
+          
+          <div class="chart-canvas-wrapper position-relative flex-grow-1 d-flex align-items-center justify-content-center">
+            <canvas ref="popularityChartCanvas"></canvas>
+          </div>
+
+          <div class="mt-4 pt-3 border-top border-white border-opacity-10 d-flex flex-column gap-2 fs-9 text-white-50">
+            <div v-for="(item, idx) in stats.charts.popular" :key="idx" class="d-flex justify-content-between">
+              <span class="text-truncate pe-2">📍 {{ item.name }}</span>
+              <strong class="text-white">{{ item.bookings }}</strong>
+            </div>
+          </div>
+        </div>
       </div>
+
     </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+import { useAuthStore } from '../../stores/auth'
+import { useAlertStore } from '../../stores/alert'
+import Chart from 'chart.js/auto'
 
-// Placeholder mocked data matrix to mirror the reference structure.
-// This gets replaced by your Flask API GET payload shortly.
+const authStore = useAuthStore()
+const alertStore = useAlertStore()
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+
+const trendChartCanvas = ref(null)
+const popularityChartCanvas = ref(null)
+let trendChartInstance = null
+let popChartInstance = null
+
+// Initial Zero-State Baseline
 const stats = ref({
-  total_treks: '24',
-  total_users: '419',
-  total_staff: '15',
-  total_bookings: '1,902'
+  counters: { treks: 0, trekkers: 0, staff: 0, bookings: 0 },
+  insights: { global_avg_rating: 0.0, top_trek: null, top_staff: null },
+  charts: { has_data: false, trends: [], popular: [] }
+})
+
+async function fetchRealDataMetrics() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/dashboard/stats`, {
+      method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      stats.value = data
+      console.log('Fetched Dashboard Stats:', data)
+      
+      // If true data exists, wait for DOM to un-hide the canvases, then draw
+      if (data.charts.has_data) {
+        await nextTick()
+        renderCharts(data.charts.trends, data.charts.popular)
+      }
+    }
+  } catch (err) {
+    alertStore.showAlert(`Dashboard Sync Error: ${err.message}`, 'danger')
+  }
+}
+
+function renderCharts(trendData, popularData) {
+  // Destroy old instances to prevent hover-glitches when hot-reloading
+  if (trendChartInstance) trendChartInstance.destroy()
+  if (popChartInstance) popChartInstance.destroy()
+
+  // 1. Line Chart
+  if (trendChartCanvas.value) {
+    trendChartInstance = new Chart(trendChartCanvas.value, {
+      type: 'line',
+      data: {
+        labels: trendData.map(t => t.month),
+        datasets: [{
+          label: 'Bookings',
+          data: trendData.map(t => t.count),
+          borderColor: '#7bf1a8',
+          backgroundColor: 'rgba(123, 241, 168, 0.15)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#ffffff',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.5)', stepSize: 1 } }
+        }
+      }
+    })
+  }
+
+  // 2. Doughnut Chart
+  if (popularityChartCanvas.value && popularData.length > 0) {
+    popChartInstance = new Chart(popularityChartCanvas.value, {
+      type: 'doughnut',
+      data: {
+        labels: popularData.map(p => p.name),
+        datasets: [{
+          data: popularData.map(p => p.bookings),
+          backgroundColor: ['rgba(25, 135, 84, 0.8)', 'rgba(123, 241, 168, 0.6)', 'rgba(255, 255, 255, 0.2)'],
+          borderColor: 'transparent',
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        cutout: '75%' 
+      }
+    })
+  }
+}
+
+onMounted(() => {
+  fetchRealDataMetrics()
 })
 </script>
 
 <style scoped>
-/* Typography Enhancements */
-.dashboard-headline {
-  color: #ffffff;
-  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.text-shadow-subtle {
-  text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.2);
-}
-
-.tracking-tight { letter-spacing: -1.2px; }
-.tracking-tighter { letter-spacing: -1.8px; }
+.text-shadow-deep { text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); }
 .max-w-lg { max-width: 650px; }
+.max-w-md { max-width: 450px; }
 
-/* High-Contrast Aesthetic Glass Cards */
+/* Custom Action Buttons */
+.btn-glass-action {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+.btn-glass-action:hover { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+
+/* Core Metrics Spacing */
 .stats-glass-card {
-  background: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  transition: transform 0.3s ease, border-color 0.2s ease;
-}
-
-.stats-glass-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.card-title {
-  color: #ffffff;
-  opacity: 0.85;
-}
-
-.card-value {
-  color: #ffffff;
-  letter-spacing: -1.8px;
-  margin-top: -6px !important;
-}
-
-/* Map Placeholder Element */
-.glass-map-wrapper {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  min-height: 400px;
+}
+.metric-icon { font-size: 1.5rem; background: rgba(255,255,255,0.06); padding: 8px; border-radius: 10px; }
+.card-title-lbl { font-size: 0.72rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+
+/* Insights Spacing */
+.insight-glass-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  height: 100%;
 }
 
-.fs-8 { font-size: 0.85rem; }
+/* Charts Spacing */
+.analytics-glass-container {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.empty-data-glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); }
+
+.fw-black { font-weight: 900; }
+.uppercase { text-transform: uppercase; }
+.tracking-tighter { letter-spacing: -1.5px; }
+.tracking-wider { letter-spacing: 0.8px; }
+.italic { font-style: italic; }
+
+.fs-8 { font-size: 0.88rem; }
+.fs-9 { font-size: 0.76rem; }
 </style>
