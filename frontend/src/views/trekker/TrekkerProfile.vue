@@ -488,14 +488,14 @@ onMounted(() => {
 
 .medical-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(10, 20, 15, 0.55) !important;
-  backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  background: rgba(0, 5, 2, 0.316) !important;
+  backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(20px) !important;
   z-index: 999 !important;
 }
 
 .glass-modal-card {
-  background: rgba(25, 35, 30, 0.8) !important;
-  backdrop-filter: blur(30px);
+  background: rgba(0, 0, 0, 0.206) !important;
+  backdrop-filter: blur(6px);
   width: 92%; max-width: 580px;
 }
 

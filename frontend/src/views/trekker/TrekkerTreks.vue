@@ -6,17 +6,59 @@
       <p class="m-0 text-white-50 fs-8 mt-1">Browse open mountain coordinates, check altitude parameters, and examine verified safety guide telemetry.</p>
     </div>
 
+    <!-- ===================================================================
+         1. COMPACT SEARCH & COMPREHENSIVE FILTER SYSTEM
+         =================================================================== -->
+    <div class="glass-container p-3.5 rounded-4 mb-4 shadow-sm">
+      <div class="row g-3 align-items-center">
+        <!-- Text Lookup Search -->
+        <div class="col-md-3">
+          <div class="search-box px-3 py-1.5 rounded-3 d-flex align-items-center">
+            <span class="me-2 text-white-50 opacity-50">🔍</span>
+            <input v-model="filters.query" type="text" placeholder="Search by name or grid..." class="bg-transparent border-0 text-white w-100 fs-8 clean-field">
+          </div>
+        </div>
+        <!-- Difficulty Dropdown Filter -->
+        <div class="col-md-3">
+          <select v-model="filters.difficulty" class="select-glass w-100 px-3 py-1.5 rounded-3 text-white fs-8">
+            <option value="">All Intensities</option>
+            <option value="Easy">Easy Trails</option>
+            <option value="Moderate">Moderate Tracks</option>
+            <option value="Hard">High-Alpine Hard</option>
+          </select>
+        </div>
+        <!-- Price Range Filter Slider -->
+        <div class="col-md-3">
+          <label class="d-block fs-9 text-white-50 mb-1">Max Budget: <span class="text-success fw-bold">₹{{ filters.price }}</span></label>
+          <input v-model.number="filters.price" type="range" min="3000" max="25000" step="500" class="form-range custom-slider">
+        </div>
+        <!-- Altitude Cap Filter -->
+        <div class="col-md-3">
+          <label class="d-block fs-9 text-white-50 mb-1">Max Altitude: <span class="text-success fw-bold">{{ filters.altitude }}m</span></label>
+          <input v-model.number="filters.altitude" type="range" min="2500" max="6000" step="200" class="form-range custom-slider">
+        </div>
+      </div>
+    </div>
 
-    <div class="row g-4">
-      <div v-for="trek in tracksList" :key="trek.trek_id" class="col-xl-4 col-md-6">
-        <div class="trek-glass-card h-100 rounded-4 overflow-hidden border border-white border-opacity-10 shadow d-flex flex-column justify-content-between">
+      <!-- ===================================================================
+         2. EXISTING EXPEDITIONS GRID CANVAS
+         =================================================================== -->
+    <div v-if="filteredTreks.length === 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
+      <span class="fs-1">🗺️</span>
+      <h5 class="fw-bold mt-2">No Expedition Inventories Map Matches</h5>
+      <p class="text-white-50 small m-0">Reset parameters filters or configure a brand new track route.</p>
+    </div>
+
+    <div v-else class="row g-4">
+      <div v-for="trek in filteredTreks" :key="trek.trek_id" class="col-xl-4 col-md-6">
+                <div class="trek-glass-card h-100 rounded-4 overflow-hidden border border-white border-opacity-10 shadow d-flex flex-column justify-content-between">
           
           <div class="card-image-thumbnail-wrapper position-relative">
-            <img :src="trek.images[0] || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b'" alt="Trek Thumbnail" class="thumbnail-img w-100" />
-            <span class="badge position-absolute top-3 right-3 status-pill" :class="trek.status.toLowerCase()">
-              ● {{ trek.status }}
-            </span>
+            <img :src="BACKEND_URL + trek.image_url" alt="Trek Thumbnail" class="thumbnail-img w-100" />
           </div>
+          <span class="badge position-absolute  status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; right: 1rem;">
+            ● {{ trek.status }}
+          </span>
 
           <div class="p-3_5 flex-grow-1 d-flex flex-column justify-content-between">
             <div>
@@ -33,7 +75,7 @@
                 <span class="d-block fs-9 text-white-50 opacity-50 fw-semibold">VALUED AT</span>
                 <strong class="fs-6 text-success">₹{{ trek.price_per_person }}</strong>
               </div>
-              <button @click="$router.push('/portal/trek/view/' + trek.id)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fs-8 fw-bold text-dark">
+              <button @click="routeToDeepInsights(trek.trek_id)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fs-8 fw-bold text-dark">
                 View Details
               </button>
             </div>
@@ -43,118 +85,69 @@
       </div>
     </div>
 
-    <Transition name="modal-fade">
-      <div v-if="selectedTrek" class="detailed-overlay-backdrop d-flex align-items-center justify-content-center p-2 p-md-3">
-        <div class="glass-detail-card rounded-4 border border-white border-opacity-15 shadow-lg w-100 overflow-y-auto max-vh-90">
-          
-          <div class="row g-0">
-            <div class="col-lg-6 p-4">
-              <div class="active-gallery-frame rounded-3 overflow-hidden border border-white border-opacity-10 mb-2">
-                <img :src="selectedTrek.images[activeImageIndex]" alt="Master view" class="w-100 master-gallery-view" />
-              </div>
-              <div class="row g-2">
-                <div v-for="(img, idx) in selectedTrek.images" :key="idx" class="col-3">
-                  <div @click="activeImageIndex = idx" class="gallery-thumb-container rounded-2 overflow-hidden cursor-pointer" :class="{ 'active-thumb': activeImageIndex === idx }">
-                    <img :src="img" alt="Thumb" class="w-100 thumb-img-element" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-4 text-start">
-                <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase border-bottom border-white border-opacity-10 pb-1 mb-2">Trail Synopsis</h6>
-                <p class="fs-8 text-white-50 lh-base m-0 text-justify">{{ selectedTrek.description }}</p>
-              </div>
-            </div>
-
-            <div class="col-lg-6 p-4 d-flex flex-column justify-content-between border-start border-white border-opacity-10">
-              <div class="text-start">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <h3 class="fw-bold tracking-tight m-0">{{ selectedTrek.trek_name }}</h3>
-                  <button @click="closeDetailedOverlay" class="btn-close-modal-round">✕</button>
-                </div>
-                <p class="text-success small fw-semibold m-0 mb-3">📍 {{ selectedTrek.location }}</p>
-
-                <div class="spec-matrix-grid mb-4 fs-8  bg-opacity-5 p-3 rounded-3 border border-white border-opacity-10">
-                  <div class="row g-2">
-                    <div class="col-6 mb-2"><strong>Duration:</strong> <span class="text-white-50">{{ selectedTrek.duration_days }} Days</span></div>
-                    <div class="col-6 mb-2"><strong>Peak Altitude:</strong> <span class="text-white-50">{{ selectedTrek.max_altitude }} Meters</span></div>
-                    <div class="col-6 mb-2"><strong>Available Slots:</strong> <span class="text-white-50 text-success">{{ selectedTrek.available_slots }} left</span></div>
-                    <div class="col-6 mb-2"><strong>Est. Completion:</strong> <span class="text-white-50">{{ selectedTrek.end_date }}</span></div>
-                  </div>
-                </div>
-
-                <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase border-bottom border-white border-opacity-10 pb-1 mb-2">Verified Assigned Staff Guide</h6>
-                <div class="staff-glass-capsule p-3 rounded-3 border border-white border-opacity-10 d-flex gap-3 mb-4">
-                  <img :src="selectedTrek.staff.avatar" alt="Staff Guide" class="staff-card-avatar" />
-                  <div class="text-start flex-grow-1">
-                    <h6 class="m-0 fw-bold text-white fs-8">{{ selectedTrek.staff.name }}</h6>
-                    <p class="m-0 fs-9 text-success fw-medium mt-0.5">Clearance: Senior Guide ({{ selectedTrek.staff.experience }} Exp)</p>
-                    
-                    <div class="mt-2 pt-2 border-top border-white border-opacity-10">
-                      <span class="d-block fs-9 text-white-50 fw-semibold mb-1">EXPLORER FEEDBACK LOOP</span>
-                      <p class="m-0 fs-9 text-white-50 italic">"{{ selectedTrek.staff.top_review }}"</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">
-                <div>
-                  <span class="fs-9 text-white-50 opacity-60">PRICE PER TREKKER</span>
-                  <h4 class="m-0 fw-bold text-success">₹{{ selectedTrek.price_per_person }}</h4>
-                </div>
-                <button @click="executeBookingAction(selectedTrek.trek_id)" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-dark fs-8">
-                  Confirm Base Authorization Slot
-                </button>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </Transition>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useAlertStore } from '../../stores/alert'
 
+import { ref, onMounted ,computed } from 'vue'
+import { useAlertStore } from '../../stores/alert'
+import { useAuthStore } from '../../stores/auth'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const alertStore = useAlertStore()
+const authStore = useAuthStore()
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 const selectedTrek = ref(null)
 const activeImageIndex = ref(0)
+const tracksList = ref([])
 
-// Mocked response records containing paginated 4-image array limits schemas definitions
-const tracksList = ref([
-  {
-    trek_id: 1,
-    trek_name: 'Solang Valley Alpine Pass',
-    location: 'Manali, Himachal Pradesh',
-    difficulty: 'Moderate',
-    duration_days: 4,
-    available_slots: 12,
-    status: 'Open',
-    max_altitude: 3840,
-    price_per_person: 6499,
-    description: 'Traverse magnificent cedar woodlands and crystalline stream junctions before rising into pristine high alpine zones. This route features scenic photography points and reliable emergency coordinates.',
-    images: [
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=600&q=80',
-      'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?auto=format&fit=crop&w=600&q=80'
-    ],
-    staff: {
-      name: 'Captain Vikram Singh',
-      experience: '6+ Years',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-      top_review: 'Vikram coordinated our entire safety checkpoint array perfectly during the snow shifts. Ultimate professional guide.'
+
+// Filtering state metrics
+const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
+
+// DYNAMIC SEARCH & FILTER CALCULATOR ENGINE
+const filteredTreks = computed(() => {
+  return tracksList.value.filter(t => {
+    const matchesQuery = t.trek_name.toLowerCase().includes(filters.value.query.toLowerCase()) || 
+                         t.location.toLowerCase().includes(filters.value.query.toLowerCase())
+    const matchesDiff = !filters.value.difficulty || t.difficulty === filters.value.difficulty
+    const matchesPrice = t.price_per_person <= filters.value.price
+    const matchesAlt = t.max_altitude <= filters.value.altitude
+    return matchesQuery && matchesDiff && matchesPrice && matchesAlt
+  })
+})
+
+
+// ==========================================================================
+// REAL DATA FETCH ENGINE
+// ==========================================================================
+async function fetchDiscoverableTreks() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/treks`, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (res.ok) {
+      tracksList.value = await res.json()
+
+    } else {
+      alertStore.showAlert('Failed to synchronize open expedition parameters.', 'danger')
     }
+  } catch (err) {
+    alertStore.showAlert(`Network tracking drop: ${err.message}`, 'danger')
   }
-])
+}
 
+// ==========================================================================
+// MODAL & ACTION HANDLERS (Preserved from original design)
+// ==========================================================================
 function openDetailedOverlay(trek) {
   activeImageIndex.value = 0
   selectedTrek.value = trek
@@ -168,10 +161,21 @@ function executeBookingAction(id) {
   alertStore.showAlert(`Slot application sequence for Trek #${id} dispatched to Flask database layers.`, 'success')
   selectedTrek.value = null
 }
+
+function routeToDeepInsights(id) {
+  // Automatically routes down to your reusable nested component structure
+  router.push(`/portal/trek/view/${id}`)
+}
+
+onMounted(() => {
+  fetchDiscoverableTreks()
+})
+
 </script>
 
 <style scoped>
 
+.glass-container { background: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12) !important; padding: 0.5rem; }
 .trek-glass-card {
   background: rgba(255, 255, 255, 0.05) !important;
   backdrop-filter: blur(20px);
@@ -183,6 +187,14 @@ function executeBookingAction(id) {
 /* Status pill classes mapping definitions */
 .status-pill { padding: 4px 10px; font-size: 0.72rem; border-radius: 20px; font-weight: 600; }
 .status-pill.open { background: rgba(25, 135, 84, 0.8); border: 1px solid #198754; }
+
+.search-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+.clean-field:focus { outline: none; }
+.select-glass { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); outline: none; padding:0.2rem; }
+.select-glass option { background: #141c16; color: white; }
+
+.custom-slider::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.1); border-radius: 5px; height: 4px; }
+.custom-slider::-webkit-slider-thumb { background: #198754; margin-top: -6px; }
 
 /* Immersive Detailed Modal Shell Elements */
 .detailed-overlay-backdrop {

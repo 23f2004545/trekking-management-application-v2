@@ -311,7 +311,7 @@ def manage_trek_by_id(trek_id):
 
 @admin_bp.route('/treks/<int:trek_id>/details', methods=['GET'])
 @jwt_required()
-@admin_required
+# @admin_required
 def trek_details(trek_id):
 
     trek = Trek.query.get_or_404(trek_id)
@@ -660,17 +660,18 @@ def get_all_global_bookings():
     for b in bookings:
         # Resolve real-time lifecycle tracking labels based on schedule bounds
         calculated_status = b.status # Default fallback status: Booked / Cancelled
+        print(type(current_date) , type(b.trek.start_date))
         
         if b.status == 'Booked' and b.trek:
-            if current_date < b.trek.start_date:
+            if current_date < b.trek.start_date.date():
                 calculated_status = 'Upcoming'
-            elif b.trek.start_date <= current_date <= b.trek.end_date:
+            elif b.trek.start_date.date() <= current_date <= b.trek.end_date.date():
                 calculated_status = 'Ongoing'
             else:
                 calculated_status = 'Completed'
 
         results.append({
-            "booking_id": b.id,
+            "booking_id": b.booking_id,
             "booking_date": b.booking_date.strftime("%Y-%m-%d"),
             "booking_status": calculated_status, 
             "trek_name": b.trek.trek_name if b.trek else " PURGED ROUTE",
@@ -692,8 +693,8 @@ def get_admin_booking_deep_details(booking_id):
     
     calculated_status = b.status
     if b.status == 'Booked' and b.trek:
-        if current_date < b.trek.start_date: calculated_status = 'Upcoming'
-        elif b.trek.start_date <= current_date <= b.trek.end_date: calculated_status = 'Ongoing'
+        if current_date < b.trek.start_date.date(): calculated_status = 'Upcoming'
+        elif b.trek.start_date.date() <= current_date <= b.trek.end_date.date(): calculated_status = 'Ongoing'
         else: calculated_status = 'Completed'
 
     # Pull direct assigned guide details safely
@@ -703,7 +704,7 @@ def get_admin_booking_deep_details(booking_id):
     review = TrekReview.query.filter_by(user_id=b.user_id, trek_id=b.trek_id).first()
 
     payload = {
-        "booking_id": b.id,
+        "booking_id": b.booking_id,
         "booking_date": b.booking_date.strftime("%B %d, %Y"),
         "booking_status": calculated_status,
         "cancelled_date": "2026-05-28" if b.status == 'Cancelled' else None, # Example tracking placeholder
@@ -712,7 +713,7 @@ def get_admin_booking_deep_details(booking_id):
             "name": b.trek.trek_name if b.trek else "Unknown Pass",
             "location": b.trek.location if b.trek else "Grid offline",
             "difficulty": b.trek.difficulty if b.trek else "Moderate",
-            "schedule": f"{b.trek.start_date} to {b.trek.end_date}" if b.trek else "N/A",
+            "schedule": f"{b.trek.start_date.date()} to {b.trek.end_date.date()}" if b.trek else "N/A",
             "altitude": getattr(b.trek, 'max_altitude', 0.0),
             "price": getattr(b.trek, 'price_per_person', 0.0)
         },

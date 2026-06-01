@@ -10,7 +10,7 @@
       <div v-for="item in globalBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
-          <img :src="getAbsoluteUrl(item.trekker.profile_pic)" alt="Trekker" class="rect-profile-img shadow" />
+          <img :src="BACKEND_URL + item.trekker.profile_pic" alt="Trekker" class="rect-profile-img shadow" />
           <div>
             <span class="extra-small text-white-50 opacity-40 uppercase tracking-wider">RESERVATION TOKEN: #APX-B{{ item.booking_id }}</span>
             <h5 class="fw-bold m-0 text-white tracking-tight mt-0.5">{{ item.trek_name }}</h5>
@@ -61,7 +61,7 @@
       <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
         <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">2. Registered Explorer Telemetry</h6>
         <div class="d-flex align-items-center gap-3">
-          <img :src="getAbsoluteUrl(activeAuditDetail.trekker.profile_pic)" alt="Trekker Avatar" class="audit-avatar-circle" />
+          <img :src="BACKEND_URL + activeAuditDetail.trekker.profile_pic" alt="Trekker Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.trekker.name }}</h5>
             <div>Email Registry: <span class="text-white">{{ activeAuditDetail.trekker.email }}</span></div>
@@ -73,7 +73,7 @@
       <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
         <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">3. Assigned Trail Guide Node</h6>
         <div class="d-flex align-items-center gap-3">
-          <img :src="getAbsoluteUrl(activeAuditDetail.staff.profile_pic)" alt="Staff Avatar" class="audit-avatar-circle" />
+          <img :src="BACKEND_URL + (activeAuditDetail.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.staff.name }}</h5>
             <div>Guide Email: <span class="text-white">{{ activeAuditDetail.staff.email }}</span></div>
@@ -138,14 +138,14 @@ async function loadDeepAuditPassport(id) {
     const res = await fetch(`${BACKEND_URL}/api/admin/bookings/${id}/details`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
-    if (res.ok) activeAuditDetail.value = await res.json()
+    if (res.ok) activeAuditDetail.value = await res.json() 
   } catch (err) { alertStore.showAlert('Audit retrieval failure.', 'danger') }
 }
 
-function getAbsoluteUrl(path) {
-  if (!path) return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-  return path.startsWith('http') ? path : `${BACKEND_URL}/path`
-}
+// function getAbsoluteUrl(path) {
+//   if (!path) return `${BACKEND_URL}/static/Profile_pics.trekker.png`
+//   return path.startsWith('http') ? path : `${BACKEND_URL} + path`
+// }
 
 onMounted(() => { fetchGlobalBookingsDataset() })
 </script>
@@ -154,7 +154,7 @@ onMounted(() => { fetchGlobalBookingsDataset() })
 .booking-rect-row { background: rgba(255, 255, 255, 0.04) !important; backdrop-filter: blur(20px); }
 .glass-audit-card { background: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.12) !important; }
 .rect-profile-img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
-.audit-avatar-circle { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
+.audit-avatar-circle { width: 70px; height: 70px; border-radius:50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.15); }
 
 /* Lifecycle color indices layout definitions */
 .lifecycle-tag { padding: 4px 12px; border-radius: 20px; font-weight: 600; }

@@ -322,8 +322,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.checkout-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 20, 15, 0.55) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; z-index: 999999999 !important; }
-.glass-checkout-card { background: rgba(25, 35, 30, 0.88) !important; backdrop-filter: blur(35px); width: 100%; max-width: 440px; }
+.checkout-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.456) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(20px) !important; z-index: 999 !important; }
+.glass-checkout-card { background: rgba(6, 27, 11, 0.452) !important; backdrop-filter: blur(9px); width: 100%; max-width: 440px; }
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
 .modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }

@@ -72,7 +72,7 @@
             <p class="m-0 text-white-50 small">Spaces are highly restricted per seasonal route to preserve environmental stability and guide ratios.</p>
           </div>
           <div class="col-auto">
-            <button @click="$router.push('/portal/trekker/dashboard')" class="btn-footer-cta rounded-pill px-4 py-2 fw-semibold fs-8">
+            <button @click="$router.push('/')" class="btn-footer-cta rounded-pill px-4 py-2 fw-semibold fs-8">
               Explore Open Trails →
             </button>
           </div>
@@ -126,9 +126,9 @@
             <span>© 2026 APEX APP SYSTEMS. DESIGNED FOR WILDERNESS OPERATIONS & CODES.</span>
           </div>
           <div class="col-auto d-flex gap-3 fs-7">
-            <a href="#" class="text-white-50 hover-white text-decoration-none">🌐</a>
-            <a href="#" class="text-white-50 hover-white text-decoration-none">📸</a>
-            <a href="#" class="text-white-50 hover-white text-decoration-none">🕊️</a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="text-white-50 hover-white text-decoration-none"><i class="bi bi-twitter"></i></a>
           </div>
         </div>
 

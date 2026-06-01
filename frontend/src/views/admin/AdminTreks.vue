@@ -62,8 +62,8 @@
           <!-- Image Top Cap Area -->
           <div class="card-img-frame position-relative">
             <img :src="BACKEND_URL + trek.image_url" alt="Trek Layout Graphic" class="w-100 h-100 object-cover" />
-            <span class="badge position-absolute top-3 right-3 status-pill" :class="trek.status.toLowerCase()">
-              {{ trek.status }}
+            <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; right: 1rem;">
+             ● {{  trek.status }}
             </span>
           </div>
 
@@ -236,7 +236,6 @@ async function syncTrekDataset() {
     const res = await fetch(`${BACKEND_URL}/api/admin/treks`, { method: 'GET', headers })
     if (res.ok) {
       adminTreks.value = await res.json()
-      console.log(adminTreks)
     }
     
     // Quick async retrieval load to populate staff selectors downstream
@@ -343,7 +342,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.glass-container { background: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12) !important; }
+.glass-container { background: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12) !important; padding: 0.5rem; }
 .trek-glass-card { background: rgba(255, 255, 255, 0.04) !important; backdrop-filter: blur(20px); transition: transform 0.2s; }
 .trek-glass-card:hover { transform: translateY(-3px); }
 
@@ -371,8 +370,8 @@ onMounted(() => {
 .text-area-fix { resize: none; line-height: 1.4; }
 .select-fix option { background: #1c241e; color: white; }
 
-.custom-slider::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; height: 5px; }
-.custom-slider::-webkit-slider-thumb { background: #198754; margin-top: -4px; }
+.custom-slider::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.1); border-radius: 5px; height: 4px; }
+.custom-slider::-webkit-slider-thumb { background: #198754; margin-top: -6px; }
 
 .extra-small { font-size: 0.68rem; }
 .fs-8 { font-size: 0.88rem; }

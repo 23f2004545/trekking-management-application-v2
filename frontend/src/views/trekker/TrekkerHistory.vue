@@ -45,7 +45,7 @@
   </div>
 </template>
 
-<script setup>
+<!-- <script setup>
 import { ref } from 'vue'
 import TrekDetail from '../../components/TrekDetail.vue'
 import TrekHistory from '../../components/TrekHistory.vue'
@@ -100,6 +100,78 @@ const historicTrips = ref([
     existing_staff_review: { stars: 4, comment: 'Rohan kept group pacing speed exceptionally balanced across steep slopes.' }
   }
 ])
+</script> -->
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import TrekDetail from '../../components/TrekDetail.vue'
+import TrekHistory from '../../components/TrekHistory.vue'
+import { useAlertStore } from '../../stores/alert'
+import { useAuthStore } from '../../stores/auth'
+
+const alertStore = useAlertStore()
+const authStore = useAuthStore()
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+
+const selectedTripForDetails = ref(null)
+const historicTrips = ref([])
+
+async function fetchCompletedHistory() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/history`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      
+      // Resolve image absolute URLs safely
+      historicTrips.value = data.map(trip => {
+        trip.images = trip.images.map(img => img.startsWith('http') ? img : `${BACKEND_URL}${img}`)
+        if (trip.staff.profile_pic && !trip.staff.profile_pic.startsWith('http')) {
+          trip.staff.profile_pic = `${BACKEND_URL}${trip.staff.profile_pic}`
+        }
+        return trip
+      })
+    }
+  } catch (err) {
+    alertStore.showAlert('Historical registry sync dropped.', 'danger')
+  }
+}
+
+async function handlePublishedReview(formData) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/reviews`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trek_id: selectedTripForDetails.value.trek_id,
+        staff_id: selectedTripForDetails.value.staff?.id || null, // Assuming staff ID is attached if needed
+        trek_rating: formData.trek_rating,
+        trek_comment: formData.trek_comment,
+        staff_rating: formData.staff_rating,
+        staff_comment: formData.staff_comment
+      })
+    })
+    
+    if (res.ok) {
+      // Optimistically update the UI to read-only view
+      selectedTripForDetails.value.review_submitted = true
+      selectedTripForDetails.value.existing_trek_review = { stars: formData.trek_rating, comment: formData.trek_comment }
+      selectedTripForDetails.value.existing_staff_review = { stars: formData.staff_rating, comment: formData.staff_comment }
+      alertStore.showAlert('Success: Review variables committed to the apex network.', 'success')
+    } else {
+      const data = await res.json()
+      alertStore.showAlert(data.message || 'Review rejection flagged.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network Drop: ${err.message}`, 'danger')
+  }
+}
+
+onMounted(() => {
+  fetchCompletedHistory()
+})
 </script>
 
 <style scoped>

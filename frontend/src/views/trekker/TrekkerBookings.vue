@@ -110,27 +110,81 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+// import { ref } from 'vue'
+// import { useAlertStore } from '../../stores/alert'
+// import { useConfirmStore } from '../../stores/confirm'
+
+// const alertStore = useAlertStore()
+// const confirmStore = useConfirmStore()
+
+// const modalTarget = ref(null)
+
+// const activeBookingsList = ref([
+//   { 
+//     booking_id: 9024, trek_name: 'Solang Valley Alpine Pass', booking_date: '2026-05-20', booking_status: 'Booked', payment_status: 'Paid',
+//     duration_days: 4, total_people: 3, trek_image: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=300&q=80',
+//     staff: { name: 'Captain Vikram Singh', email: 'vikram.singh@apex.com', contact: '+91 98765 43210' }
+//   },
+//   { 
+//     booking_id: 8142, trek_name: 'Rohtang Pass Crest Loop', booking_date: '2026-05-14', booking_status: 'Cancelled', payment_status: 'Refunded',
+//     duration_days: 5, total_people: 1, trek_image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
+//     staff: { name: 'Guide Rohan Negi', email: 'rohan.negi@apex.com', contact: '+91 88776 55443' }
+//   }
+// ])
+
+// function openDeepContextModal(record) {
+//   modalTarget.value = record
+// }
+
+// function triggerRouteCancellation(id) {
+//   confirmStore.ask(
+//     `Are you completely certain you want to revoke Expedition Pass #${id}? This restores slot boundaries immediately.`, 
+//     () => {
+//       const target = activeBookingsList.value.find(b => b.booking_id === id)
+//       if (target) {
+//         target.booking_status = 'Cancelled'
+//         target.payment_status = 'Refunded'
+//       }
+//       modalTarget.value = null // Terminate modal context stack view
+//       alertStore.showAlert(`Expedition Pass #${id} cancelled. Financial refund loop initializing.`, 'warning')
+//     }
+//   )
+// }
+
+import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useConfirmStore } from '../../stores/confirm'
+import { useAuthStore } from '../../stores/auth'
 
 const alertStore = useAlertStore()
 const confirmStore = useConfirmStore()
+const authStore = useAuthStore()
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const modalTarget = ref(null)
+const activeBookingsList = ref([])
 
-const activeBookingsList = ref([
-  { 
-    booking_id: 9024, trek_name: 'Solang Valley Alpine Pass', booking_date: '2026-05-20', booking_status: 'Booked', payment_status: 'Paid',
-    duration_days: 4, total_people: 3, trek_image: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=300&q=80',
-    staff: { name: 'Captain Vikram Singh', email: 'vikram.singh@apex.com', contact: '+91 98765 43210' }
-  },
-  { 
-    booking_id: 8142, trek_name: 'Rohtang Pass Crest Loop', booking_date: '2026-05-14', booking_status: 'Cancelled', payment_status: 'Refunded',
-    duration_days: 5, total_people: 1, trek_image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
-    staff: { name: 'Guide Rohan Negi', email: 'rohan.negi@apex.com', contact: '+91 88776 55443' }
+async function fetchLiveBookings() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/bookings`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      
+      // Ensure image routes map to absolute addresses properly
+      activeBookingsList.value = data.map(b => {
+        if (b.trek_image && !b.trek_image.startsWith('http')) {
+          b.trek_image = `${BACKEND_URL}${b.trek_image}`
+        }
+        return b
+      })
+    }
+  } catch (err) {
+    alertStore.showAlert(`Telemetry Sync Drop: ${err.message}`, 'danger')
   }
-])
+}
 
 function openDeepContextModal(record) {
   modalTarget.value = record
@@ -139,17 +193,30 @@ function openDeepContextModal(record) {
 function triggerRouteCancellation(id) {
   confirmStore.ask(
     `Are you completely certain you want to revoke Expedition Pass #${id}? This restores slot boundaries immediately.`, 
-    () => {
-      const target = activeBookingsList.value.find(b => b.booking_id === id)
-      if (target) {
-        target.booking_status = 'Cancelled'
-        target.payment_status = 'Refunded'
+    async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/trekker/bookings/${id}/cancel`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${authStore.token}` }
+        })
+        const data = await res.json()
+        if (res.ok) {
+          alertStore.showAlert(`Expedition Pass #${id} cancelled. Refund loops initialized.`, 'warning')
+          modalTarget.value = null
+          await fetchLiveBookings() // Re-sync the view cleanly
+        } else {
+          alertStore.showAlert(data.message || "Cancellation failed.", 'danger')
+        }
+      } catch (err) {
+        alertStore.showAlert(`Network error: ${err.message}`, 'danger')
       }
-      modalTarget.value = null // Terminate modal context stack view
-      alertStore.showAlert(`Expedition Pass #${id} cancelled. Financial refund loop initializing.`, 'warning')
     }
   )
 }
+
+onMounted(() => {
+  fetchLiveBookings()
+})
 </script>
 
 <style scoped>
@@ -168,11 +235,11 @@ function triggerRouteCancellation(id) {
 /* Immersive Audit Modal Box elements */
 .bookings-modal-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(10, 20, 15, 0.55) !important;
-  backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 999999999 !important;
+  background: rgba(1, 23, 12, 0.454) !important;
+  backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 999 !important;
 }
-.glass-audit-card { background: rgba(25, 35, 30, 0.88) !important; backdrop-filter: blur(35px); width: 100%; max-width: 580px; }
+.glass-audit-card { background: rgba(0, 0, 0, 0.2) !important; backdrop-filter: blur(6px); width: 100%; max-width: 580px; }
 
 .modal-thumbnail-wrapper { height: 155px; }
 .object-cover { width: 100%; height: 100%; object-fit: cover; }

@@ -5,4 +5,4 @@ class config:
     JWT_SECRET_KEY = "super-secret-production-key"
     
     # Optional: How long should an access token live? (e.g., 1 hour)
-    JWT_ACCESS_TOKEN_EXPIRES = 3600
+    JWT_ACCESS_TOKEN_EXPIRES = 36000

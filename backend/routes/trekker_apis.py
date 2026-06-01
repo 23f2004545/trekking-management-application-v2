@@ -1,15 +1,78 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db
-from controller.models import User, Trek, Booking , MedicalRecord
+from controller.models import *
 from controller.decorators import trekker_required
 from datetime import datetime, timezone
-import os
+import os , random
 
 trekker_bp = Blueprint('trekker', __name__)
 
+
 # ==========================================================================
-# 1. PROFILE MANAGEMENT 
+# 1. TREKKER DASHBOARD STATS & GAMIFICATION
+# ==========================================================================
+
+@trekker_bp.route('/dashboard/stats', methods=['GET'])
+@jwt_required()
+def get_trekker_dashboard_stats():
+    user_id = get_jwt_identity()
+    current_date = datetime.now(timezone.utc).date()
+    
+    bookings = Booking.query.filter_by(user_id=user_id).all()
+    
+    secured_slots = 0
+    completed_paths = 0
+    total_altitude = 0.0
+    altitude_history = []
+
+    for b in bookings:
+        if b.status == 'Booked' and b.trek:
+            if b.trek.start_date.date() > current_date or (b.trek.start_date.date() <= current_date <= b.trek.end_date.date()):
+                secured_slots += 1
+            elif b.trek.end_date.date() < current_date:
+                completed_paths += 1
+                alt = b.trek.max_altitude or 0.0
+                total_altitude += alt
+                altitude_history.append({
+                    "trek_name": b.trek.trek_name,
+                    "altitude": alt,
+                    "date": b.trek.end_date.strftime("%b %d")
+                })
+        elif b.status == 'Completed' and b.trek:
+            completed_paths += 1
+            alt = b.trek.max_altitude or 0.0
+            total_altitude += alt
+            altitude_history.append({
+                "trek_name": b.trek.trek_name,
+                "altitude": alt,
+                "date": b.trek.end_date.strftime("%b %d")
+            })
+
+    # Sort history chronologically for the chart
+    altitude_history.reverse()
+
+    # Generate live FOMO simulation data
+    recent_activity = [
+        {"user": "Aman V.", "trek": "Rohtang Pass", "action": "secured 2 slots"},
+        {"user": "Priya S.", "trek": "Hampta Pass", "action": "completed the trail"},
+        {"user": "Rahul K.", "trek": "Solang Valley", "action": "booked the final slot!"},
+        {"user": "Neha M.", "trek": "Bhrigu Lake", "action": "left a 5-star review"}
+    ]
+    random.shuffle(recent_activity)
+
+    return make_response(jsonify({
+        "secured_slots": secured_slots,
+        "completed_paths": completed_paths,
+        "total_altitude": int(total_altitude),
+        "alerts": "ALL CLEAR",
+        "chart_data": altitude_history,
+        "fomo_events": recent_activity[:3] # Send 3 random events
+    }), 200)
+    
+
+# ==========================================================================
+# 2. PROFILE MANAGEMENT 
 # ==========================================================================
 
 @trekker_bp.route('/profile', methods=['GET'])
@@ -103,7 +166,7 @@ def update_profile():
 
 
 # ==========================================================================
-# 2. MEDICAL TELEMETRY MATRIX MANAGEMENT (GET / POST)
+# 3. MEDICAL TELEMETRY MATRIX MANAGEMENT (GET / POST)
 # ==========================================================================
 
 
@@ -178,46 +241,50 @@ def save_medical_record():
 
 
 # ==========================================================================
-# 2. DISCOVER, SEARCH, & FILTER OPEN TREKS
+# 4. TREKS MANAGEMENT
 # ==========================================================================
+
 @trekker_bp.route('/treks', methods=['GET'])
 @jwt_required()
 @trekker_required
-def get_discoverable_treks():
-    """Fetch approved/open treks with optional parameters for difficulty, location, and duration."""
-    # Trekkers should primarily discover treks that are explicitly marked as 'Open'
-    query_pipeline = Trek.query.filter_by(status='Open')
+def get_all_treks():
+    treks = Trek.query.filter_by(status='Open').order_by(Trek.created_at.desc()).all()
     
-    # Extract query filter arguments
-    difficulty = request.args.get('difficulty') # Easy / Moderate / Hard
-    location = request.args.get('location')
-    max_duration = request.args.get('duration') # Max days slider/input
+    results = []
+    for t in treks:
+        # Resolve assigned guide properties safely
+        staff_user = User.query.get(t.assigned_staff_id) if t.assigned_staff_id else None
+        images = TrekImage.query.filter_by(trek_id=t.trek_id).all()
 
-    if difficulty:
-        query_pipeline = query_pipeline.filter_by(difficulty=difficulty)
-    if location:
-        query_pipeline = query_pipeline.filter(Trek.location.ilike(f"%{location}%"))
-    if max_duration:
-        query_pipeline = query_pipeline.filter(Trek.duration <= int(max_duration))
+        results.append({
+            "trek_id": t.trek_id,
+            "trek_name": t.trek_name,
+            "location": t.location,
+            "difficulty": t.difficulty,
+            "duration_days": t.duration_days ,
+            "available_slots": t.available_slots,
+            "status": t.status,
+            "start_date": t.start_date.strftime("%Y-%m-%d") ,
+            "end_date": t.end_date.strftime("%Y-%m-%d") ,
+            "max_altitude": getattr(t, 'max_altitude', 0.0),
+            "price_per_person": getattr(t, 'price_per_person', 0.0),
+            "description": getattr(t, 'description', ""),
+            "created_at": t.created_at.strftime("%Y-%m-%d") ,
+            "updated_at": t.updated_at.strftime("%Y-%m-%d") ,
+            "image_url": images[0].image_url if images else "/static/Treks/default_trek.jpg",
+            "assigned_staff": {
+                "id": staff_user.id if staff_user else None,
+                "name": staff_user.name if staff_user else "Unassigned Guide"
+            }
+        })
         
-    treks = query_pipeline.all()
-    
-    results = [{
-        "id": t.id,
-        "name": t.name,
-        "location": t.location,
-        "difficulty": t.difficulty,
-        "duration": t.duration,
-        "available_slots": t.available_slots,
-        "start_date": t.start_date.strftime("%Y-%m-%d"),
-        "end_date": t.end_date.strftime("%Y-%m-%d")
-    } for t in treks]
-    
     return make_response(jsonify(results), 200)
+
 
 # ==========================================================================
 # 3. CORE SECURE BOOKING SYSTEM & CRITICAL VALIDATIONS
 # ==========================================================================
+
 @trekker_bp.route('/bookings', methods=['POST'])
 @jwt_required()
 @trekker_required
@@ -254,69 +321,214 @@ def book_trek_slot():
             user_id=user_id,
             trek_id=trek_id,
             booking_date=datetime.now(timezone.utc),
-            status='Booked' # Default state tracking label
+            status='Booked' ,# Default state tracking label
+            number_of_persons=data.get('adults') + data.get('children') + data.get('seniors'),
+            payment_method=data.get('payment_method'),
+            total_amount=trek.price_per_person * (data.get('adults') + data.get('children') + data.get('seniors')),
         )
         
         db.session.add(new_booking)
         db.session.commit()
-        return make_response(jsonify({"message": "Base camp slot secured successfully! Expedition booked.", "booking_id": new_booking.id}), 201)
+        return make_response(jsonify({"message": "Base camp slot secured successfully! Expedition booked.", "booking_id": new_booking.booking_id}), 201)
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({"message": f"Transaction aborted: {str(e)}"}), 500)
+    
 
 # ==========================================================================
 # 4. TRACK ACTIVE BOOKINGS & HISTORICAL RECORDS
 # ==========================================================================
-@trekker_bp.route('/bookings/history', methods=['GET'])
+
+@trekker_bp.route('/bookings', methods=['GET'])
 @jwt_required()
 @trekker_required
-def get_user_trekking_history():
-    """Retrieve only the personal historical trekking database lines for the logged-in trekker user."""
+def get_bookings():
+    """Retrieve personal booking records dynamically calculated for timeline states."""
     user_id = get_jwt_identity()
-    
-    # Pull all records attached to this single trekker account mapping
     user_bookings = Booking.query.filter_by(user_id=user_id).order_by(Booking.booking_date.desc()).all()
+    current_date = datetime.now(timezone.utc).date()
     
-    history_cards = []
+    results = []
     for b in user_bookings:
-        # Cross-reference the master trek lifecycle status to determine user visibility parameters
-        history_cards.append({
-            "booking_id": b.id,
-            "booking_date": b.booking_date.strftime("%Y-%m-%d"),
-            "booking_status": b.status, # Booked / Cancelled / Completed
-            "trek_id": b.trek.id,
-            "trek_name": b.trek.name,
-            "location": b.trek.location,
-            "duration": b.trek.duration,
-            "difficulty": b.trek.difficulty,
-            "trek_status": b.trek.status # Shows if it's currently Ongoing / Completed on the trail
+        # 1. Lifecycle Tracking Logic
+        calc_status = b.status
+        if b.status == 'Booked' and b.trek:
+            if current_date < b.trek.start_date.date():
+                calc_status = 'Upcoming'
+            elif b.trek.start_date.date() <= current_date <= b.trek.end_date.date():
+                calc_status = 'Ongoing'
+            else:
+                calc_status = 'Completed'
+                
+        # 2. Extract First Trek Image
+        trek_img = ""
+        if b.trek and b.trek.images:
+            trek_img = b.trek.images[0].image_url
+
+        # 3. Resolve Assigned Staff Guide
+        staff_data = {"name": "Unassigned", "email": "N/A", "contact": "N/A"}
+        if b.trek and b.trek.assigned_staff_id:
+            staff_user = User.query.get(b.trek.assigned_staff_id)
+            if staff_user:
+                staff_data = {
+                    "name": staff_user.name, 
+                    "email": staff_user.email, 
+                    "contact": staff_user.contact
+                }
+
+        results.append({
+            "booking_id": b.booking_id,
+            "trek_name": b.trek.trek_name if b.trek else "Deleted Route",
+            "booking_date": b.booking_date.strftime("%B %d, %Y"),
+            "booking_status": calc_status,
+            "payment_status": b.payment_status,
+            "duration_days": b.trek.duration_days if b.trek else 0,
+            "total_people": b.number_of_persons,
+            "trek_image": trek_img,
+            "staff": staff_data
         })
         
-    return make_response(jsonify(history_cards), 200)
+    return make_response(jsonify(results), 200)
 
-
-@trekker_bp.route('/bookings/<int:booking_id>/cancel', methods=['PATCH'])
+@trekker_bp.route('/history', methods=['GET'])
 @jwt_required()
-@trekker_required
-def cancel_trek_booking(booking_id):
-    """Allows users to safely cancel an active reservation and restore available slot counts."""
-    user_id = int(get_jwt_identity())
-    booking = Booking.query.get_or_404(booking_id)
+def get_completed_history():
+    user_id = get_jwt_identity()
+    current_date = datetime.now(timezone.utc).date()
     
-    # ISOLATION PRIVILEGE GUARD
-    if booking.user_id != user_id:
-        return make_response(jsonify({"message": "Access Denied: Cannot cancel another trekker's payload."}), 403)
-        
-    if booking.status != 'Booked':
-        return make_response(jsonify({"message": "This record is already finalized or cancelled."}), 400)
+    user_bookings = Booking.query.filter_by(user_id=user_id).order_by(Booking.booking_date.desc()).all()
+    
+    results = []
+    for b in user_bookings:
+        # Filter: Only process Completed routes
+        is_past_date = b.trek and b.trek.end_date.date() < current_date
+        if b.status == 'Completed' or (b.status == 'Booked' and is_past_date):
+            
+            # Check for existing feedback
+            review = TrekReview.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
+            
+            gallery = [img.image_url for img in b.trek.images] if b.trek.images else []
+            
+            staff_info = {"name": "Unknown", "profile_pic": ""}
+            if b.trek.assigned_staff_id and b.trek.assigned_staff:
+                staff_user = User.query.get(b.trek.assigned_staff.user_id)
+                if staff_user:
+                    staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic}
+
+            results.append({
+                "booking_id": b.booking_id,
+                "booking_date": b.booking_date.strftime("%B %d, %Y"),
+                "total_trekkers": b.number_of_persons,
+                "total_amount_paid": b.total_amount,
+                "payment_type": b.payment_method,
+                "payment_status": b.payment_status,
+                "booking_created_at": b.created_at.strftime("%Y-%m-%d %H:%M"),
+                
+                # TrekDetail Component Mapping
+                "trek_id": b.trek.trek_id,
+                "trek_name": b.trek.trek_name,
+                "location": b.trek.location,
+                "difficulty": b.trek.difficulty,
+                "duration_days": b.trek.duration_days,
+                "status": "Completed",
+                "max_altitude": getattr(b.trek, 'max_altitude', 0),
+                "price_per_person": b.trek.price_per_person,
+                "created_at": b.trek.created_at.strftime("%Y-%m-%d"),
+                "updated_at": b.trek.updated_at.strftime("%Y-%m-%d"),
+                "description": b.trek.description,
+                "images": gallery,
+                "staff": staff_info,
+                
+                # Review Component Mapping
+                "review_submitted": True if review else False,
+                "existing_trek_review": {"stars": review.trek_rating, "comment": review.trek_experience} if review else None,
+                "existing_staff_review": {"stars": review.staff_rating, "comment": review.staff_experience} if review else None
+            })
+            
+    return make_response(jsonify(results), 200)
+
+# ==========================================================================
+# 5. SUBMIT POST-TRIP EVALUATION
+# ==========================================================================
+@trekker_bp.route('/reviews', methods=['POST'])
+@jwt_required()
+def submit_trek_review():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    trek_id = data.get('trek_id')
+    
+    existing = TrekReview.query.filter_by(user_id=user_id, trek_id=trek_id).first()
+    if existing:
+        return make_response(jsonify({"message": "Evaluation already logged for this path."}), 400)
         
     try:
-        booking.status = 'Cancelled'
-        # Restore slot capacity value dynamically back to the parent trek map entity row
-        booking.trek.available_slots += 1
-        
+        new_review = TrekReview(
+            user_id=user_id,
+            trek_id=trek_id,
+            staff_id=data.get('staff_id'),
+            trek_rating=data.get('trek_rating'),
+            staff_rating=data.get('staff_rating'),
+            trek_experience=data.get('trek_comment'),
+            staff_experience=data.get('staff_comment')
+        )
+        db.session.add(new_review)
         db.session.commit()
-        return make_response(jsonify({"message": "Expedition registration cancelled successfully. Slots returned."}), 200)
+        return make_response(jsonify({"message": "Review matrix synchronized with database."}), 201)
     except Exception as e:
         db.session.rollback()
-        return make_response(jsonify({"message": f"Cancellation transaction error: {str(e)}"}), 500)
+        return make_response(jsonify({"message": str(e)}), 500)
+
+# @trekker_bp.route('/bookings/history', methods=['GET'])
+# @jwt_required()
+# @trekker_required
+# def get_user_trekking_history():
+#     """Retrieve only the personal historical trekking database lines for the logged-in trekker user."""
+#     user_id = get_jwt_identity()
+    
+#     # Pull all records attached to this single trekker account mapping
+#     user_bookings = Booking.query.filter_by(user_id=user_id).order_by(Booking.booking_date.desc()).all()
+    
+#     history_cards = []
+#     for b in user_bookings:
+#         # Cross-reference the master trek lifecycle status to determine user visibility parameters
+#         history_cards.append({
+#             "booking_id": b.id,
+#             "booking_date": b.booking_date.strftime("%Y-%m-%d"),
+#             "booking_status": b.status, # Booked / Cancelled / Completed
+#             "trek_id": b.trek.id,
+#             "trek_name": b.trek.name,
+#             "location": b.trek.location,
+#             "duration": b.trek.duration,
+#             "difficulty": b.trek.difficulty,
+#             "trek_status": b.trek.status # Shows if it's currently Ongoing / Completed on the trail
+#         })
+        
+#     return make_response(jsonify(history_cards), 200)
+
+
+# @trekker_bp.route('/bookings/<int:booking_id>/cancel', methods=['PATCH'])
+# @jwt_required()
+# @trekker_required
+# def cancel_trek_booking(booking_id):
+#     """Allows users to safely cancel an active reservation and restore available slot counts."""
+#     user_id = int(get_jwt_identity())
+#     booking = Booking.query.get_or_404(booking_id)
+    
+#     # ISOLATION PRIVILEGE GUARD
+#     if booking.user_id != user_id:
+#         return make_response(jsonify({"message": "Access Denied: Cannot cancel another trekker's payload."}), 403)
+        
+#     if booking.status != 'Booked':
+#         return make_response(jsonify({"message": "This record is already finalized or cancelled."}), 400)
+        
+#     try:
+#         booking.status = 'Cancelled'
+#         # Restore slot capacity value dynamically back to the parent trek map entity row
+#         booking.trek.available_slots += 1
+        
+#         db.session.commit()
+#         return make_response(jsonify({"message": "Expedition registration cancelled successfully. Slots returned."}), 200)
+#     except Exception as e:
+#         db.session.rollback()
+#         return make_response(jsonify({"message": f"Cancellation transaction error: {str(e)}"}), 500)

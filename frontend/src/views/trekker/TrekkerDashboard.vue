@@ -1,261 +1,234 @@
 <template>
-  <div class="trekker-dashboard-canvas text-white">
+  <div class="trekker-dashboard-canvas text-white animate-fade-in pb-5">
     
+    <!-- HERO SECTION & FOMO ALERT -->
     <div class="welcome-hero-section text-start py-4 mb-4">
       <div class="row align-items-end justify-content-between g-3">
         <div class="col-lg-7">
           <span class="badge status-badge mb-2 px-3 py-1.5 rounded-pill fs-9 fw-semibold">
-            🥾 CURRENT ACTIVE EXPEDITION PROFILE
+            <i class="bi bi-geo-alt"></i> TREKKER BASECAMP OPERATIONS
           </span>
           <h1 class="display-4 fw-bold tracking-tight m-0">
             Welcome Back, <span class="text-glow">{{ authStore.userName }}</span>
           </h1>
           <p class="lead opacity-75 m-0 mt-2 fs-8 max-w-xl">
-            Your telemetry markers are clean. There are currently <strong class="text-white">184 trekkers</strong> out on the high-alpine grids this week alone. Don't let the season pass you by.
+            Your telemetry markers are clean. The high-alpine season is peaking—ensure your medical clearances are up to date before deployment.
           </p>
         </div>
         
-        <div class="col-lg-4 d-flex justify-content-lg-end">
-          <div class="fomo-glass-alert p-3 rounded-3 border border-warning border-opacity-20 d-flex align-items-start gap-2">
-            <span class="fs-4">⏳</span>
-            <div class="text-start">
-              <h6 class="m-0 fw-bold text-warning small tracking-tight">Slots Depleting Rapidly</h6>
-              <p class="m-0 fs-9 text-white-50 mt-1">The premium 'Rohtang Pass Crest' tracking matrix is at 94% capacity for this cycle. Secure your base authorization codes immediately.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3 mb-5">
-      <div class="col-6 col-md-3">
-        <div class="metric-glass-card p-3 text-center rounded-3">
-          <h6 class="metric-label opacity-60 small m-0">MY SECURED SLOTS</h6>
-          <p class="metric-value display-6 fw-bold m-0 mt-1">02</p>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="metric-glass-card p-3 text-center rounded-3">
-          <h6 class="metric-label opacity-60 small m-0">PATHS COMPLETED</h6>
-          <p class="metric-value display-6 fw-bold m-0 mt-1">05</p>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="metric-glass-card p-3 text-center rounded-3">
-          <h6 class="metric-label opacity-60 small m-0">TOTAL ALTITUDE (M)</h6>
-          <p class="metric-value display-6 fw-bold m-0 mt-1">4,240</p>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="metric-glass-card p-3 text-center rounded-3">
-          <h6 class="metric-label opacity-60 small m-0">GLOBAL SAFETY ALERTS</h6>
-          <p class="metric-value display-6 fw-bold m-0 mt-1 text-success">ALL CLEAR</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="filter-controls-wrapper p-3 rounded-4 mb-4 shadow-sm border border-white border-opacity-10">
-      <div class="row g-3 align-items-center">
-        
-        <div class="col-md-4">
-          <div class="search-input-box px-3 py-2 rounded-3 d-flex align-items-center">
-            <span class="me-2 opacity-60">🔍</span>
-            <input 
-              v-model="searchLocation" 
-              type="text" 
-              placeholder="Filter by mountain location..." 
-              class="bg-transparent border-0 text-white w-100 clean-field"
-            >
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <select v-model="selectedDifficulty" class="select-glass-box w-100 px-3 py-2 rounded-3 text-white">
-            <option value="">All Difficulty Intensities</option>
-            <option value="Easy">🟢 Easy Trails</option>
-            <option value="Moderate">🟡 Moderate Tracks</option>
-            <option value="Hard">🔴 High-Alpine Hard</option>
-          </select>
-        </div>
-
-        <div class="col-md-4 d-flex justify-content-md-end">
-          <button @click="resetFilters" class="btn-reset-glass rounded-3 px-4 py-2 w-100 w-md-auto fw-medium fs-8">
-            Reset System Filters
-          </button>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="treks-showcase-section">
-      <h3 class="fw-bold tracking-tight mb-3 text-start">Available Expeditions</h3>
-      
-      <div v-if="filteredTreks.length === 0" class="empty-state-glass p-5 text-center rounded-4 border border-white border-opacity-10">
-        <span class="fs-1">🗺️</span>
-        <h5 class="fw-bold mt-2 mb-1">No Matching Expeditions Found</h5>
-        <p class="m-0 text-white-50 small">Adjust your telemetry metrics parameters or expand your search scope parameters.</p>
-      </div>
-
-      <div v-else class="row g-4 text-start">
-        <div v-for="trek in filteredTreks" :key="trek.id" class="col-xl-4 col-md-6">
-          <div class="trek-glass-card h-100 p-4 rounded-4 d-flex flex-column justify-content-between border border-white border-opacity-15 shadow-sm">
-            
-            <div>
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="badge diff-badge text-uppercase fs-9 fw-bold" :class="trek.difficulty.toLowerCase()">
-                  {{ trek.difficulty }}
-                </span>
-                <span class="fs-9 opacity-50 fw-bold">⌛ {{ trek.duration }} DAYS</span>
-              </div>
-
-              <h4 class="trek-card-title fw-bold m-0 tracking-tight mb-1">{{ trek.name }}</h4>
-              <p class="trek-card-loc small opacity-75 d-flex align-items-center gap-1 mb-3">
-                📍 <span>{{ trek.location }}</span>
-              </p>
-            </div>
-
-            <div class="pt-3 border-top border-white border-opacity-10 mt-3 d-flex align-items-center justify-content-between">
-              <div class="slots-indicator">
-                <p class="m-0 fs-9 opacity-50 fw-semibold uppercase">SLOTS AVAILABLE</p>
-                <p class="m-0 fw-bold text-success fs-7" :class="{ 'text-danger': trek.available_slots <= 3 }">
-                  {{ trek.available_slots }} remaining
+        <div class="col-lg-5 d-flex justify-content-lg-end">
+          <Transition name="slide-fade" mode="out-in">
+            <!-- LIVE FOMO TICKER -->
+            <div :key="activeFomoEvent.user" class="fomo-glass-alert p-3 rounded-3 border border-success border-opacity-20 d-flex align-items-center gap-3">
+              <span class="fs-3">📡</span>
+              <div class="text-start">
+                <h6 class="m-0 fw-bold text-success-tint small tracking-tight">Live Trail Network</h6>
+                <p class="m-0 fs-9 text-white-50 mt-1">
+                  <strong class="text-white">{{ activeFomoEvent.user }}</strong> just {{ activeFomoEvent.action }} on <strong class="text-white">{{ activeFomoEvent.trek }}</strong>!
                 </p>
               </div>
-              <button @click="initiateBooking(trek.id)" class="btn-card-action rounded-pill px-3.5 py-1.5 fw-bold fs-8 border-0">
-                Book Path
-              </button>
             </div>
+          </Transition>
+        </div>
+      </div>
+    </div>
 
+    <!-- METRICS ROW -->
+    <div class="row g-3 mb-5">
+      <div class="col-6 col-md-3">
+        <div class="metric-glass-card p-3 p-md-4 text-center rounded-4 shadow-sm">
+          <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider">Secured Slots</h6>
+          <p class="metric-value display-5 fw-bold m-0 mt-1">{{ stats.secured_slots }}</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-glass-card p-3 p-md-4 text-center rounded-4 shadow-sm">
+          <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider">Paths Conquered</h6>
+          <p class="metric-value display-5 fw-bold m-0 mt-1">{{ stats.completed_paths }}</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-glass-card p-3 p-md-4 text-center rounded-4 shadow-sm">
+          <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider">Elevation (M)</h6>
+          <p class="metric-value display-5 fw-bold m-0 mt-1 text-glow">{{ stats.total_altitude }}</p>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-glass-card p-3 p-md-4 text-center rounded-4 shadow-sm">
+          <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider">Safety Status</h6>
+          <p class="metric-value fs-4 fw-bold m-0 mt-2 text-success uppercase">ALL CLEAR</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCOVERY CTA & GAMIFIED CHART ROW -->
+    <div class="row g-4 mb-4">
+      
+      <!-- CTA Panel -->
+      <div class="col-lg-4">
+        <div class="cta-glass-card p-4 p-md-5 rounded-4 shadow-sm h-100 d-flex flex-column justify-content-center text-center border border-success border-opacity-25">
+          <span class="fs-1 mb-3">🏔️</span>
+          <h3 class="fw-bold tracking-tight mb-2">Ready for the Summit?</h3>
+          <p class="text-white-50 fs-8 mb-4">The alpine grids are open. Discover new routes, review guide logs, and secure your authorization pass today.</p>
+          <button @click="$router.push('/portal/trekker/treks')" class="btn btn-success rounded-pill py-3 fw-bold text-dark fs-8 shadow w-100">
+            Explore Open Trails Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Altitude Progression Chart -->
+      <div class="col-lg-8">
+        <div class="chart-glass-container p-4 p-md-5 rounded-4 shadow-sm h-100">
+          <h5 class="fw-bold tracking-tight fs-5 mb-1">📈 My Vertical Progression</h5>
+          <p class="fs-9 text-white-50 mb-4">Tracking maximum altitude metrics conquered across completed expeditions.</p>
+          
+          <div v-if="stats.chart_data.length === 0" class="d-flex align-items-center justify-content-center h-75">
+            <p class="text-white-50 italic fs-8">Complete a trek to begin logging your vertical progression matrix.</p>
+          </div>
+          
+          <div v-else class="chart-canvas-wrapper position-relative" style="height: 250px;">
+            <canvas ref="altitudeChartCanvas"></canvas>
           </div>
         </div>
       </div>
+
     </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useAlertStore } from '../../stores/alert'
+import Chart from 'chart.js/auto'
 
 const authStore = useAuthStore()
-const alertStore = useAlertStore()
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
-// System Reactive Control Variables
-const searchLocation = ref('')
-const selectedDifficulty = ref('')
+const altitudeChartCanvas = ref(null)
+let chartInstance = null
+let fomoInterval = null
 
-// Mocked live data block matching your exact Flask route properties setup
-const availableTreks = ref([
-  { id: 1, name: 'Triund Peak Ridge', location: 'Dharamshala, HP', difficulty: 'Easy', duration: 2, available_slots: 14 },
-  { id: 2, name: 'Rohtang Pass Crest', location: 'Manali, HP', difficulty: 'Hard', duration: 5, available_slots: 2 },
-  { id: 3, name: 'Hampta Pass Corridor', location: 'Kullu Valley, HP', difficulty: 'Moderate', duration: 4, available_slots: 18 },
-  { id: 4, name: 'Kheerganga Hot Springs', location: 'Parvati Valley, HP', difficulty: 'Easy', duration: 3, available_slots: 22 },
-  { id: 5, name: 'Bhrigu Lake Circuit', location: 'Manali Heights, HP', difficulty: 'Hard', duration: 4, available_slots: 5 }
-])
-
-// Pure client-side dynamic search filtering pipeline engine computation
-const filteredTreks = computed(() => {
-  return availableTreks.value.filter(trek => {
-    const matchLocation = trek.location.toLowerCase().includes(searchLocation.value.toLowerCase())
-    const matchDiff = selectedDifficulty.value === '' || trek.difficulty === selectedDifficulty.value
-    return matchLocation && matchDiff
-  })
+const stats = ref({
+  secured_slots: 0,
+  completed_paths: 0,
+  total_altitude: 0,
+  chart_data: []
 })
 
-function resetFilters() {
-  searchLocation.value = ''
-  selectedDifficulty.value = ''
-  alertStore.showAlert('System telemetry search variables reset successfully.', 'info')
+const activeFomoEvent = ref({ user: "Apex System", action: "initializing", trek: "Global Grid" })
+const fomoQueue = ref([])
+
+async function fetchDashboardMetrics() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trekker/dashboard/stats`, {
+      method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      stats.value = data
+      fomoQueue.value = data.fomo_events
+      
+      startFomoTicker()
+
+      if (data.chart_data.length > 0) {
+        await nextTick()
+        renderAltitudeChart(data.chart_data)
+      }
+    }
+  } catch (err) {
+    console.error("Dashboard Sync Failed", err)
+  }
 }
 
-function initiateBooking(trekId) {
-  // Captures input for your Flask endpoint body payload
-  alertStore.showAlert(`Booking request for route ID code #${trekId} dispatched to verification pipeline.`, 'success')
+function startFomoTicker() {
+  if (fomoQueue.value.length === 0) return
+  
+  // Set initial event
+  activeFomoEvent.value = fomoQueue.value[0]
+  let currentIndex = 0
+
+  // Rotate events every 8 seconds to simulate live network traffic
+  fomoInterval = setInterval(() => {
+    currentIndex = (currentIndex + 1) % fomoQueue.value.length
+    activeFomoEvent.value = fomoQueue.value[currentIndex]
+  }, 8000)
 }
+
+function renderAltitudeChart(chartData) {
+  if (chartInstance) chartInstance.destroy()
+  
+  if (altitudeChartCanvas.value) {
+    chartInstance = new Chart(altitudeChartCanvas.value, {
+      type: 'bar',
+      data: {
+        labels: chartData.map(d => d.trek_name),
+        datasets: [{
+          label: 'Max Altitude (Meters)',
+          data: chartData.map(d => d.altitude),
+          backgroundColor: 'rgba(123, 241, 168, 0.75)',
+          borderRadius: 6,
+          barThickness: 20
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } }
+        }
+      }
+    })
+  }
+}
+
+onMounted(() => {
+  fetchDashboardMetrics()
+})
+
+onUnmounted(() => {
+  if (fomoInterval) clearInterval(fomoInterval)
+})
 </script>
 
 <style scoped>
-.max-w-xl { max-width: 600px; }
 .text-glow { text-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
+.max-w-xl { max-width: 600px; }
+.uppercase { text-transform: uppercase; }
+.tracking-wider { letter-spacing: 0.8px; }
 
-/* Status & Fomo Alerts layout pods */
-.status-badge {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.5px;
-}
-
+/* FOMO Animations */
 .fomo-glass-alert {
-  background: rgba(255, 193, 7, 0.08) !important;
+  background: rgba(25, 135, 84, 0.08) !important;
   backdrop-filter: blur(10px);
-  max-width: 360px;
+  width: 100%;
+  max-width: 420px;
 }
+.slide-fade-enter-active { transition: all 0.5s ease-out; }
+.slide-fade-leave-active { transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1); }
+.slide-fade-enter-from { transform: translateX(20px); opacity: 0; }
+.slide-fade-leave-to { transform: translateX(-20px); opacity: 0; }
 
-/* Metric Display Row Cards */
 .metric-glass-card {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.25s;
 }
-.metric-label { font-size: 0.72rem; letter-spacing: 0.5px; }
+.metric-glass-card:hover { transform: translateY(-3px); }
+.metric-label { letter-spacing: 1px; }
 
-/* Filter Container Blocks styling */
-.filter-controls-wrapper {
-  background: rgba(255, 255, 255, 0.06) !important;
-  backdrop-filter: blur(16px);
+.cta-glass-card, .chart-glass-container {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+.cta-glass-card { background: rgba(25, 135, 84, 0.04) !important; }
 
-.search-input-box {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.clean-field:focus { outline: none; }
-.clean-field::placeholder { color: rgba(255, 255, 255, 0.45); }
-
-.select-glass-box {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  outline: none;
-}
-.select-glass-box option { background: #16241c; color: white; }
-
-.btn-reset-glass {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-reset-glass:hover { background: rgba(255, 255, 255, 0.25); }
-
-/* Individual Trek Showcase Cards Elements */
-.trek-glass-card {
-  background: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(16px);
-  transition: transform 0.25s ease, border-color 0.25s ease;
-}
-.trek-glass-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.trek-card-title { font-size: 1.25rem; letter-spacing: -0.3px; }
-
-.diff-badge.easy { background: rgba(25, 135, 84, 0.2); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.4); }
-.diff-badge.moderate { background: rgba(255, 193, 7, 0.15); color: #ffe066; border: 1px solid rgba(255, 193, 7, 0.4); }
-.diff-badge.hard { background: rgba(220, 53, 69, 0.2); color: #ff8787; border: 1px solid rgba(220, 53, 69, 0.4); }
-
-.btn-card-action {
-  background: #ffffff;
-  color: #0b1f15;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.btn-card-action:hover { background: #e8f5e9; }
-
-.empty-state-glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+.text-success-tint { color: #7bf1a8; }
+.italic { font-style: italic; }
 
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
