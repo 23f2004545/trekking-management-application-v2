@@ -34,7 +34,8 @@ const router = createRouter({
         { path: 'admin/bookings', name: 'admin-bookings', component: () => import('../views/admin/AdminBookings.vue'), meta: { role: 'admin' } },
 
 
-        { path: 'staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+        { path: 'trek_staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+        { path: 'trek_staff/profile', name: 'staff-profile', component: () => import('../views/staff/StaffProfile.vue'), meta: { role: 'trek_staff' } },
 
         { path: 'trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
         { path: 'trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },
@@ -81,7 +82,7 @@ const router = createRouter({
 function getRoleDashboard(role) {
   switch (role) {
     case 'admin': return '/portal/admin/dashboard'
-    case 'trek_staff': return '/portal/staff/dashboard'
+    case 'trek_staff': return '/portal/trek_staff/dashboard'
     case 'trekker': return '/portal/trekker/dashboard'
     default: return '/'
   }

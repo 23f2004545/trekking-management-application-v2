@@ -72,13 +72,13 @@ def get_dashboard_stats():
 
     # 3. RATING INSIGHTS (Averages & Top Performers)
     # Global Average Trek Rating
-    avg_rating_raw = db.session.query(func.avg(TrekReview.trek_rating)).scalar()
+    avg_rating_raw = db.session.query(func.avg(Review.trek_rating)).scalar()
     global_avg_rating = round(avg_rating_raw, 1) if avg_rating_raw else 0.0
 
     # Highest Rated Trek
     top_trek_query = db.session.query(
-        Trek.trek_name, func.avg(TrekReview.trek_rating).label('avg')
-    ).join(TrekReview, TrekReview.trek_id == Trek.trek_id)\
+        Trek.trek_name, func.avg(Review.trek_rating).label('avg')
+    ).join(Review, Review.trek_id == Trek.trek_id)\
      .group_by(Trek.trek_id)\
      .order_by(func.avg('avg').desc()).first()
      
@@ -86,9 +86,9 @@ def get_dashboard_stats():
 
     # Highest Rated Staff Guide
     top_staff_query = db.session.query(
-        User.name, func.avg(TrekReview.staff_rating).label('avg')
+        User.name, func.avg(Review.staff_rating).label('avg')
     ).join(StaffProfile, StaffProfile.user_id == User.id)\
-     .join(TrekReview, TrekReview.staff_id == StaffProfile.staff_id)\
+     .join(Review, Review.staff_id == StaffProfile.staff_id)\
      .group_by(User.id).order_by(func.avg('avg').desc()).first()
 
     top_staff = {"name": top_staff_query[0], "rating": round(top_staff_query[1], 1)} if top_staff_query else None
@@ -322,23 +322,82 @@ def trek_details(trek_id):
 
     # 2. Extract Assigned Staff Guide Profile
     staff_user = User.query.get(trek.assigned_staff_id) if trek.assigned_staff_id else None
+    reviews = Review.query.filter_by(trek_id=trek_id).all()
     
     # 3. Compile Separate Reviews (Trek vs Staff) from feedback metrics tables
     # (Assuming columns exist or fallback to blank lists until Milestone 6 execution)
-    trek_reviews_list = []
-    staff_reviews_list = []
-    staff_rating_avg = 5
+    trek_reviews_list = [
+        # {
+        #     "id": 1, 
+        #     "trekker": "Aarav Patel", 
+        #     "stars": 5, 
+        #     "comment": "Breathtaking views and a well-marked trail. Highly recommend!"
+        # },
+        # {
+        #     "id": 2, 
+        #     "trekker": "Priya Sharma", 
+        #     "stars": 4, 
+        #     "comment": "Beautiful trek, but the final ascent was tougher than expected."
+        # },
+        # {
+        #     "id": 2, 
+        #     "trekker": "Priya Sharma", 
+        #     "stars": 4, 
+        #     "comment": "Beautiful trek, but the final ascent was tougher than expected."
+        # },
+        # {
+        #     "id": 2, 
+        #     "trekker": "Priya Sharma", 
+        #     "stars": 4, 
+        #     "comment": "Beautiful trek, but the final ascent was tougher than expected."
+        # },
+        # {
+        #     "id": 3, 
+        #     "trekker": "Rohan Gupta", 
+        #     "stars": 5, 
+        #     "comment": "An unforgettable experience. The sunrise from the summit was magical."
+        # }
+    ]
+    staff_reviews_list = [
+        # {
+        #     "id": 101, 
+        #     "trekker": "Aarav Patel", 
+        #     "stars": 5, 
+        #     "comment": "Our guide was incredibly patient and knowledgeable about the local flora."
+        # },
+        # {
+        #     "id": 102, 
+        #     "trekker": "Sneha Desai", 
+        #     "stars": 3, 
+        #     "comment": "Friendly staff, but dinner was served a bit late on the second night."
+        # },
+        # {
+        #     "id": 102, 
+        #     "trekker": "Sneha Desai", 
+        #     "stars": 3, 
+        #     "comment": "Friendly staff, but dinner was served a bit late on the second night."
+        # },
+        # {
+        #     "id": 102, 
+        #     "trekker": "Sneha Desai", 
+        #     "stars": 3, 
+        #     "comment": "Friendly staff, but dinner was served a bit late on the second night."
+        # }
+    ]
+    staff_rating_avg = None
+    trek_rating_avg = None
     
-    if hasattr(trek, 'trek_feedback') and trek.trek_feedback:
+    if hasattr(trek, 'reviews') and trek.reviews:
         trek_reviews_list = [{
-            "id": r.id, "trekker": r.author.name, "stars": r.trek_rating, "comment": r.message
-        } for r in trek.trek_feedback]
+            "id": r.id, "trekker": r.author.name, "stars": r.trek_rating, "comment": r.trek_experience or 'No review provided'
+        } for r in trek.reviews]
+        trek_rating_avg = round(sum([r.trek_rating for r in trek.reviews]) / len(trek.reviews))
 
-    if staff_user and hasattr(staff_user, 'my_guide_ratings') and staff_user.my_guide_ratings:
+    if reviews :
         staff_reviews_list = [{
-            "id": r.id, "trekker": r.author.name, "stars": r.staff_rating, "comment": r.message
-        } for r in staff_user.my_guide_ratings]
-        staff_rating_avg = round(sum([r.staff_rating for r in staff_user.my_guide_ratings]) / len(staff_user.my_guide_ratings))
+            "id": r.id, "trekker": r.author.name, "stars": r.staff_rating, "comment": r.staff_experience or 'No review provided'
+        } for r in reviews]
+        staff_rating_avg = round(sum([r.staff_rating for r in reviews]) / len(reviews))
 
     payload = {
         "trek_id": trek.trek_id,
@@ -356,18 +415,19 @@ def trek_details(trek_id):
         "created_at": trek.created_at.strftime("%B %d, %Y") if trek.created_at else "N/A",
         "updated_at": trek.updated_at.strftime("%B %d, %Y") if hasattr(trek, 'updated_at') and trek.updated_at else "N/A",
         "images": gallery_images,
+        "trek_rating_avg": trek_rating_avg ,
+        "trek_reviews": trek_reviews_list,
         "staff": {
             "id" : staff_user.id,
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
-            "experience": "5+ Years" if staff_user else "0 Years",
-            "last_login_at": "Active Now" if staff_user else "Offline",
-            "specialization": "High-Alpine Survival",
-            "certification": "NIM Mountaineering",
-            "rating": staff_rating_avg,
+            "experience": staff_user.staff_profile.experience_years if staff_user and staff_user.staff_profile else None,
+            "status": staff_user.staff_profile.status if staff_user and staff_user.staff_profile else "Active",
+            "specialization": staff_user.staff_profile.specialization if staff_user and staff_user.staff_profile else "General Mountaineering",
+            "certification": staff_user.staff_profile.certification if staff_user and staff_user.staff_profile else "Basic Certified",
             "profile_pic": staff_user.profile_pic if staff_user else '/static/Profile_pics/trek_staff.png',
+            "staff_rating_avg": staff_rating_avg ,
             "staff_reviews": staff_reviews_list
-        },
-        "trek_reviews": trek_reviews_list
+        }
     }
     return make_response(jsonify(payload), 200)
 
@@ -660,7 +720,6 @@ def get_all_global_bookings():
     for b in bookings:
         # Resolve real-time lifecycle tracking labels based on schedule bounds
         calculated_status = b.status # Default fallback status: Booked / Cancelled
-        print(type(current_date) , type(b.trek.start_date))
         
         if b.status == 'Booked' and b.trek:
             if current_date < b.trek.start_date.date():
@@ -687,7 +746,7 @@ def get_all_global_bookings():
 @jwt_required()
 @admin_required
 def get_admin_booking_deep_details(booking_id):
-    """Compiles deep context metrics into a single layout-ready structure."""
+    
     b = Booking.query.get_or_404(booking_id)
     current_date = datetime.now(timezone.utc).date()
     
@@ -701,7 +760,7 @@ def get_admin_booking_deep_details(booking_id):
     staff_user = User.query.get(b.trek.assigned_staff_id) if b.trek and b.trek.assigned_staff_id else None
     
     # Query distinct reviewer lines matching this unique transaction node
-    review = TrekReview.query.filter_by(user_id=b.user_id, trek_id=b.trek_id).first()
+    review = Review.query.filter_by(user_id=b.user_id, trek_id=b.trek_id).first()
 
     payload = {
         "booking_id": b.booking_id,

@@ -133,7 +133,7 @@
       if (responseData.role === 'admin') {
         router.push('/portal/admin/dashboard')
       } else if (responseData.role === 'trek_staff') {
-        router.push('/portal/staff/dashboard')
+        router.push('/portal/trek_staff/dashboard')
       } else {
         router.push('/portal/trekker/dashboard')
       }

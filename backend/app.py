@@ -13,7 +13,7 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 from routes.auth_apis import auth_bp
 from routes.admin_apis import admin_bp
-from routes.staff_apis import staff_bp
+from routes.staff_apis import trek_staff_bp
 from routes.trekker_apis import trekker_bp
 
 def create_app():
@@ -63,7 +63,7 @@ CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5000"])
 
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
-app.register_blueprint(staff_bp, url_prefix='/api/staff')
+app.register_blueprint(trek_staff_bp, url_prefix='/api/trek_staff')
 app.register_blueprint(trekker_bp, url_prefix='/api/trekker')
 
 if __name__ == '__main__':

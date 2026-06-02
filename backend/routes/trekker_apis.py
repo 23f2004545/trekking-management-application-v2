@@ -27,7 +27,7 @@ def get_trekker_dashboard_stats():
     altitude_history = []
 
     for b in bookings:
-        if b.status == 'Booked' and b.trek:
+        if b.trek.status == 'Open' and b.trek:
             if b.trek.start_date.date() > current_date or (b.trek.start_date.date() <= current_date <= b.trek.end_date.date()):
                 secured_slots += 1
             elif b.trek.end_date.date() < current_date:
@@ -39,7 +39,7 @@ def get_trekker_dashboard_stats():
                     "altitude": alt,
                     "date": b.trek.end_date.strftime("%b %d")
                 })
-        elif b.status == 'Completed' and b.trek:
+        elif b.trek.status == 'Completed' and b.trek:
             completed_paths += 1
             alt = b.trek.max_altitude or 0.0
             total_altitude += alt
@@ -392,6 +392,7 @@ def get_bookings():
 
 @trekker_bp.route('/history', methods=['GET'])
 @jwt_required()
+@trekker_required
 def get_completed_history():
     user_id = get_jwt_identity()
     current_date = datetime.now(timezone.utc).date()
@@ -402,10 +403,10 @@ def get_completed_history():
     for b in user_bookings:
         # Filter: Only process Completed routes
         is_past_date = b.trek and b.trek.end_date.date() < current_date
-        if b.status == 'Completed' or (b.status == 'Booked' and is_past_date):
+        if b.trek.status == 'Completed' or (b.status == 'Booked' and is_past_date):
             
             # Check for existing feedback
-            review = TrekReview.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
+            review = Review.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
             
             gallery = [img.image_url for img in b.trek.images] if b.trek.images else []
             
@@ -444,6 +445,7 @@ def get_completed_history():
                 "existing_trek_review": {"stars": review.trek_rating, "comment": review.trek_experience} if review else None,
                 "existing_staff_review": {"stars": review.staff_rating, "comment": review.staff_experience} if review else None
             })
+    print(user_bookings[1].status)
             
     return make_response(jsonify(results), 200)
 
@@ -458,12 +460,12 @@ def submit_trek_review():
     
     trek_id = data.get('trek_id')
     
-    existing = TrekReview.query.filter_by(user_id=user_id, trek_id=trek_id).first()
+    existing = Review.query.filter_by(user_id=user_id, trek_id=trek_id).first()
     if existing:
         return make_response(jsonify({"message": "Evaluation already logged for this path."}), 400)
         
     try:
-        new_review = TrekReview(
+        new_review = Review(
             user_id=user_id,
             trek_id=trek_id,
             staff_id=data.get('staff_id'),

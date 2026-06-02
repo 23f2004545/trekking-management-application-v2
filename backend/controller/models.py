@@ -43,7 +43,7 @@ class Trek(db.Model):
     duration_days = db.Column(db.Integer, nullable=False)  # in days
     available_slots = db.Column(db.Integer, nullable=False)
     assigned_staff_id = db.Column(db.Integer, db.ForeignKey('staff_profile.staff_id'))
-    status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Approved, Open, Closed, Completed
+    status = db.Column(db.String(20), default='Open', nullable=False)  # Pending, Approved, Open, Closed, Completed
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.Text)
@@ -69,6 +69,7 @@ class StaffProfile(db.Model):
     status = db.Column(db.String(20), default='Active', nullable=False)  # Active, Inactive, On Leave
     emergency_contact = db.Column(db.String(255))
     bio = db.Column(db.Text)
+    # updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     
 
 class Booking(db.Model):
@@ -83,6 +84,7 @@ class Booking(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     cancellation_reason = db.Column(db.Text)
     cancelled_at = db.Column(db.DateTime)
+    # instructions = db.Column(db.Text , default=None)  # Special requests or instructions for the trek
     payment_method = db.Column(db.String(50))  # Credit Card, Bank Transfer, Cash, etc.
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
@@ -106,7 +108,7 @@ class MedicalRecord(db.Model):
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 
-class TrekReview(db.Model):
+class Review(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -121,11 +123,11 @@ class TrekReview(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     # Relationship Matrices
-    author = db.relationship('User', backref='trek_review')
-    trek = db.relationship('Trek', backref='trek_review')
-    reviewed_staff = db.relationship('StaffProfile', backref='trek_review', foreign_keys=[staff_id])
-    
-    
+    author = db.relationship('User', backref='reviews')
+    reviewed_trek = db.relationship('Trek', backref='reviews', lazy=True, uselist=True)
+    reviewed_staff = db.relationship('StaffProfile', backref='reviews', foreign_keys=[staff_id], lazy=True, uselist=True)
+
+
 class TrekImage(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

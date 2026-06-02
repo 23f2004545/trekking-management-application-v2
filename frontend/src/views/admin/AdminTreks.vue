@@ -358,6 +358,8 @@ onMounted(() => {
 .status-pill { padding: 3px 9px; font-size: 0.7rem; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
 .status-pill.open { background: rgba(25, 135, 84, 0.8); }
 .status-pill.pending { background: rgba(255, 193, 7, 0.8); color: black; }
+.status-pill.closed { background: rgba(220, 53, 69, 0.8); }
+.status-pill.completed { background: rgba(13, 110, 253, 0.8); }
 
 /* Modal overlay layouts */
 .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999; }

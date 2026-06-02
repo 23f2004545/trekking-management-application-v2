@@ -12,9 +12,9 @@
         <div class="d-flex align-items-center gap-3">
           <img :src="BACKEND_URL + item.trekker.profile_pic" alt="Trekker" class="rect-profile-img shadow" />
           <div>
-            <span class="extra-small text-white-50 opacity-40 uppercase tracking-wider">RESERVATION TOKEN: #APX-B{{ item.booking_id }}</span>
-            <h5 class="fw-bold m-0 text-white tracking-tight mt-0.5">{{ item.trek_name }}</h5>
-            <p class="m-0 fs-9 text-white-50 mt-0.5">Authorized User: <span class="text-success fw-medium">{{ item.trekker.name }}</span> — Logged on: {{ item.booking_date }}</p>
+            <span class="extra-small text-info opacity-40 uppercase tracking-wider">BOOKING ID : #APX-B{{ item.booking_id }}</span>
+            <h5 class="fw-bold m-0 text-white tracking-tight mt-0.5">Trek : {{ item.trek_name }}</h5>
+            <p class="m-0 fs-9 text-white-50 mt-0.5">User : <span class=" fw-bold">{{ item.trekker.name }}</span> — Booking Date : {{ item.booking_date }}</p>
           </div>
         </div>
 

@@ -7,7 +7,7 @@
         <div class="logo-zone">
           <RouterLink to="/" class="brand-logo">
             <span class="logo-wrapper">
-              <img src="@/assets/logo.png" alt="Apex Logo" height="62px" class="apex-brand-img"/>
+              <img src="@/assets/logo.png" alt="Apex Logo" class="apex-brand-img"/>
             </span>
           </RouterLink>
         </div>
@@ -176,6 +176,8 @@ export default {
 
 .logo-zone, .action-zone {
   flex: 1;
+  display: flex;
+  align-content: end;
 }
 .action-zone {
   display: flex;
@@ -225,7 +227,7 @@ export default {
   overflow: hidden;
   display: inline-block;
   border-radius: 8px;
-  height: 62px;
+  height: 3rem;
 }
 
 /* The elegant shimmer overlay passing across your PNG logo */
@@ -247,7 +249,7 @@ export default {
 }
 
 .apex-brand-img {
-  height: 62px;
+  height: 3rem;
   display: block;
   object-fit: contain;
 }

@@ -1,11 +1,10 @@
 <template>
   <div class="booking-history-sub-component text-white text-start">
     
-    <!-- EXCALIDRAW ELEMENT 2: BOOKING DETAILS CARD PANEL -->
     <div class="glass-history-block p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
       <h5 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1">📋 Secure Booking Specifications</h5>
       
-      <div class="spec-column-grid p-3.5 rounded-3 border border-white border-opacity-5  bg-opacity-5 fs-8">
+      <div class="spec-column-grid p-4 rounded-3 border border-white border-opacity-5  bg-opacity-5 fs-8">
         <div class="row g-3">
           <div class="col-md-6 col-lg-3"><strong>Booking Pass ID:</strong> <span class="text-white-50">#APX-B{{ booking.booking_id }}</span></div>
           <div class="col-md-6 col-lg-3"><strong>Reservation Date:</strong> <span class="text-white-50">{{ booking.booking_date }}</span></div>
@@ -77,7 +76,7 @@
               <div class="profile-input-group mt-3">
                 <label class="input-label-tag">Guide Performance Message Statement</label>
                 <div class="interactive-input-wrapper py-2 mt-1">
-                  <textarea v-model="localForm.staff_comment" rows="3" required class="clean-profile-field w-100 text-area-fix" placeholder="Describe guide leadership under weather shifts, group safety..."></textarea>
+                  <textarea v-model="localForm.staff_comment" rows="3" required class="clean-profile-field w-100 text-area-fix " placeholder="Describe guide leadership under weather shifts, group safety..."></textarea>
                 </div>
               </div>
             </div>
@@ -123,6 +122,9 @@ function submitLocalFeedback() {
   backdrop-filter: blur(25px);
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
+.custom-slider::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.1); border-radius: 5px; height: 4px; }
+.custom-slider::-webkit-slider-thumb { background: #198754; margin-top: -6px; }
+
 .sub-form-glass-card { background: rgba(255, 255, 255, 0.02); }
 .completed-badge { background: rgba(0, 123, 255, 0.15); color: #7cd1ff; border: 1px solid rgba(0, 123, 255, 0.25); }
 .payment-paid-badge { background: rgba(25, 135, 84, 0.15); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.25); }
