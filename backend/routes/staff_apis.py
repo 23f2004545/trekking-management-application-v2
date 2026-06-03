@@ -4,7 +4,9 @@ from controller.extensions import db
 from controller.models import Trek, Booking, User , StaffProfile
 from controller.decorators import staff_required
 from datetime import datetime, timezone
+from sqlalchemy import func,case
 import os
+
 
 trek_staff_bp = Blueprint('trek_staff', __name__)
 
@@ -12,35 +14,59 @@ trek_staff_bp = Blueprint('trek_staff', __name__)
 # 1. STAFF DASHBOARD OVERVIEW (Assigned Treks & Trekkers Metrics)
 # ==========================================================================
 
-@trek_staff_bp.route('/my-treks', methods=['GET'])
+@trek_staff_bp.route('/dashboard/stats', methods=['GET'])
 @jwt_required()
 @staff_required
-def get_assigned_treks():
-    """Fetch only the treks assigned to the logged-in staff member along with registration metrics."""
-    staff_id = int(get_jwt_identity())
+def get_staff_dashboard_stats():
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
     
-    assigned_treks = Trek.query.filter_by(assigned_staff_id=staff_id).all()
+    staff = user.staff_profile
+    if not staff:
+        return make_response(jsonify({"message": "Staff profile constraints not found."}), 403)
     
-    results = []
-    for trek in assigned_treks:
-        # Count active participant bookings attached to this specific trek row
-        registered_count = Booking.query.filter_by(trek_id=trek.id).filter(Booking.status != 'Cancelled').count()
-        
-        results.append({
-            "id": trek.id,
-            "name": trek.name,
-            "location": trek.location,
-            "difficulty": trek.difficulty,
-            "duration": trek.duration,
-            "available_slots": trek.available_slots,
-            "status": trek.status, # Pending / Approved / Open / Closed / Completed
-            "start_date": trek.start_date.strftime("%Y-%m-%d"),
-            "end_date": trek.end_date.strftime("%Y-%m-%d"),
-            "registered_trekkers_count": registered_count
-        })
-        
-    return make_response(jsonify(results), 200)
+    is_onboarded = staff.specialization != "Pending"
 
+    current_date = datetime.now(timezone.utc).date()
+    
+    # Isolate treks assigned explicitly to this guide
+    assigned_treks = Trek.query.filter_by(assigned_staff_id=staff.user_id).all()
+    assigned_trek_ids = [t.trek_id for t in assigned_treks]
+    
+    # Calculate active parameters
+    active_routes_count = len([t for t in assigned_treks if t.status in ['Open', 'Ongoing']])
+    
+    # Calculate upcoming explorers across all assigned treks
+    upcoming_explorers = db.session.query(func.sum(Booking.number_of_persons))\
+        .filter(Booking.trek_id.in_(assigned_trek_ids), Booking.status == 'Booked').scalar() or 0
+
+    # Determine the very next departure date
+    upcoming_treks = [t for t in assigned_treks if t.start_date.date() >= current_date]
+    upcoming_treks.sort(key=lambda x: x.start_date.date())
+    next_deployment = upcoming_treks[0].start_date.strftime("%b %d, %Y") if upcoming_treks else "No pending deployments"
+
+    # Grab a quick summary of active/upcoming treks for the dashboard view
+    active_roster = []
+    for t in upcoming_treks[:4]:  # Top 4 most immediate
+        booked_count = db.session.query(func.sum(Booking.number_of_persons))\
+            .filter_by(trek_id=t.trek_id, status='Booked').scalar() or 0
+            
+        active_roster.append({
+            "trek_id": t.trek_id,
+            "name": t.trek_name,
+            "status": t.status,
+            "start_date": t.start_date.strftime("%b %d"),
+            "registered_count": booked_count,
+            "capacity": t.available_slots + booked_count # Total capacity computation
+        })
+
+    return make_response(jsonify({
+        "is_onboarded": is_onboarded,
+        "active_routes": active_routes_count,
+        "total_explorers": upcoming_explorers,
+        "next_deployment": next_deployment,
+        "active_roster": active_roster
+    }), 200)
 
 # ==========================================================================
 # 2. PROFILE MANAGEMENT 
@@ -148,6 +174,9 @@ def get_staff_profile():
     
     if not record:
         return make_response(jsonify({"message": "No staff profile found." , "has_data": False}), 404)
+    
+    if record.specialization == "Pending":
+        return make_response(jsonify({"has_data": False}), 200)
         
     return make_response(jsonify({
         "has_data": True,
@@ -205,73 +234,151 @@ def save_staff_profile():
         return make_response(jsonify({"message": f"Database mutation failed: {str(e)}"}), 500)
 
 
-# ==========================================================================
-# 3. UPDATE ACTIVE TREK PARAMETERS & STATUS LIFECYCLE
-# ==========================================================================
-@trek_staff_bp.route('/treks/<int:trek_id>/operations', methods=['PATCH'])
-@jwt_required()
-@staff_required
-def update_trek_operations(trek_id):
-    """Allows assigned staff to adjust slots, toggle status boundaries (Open/Closed), or transition the trek lifecycle."""
-    staff_id = int(get_jwt_identity())
-    trek = Trek.query.get_or_404(trek_id)
-    
-    # ISOLATION PRIVILEGE GUARD: Ensure only the assigned staff can modify this trek record
-    if trek.assigned_staff_id != staff_id:
-        return make_response(jsonify({"message": "Operation Denied: You are not assigned to manage this trek route."}), 403)
-        
-    data = request.get_json()
-    
-    # 1. Optional Slot Adjustment
-    if 'available_slots' in data:
-        trek.available_slots = int(data.get('available_slots'))
-        
-    # 2. Optional Status Updates (Open / Closed / Ongoing / Completed)
-    if 'status' in data:
-        new_status = data.get('status')
-        # Simple constraint check
-        if new_status in ["Pending", "Approved", "Open", "Closed", "Completed"]:
-            trek.status = new_status
-        else:
-            return make_response(jsonify({"message": "Invalid tracking status state configuration."}), 400)
-            
-    try:
-        db.session.commit()
-        return make_response(jsonify({"message": f"Trek parameters for '{trek.name}' updated successfully."}), 200)
-    except Exception as e:
-        db.session.rollback()
-        return make_response(jsonify({"message": f"Database mutation failed: {str(e)}"}), 500)
 
 # ==========================================================================
-# 4. MANAGE & VIEW ACTIVE PARTICIPANT REGISTRATION DETAILS
+# 3. MANAGE ASSIGNED ROUTES & STATUS LIFECYCLES
 # ==========================================================================
-@trek_staff_bp.route('/treks/<int:trek_id>/participants', methods=['GET'])
+@trek_staff_bp.route('/treks', methods=['GET'])
 @jwt_required()
 @staff_required
-def get_trek_participants(trek_id):
-    """Retrieve the explicit details of all registered trekkers signed up for an assigned tracking coordinate."""
-    staff_id = int(get_jwt_identity())
-    trek = Trek.query.get_or_404(trek_id)
+def get_staff_assigned_treks():
+
+    # staff = get_current_staff_profile()
+    # if not staff: return make_response(jsonify([]), 403)
     
-    if trek.assigned_staff_id != staff_id:
-        return make_response(jsonify({"message": "Operation Denied: You are not assigned to manage this trek route."}), 403)
-        
-    # Fetch all active bookings bound to this trek ID code
-    bookings = Booking.query.filter_by(trek_id=trek.id).filter(Booking.status != 'Cancelled').all()
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
     
-    participant_list = []
-    for b in bookings:
-        participant_list.append({
-            "booking_id": b.id,
-            "booking_date": b.booking_date.strftime("%Y-%m-%d"),
-            "booking_status": b.status, # Booked / Completed
-            "trekker_id": b.user.id,
-            "trekker_name": b.user.name,
-            "trekker_email": b.user.email,
-            "trekker_contact": b.user.contact
+    staff = user.staff_profile
+    if not staff:
+        return make_response(jsonify({"message": "Staff profile constraints not found."}), 403)
+
+    # Priority Sorting: Ongoing (1) -> Open (2) -> Pending (3) -> Completed (4) -> Cancelled (5)
+    status_priority = case(
+        (Trek.status == 'Ongoing', 1),
+        (Trek.status == 'Open', 2),
+        (Trek.status == 'Pending', 3),
+        (Trek.status == 'Completed', 4),
+        (Trek.status == 'Cancelled', 5),
+        else_=6
+    )
+
+    treks = Trek.query.filter_by(assigned_staff_id=staff.user_id)\
+        .order_by(status_priority, Trek.start_date.asc()).all()
+
+    results = []
+    for t in treks:
+        gallery = [img.image_url for img in t.images]
+        results.append({
+            "id": t.trek_id,
+            "name": t.trek_name,
+            "location": t.location,
+            "difficulty": t.difficulty,
+            "duration": getattr(t, 'duration_days', 0),
+            "status": t.status,
+            "available_slots": t.available_slots,
+            "start_date": t.start_date.strftime("%Y-%m-%d"),
+            "image": gallery[0] if gallery else "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
         })
         
-    return make_response(jsonify({
-        "trek_name": trek.name,
-        "participants": participant_list
-    }), 200)
+    return make_response(jsonify(results), 200)
+
+
+@trek_staff_bp.route('/treks/<int:trek_id>/update-field-data', methods=['PATCH'])
+@jwt_required()
+@staff_required
+def update_trek_field_data(trek_id):
+
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    
+    staff = user.staff_profile
+    if not staff:
+        return make_response(jsonify({"message": "Staff profile constraints not found."}), 403)
+    
+    trek = Trek.query.get_or_404(trek_id)
+
+    # Security Guard: Prevent cross-staff manipulation
+    if trek.assigned_staff_id != staff.user_id:
+        return make_response(jsonify({"message": "Unauthorized: Route belongs to another guide."}), 403)
+
+    data = request.get_json()
+    
+    # 1. Update Lifecycle Status
+    if 'status' in data:
+        allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed']
+        if data['status'] in allowed_statuses:
+            trek.status = data['status']
+            
+    # 2. Update Live Slot Capacities (e.g., if a tent breaks or weather limits capacity)
+    if 'available_slots' in data:
+        trek.available_slots = int(data['available_slots'])
+        
+    # 3. Update Trail Description (To provide live field notes/warnings)
+    if 'description' in data:
+        trek.description = data['description'].strip()
+
+    trek.updated_at = db.func.current_timestamp()
+
+    try:
+        db.session.commit()
+        return make_response(jsonify({
+            "message": "Field operational parameters synchronized.", 
+            "new_status": trek.status
+        }), 200)
+    except Exception as e:
+        db.session.rollback()
+        return make_response(jsonify({"message": f"Transaction aborted: {str(e)}"}), 500)
+
+
+# ==========================================================================
+# 4. TACTICAL PARTICIPANT MANIFEST
+# ==========================================================================
+
+@trek_staff_bp.route('/participants', methods=['GET'])
+@jwt_required()
+@staff_required
+def get_trail_manifests():
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    
+    staff = user.staff_profile
+    if not staff:
+        return make_response(jsonify({"message": "Staff profile constraints not found."}), 403)
+    
+    # Fetch active bookings for treks assigned to this staff member
+    bookings = Booking.query.join(Trek).filter(
+        Trek.assigned_staff_id == staff.user_id,
+        Booking.status == 'Booked',
+        Trek.status.in_(['Open', 'Ongoing'])
+    ).order_by(Trek.start_date.asc()).all()
+
+    # Group payload logically by Trek ID so the frontend can filter easily
+    manifest = {}
+    for b in bookings:
+        t_id = b.trek_id
+        if t_id not in manifest:
+            manifest[t_id] = {
+                "trek_name": b.trek.trek_name,
+                "start_date": b.trek.start_date.strftime("%b %d, %Y"),
+                "status": b.trek.status,
+                "explorers": []
+            }
+        
+        manifest[t_id]["explorers"].append({
+            "booking_id": b.booking_id,
+            "name": b.user.name,
+            "contact": b.user.contact,
+            "headcount": b.number_of_persons,
+            "medical_notes": getattr(b, 'cancellation_reason', None) or "No special instructions logged.", # Reusing text field for payload demonstration
+            "payment_status": b.payment_status,
+            "medical_record_exists": True if b.user.medical_record else False,
+            "emergency_name": b.user.medical_record.emergency_name if b.user.medical_record else 'N/A' ,
+            "emergency_contact": b.user.medical_record.emergency_contact if b.user.medical_record else 'N/A' ,
+            "blood_group": b.user.medical_record.blood_group if b.user.medical_record else 'N/A',
+            "allergies" : b.user.medical_record.allergies if b.user.medical_record.allergies else None,
+            "medications" : b.user.medical_record.medications if b.user.medical_record.medications else None
+        })
+                
+    # Convert grouped dict to an array list
+    return make_response(jsonify(list(manifest.values())), 200)

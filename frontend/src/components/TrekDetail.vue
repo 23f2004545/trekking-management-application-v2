@@ -115,7 +115,7 @@
 
           <div class="pt-3 border-top border-white border-opacity-10 mt-4 text-center">
             
-            <button v-if="authStore.role === 'trekker'" @click="$emit('request-checkout')" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-dark fs-8 shadow-sm">
+            <button v-if="(authStore.role === 'trekker') && showCheckoutButton" @click="$emit('request-checkout')" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-dark fs-8 shadow-sm">
               Book Your Trek Now
             </button>
 
@@ -128,7 +128,7 @@
             </div>
 
             <div v-else-if="authStore.role === 'trek_staff'" class="text-start">
-              <span class="d-block fs-9 text-success mb-2 opacity-75">🌲 TRAIL OPERATIONS MODE</span>
+              <span class="d-block fs-9 text-warning mb-2 opacity-75"> ⚠️ TRAIL MODIFICATIONS </span>
               <button @click="$emit('staff-toggle-status')" class="btn btn-sm btn-outline-success rounded-pill w-100 py-2 fs-9 fw-semibold border-opacity-35 text-white">
                 Toggle Lifecycle Status (Open/Closed)
               </button>
@@ -148,7 +148,7 @@ import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
-const props = defineProps({ trek: { type: Object, required: true } })
+const props = defineProps({ trek: { type: Object, required: true }, showCheckoutButton: { type: Boolean, default: true } })
 defineEmits(['request-checkout', 'admin-modify', 'admin-delete', 'staff-toggle-status'])
 
 const activeImageIdx = ref(0)

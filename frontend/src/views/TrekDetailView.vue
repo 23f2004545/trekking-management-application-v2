@@ -18,10 +18,11 @@
     <div v-else>
       <TrekDetail 
         :trek="trekData" 
+        :showCheckoutButton=true           
         @request-checkout="checkoutActive = true"
         @admin-delete="handleAdminDeletePurge"
         @admin-modify="openModifyFormModal"
-        @staff-toggle-status="handleStaffStatusChange"
+        @staff-toggle-status="openStaffModifyModal"
       />
     </div>
 
@@ -165,6 +166,61 @@
       </div>
     </Transition>
 
+    <!-- ===================================================================
+         STAFF OVERRIDE: FIELD OPERATIONS POPUP MODAL
+         =================================================================== -->
+    <Transition name="modal-fade">
+      <div v-if="staffModifyModalActive" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+        <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start" style="max-width: 500px;">
+          
+          <button @click="staffModifyModalActive = false" class="btn-close-modal">✕</button>
+          <h4 class="fw-bold tracking-tight text-white m-0 mb-4 text-center">Field Operations Override</h4>
+          <p class="text-white-50 small text-center mb-4">Adjust real-time tracking parameters for your currently assigned trail.</p>
+
+          <form @submit.prevent="submitStaffFieldUpdate" class="d-flex flex-column gap-3">
+            <div class="row g-3">
+              
+              <!-- Staff Controlled: Lifecycle Status -->
+              <div class="col-12">
+                <label class="modal-input-label">Route Lifecycle State</label>
+                <div class="modal-input-wrapper">
+                  <select v-model="staffEditForm.status" class="modal-clean-field bg-transparent select-fix" required>
+                    <option value="Open">🟢 Open (Accepting Slots)</option>
+                    <option value="Ongoing">🔵 Ongoing (On Trail)</option>
+                    <option value="Closed">🔴 Closed (Weather/Halted)</option>
+                    <option value="Completed">⚪ Completed (Ended)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Staff Controlled: Live Slots Configuration -->
+              <div class="col-12">
+                <label class="modal-input-label">Adjust Available Slots</label>
+                <div class="modal-input-wrapper">
+                  <input v-model.number="staffEditForm.available_slots" type="number" min="0" required class="modal-clean-field" placeholder="Update live capacity...">
+                </div>
+              </div>
+
+              <!-- Staff Controlled: Live Trail Notes -->
+              <div class="col-12">
+                <label class="modal-input-label">Live Field Notes & Description</label>
+                <div class="modal-input-wrapper py-2">
+                  <textarea v-model="staffEditForm.description" rows="4" class="modal-clean-field text-area-fix" placeholder="Log real-time weather shifts, trail blockages, or group updates here..."></textarea>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-3 border-top border-white border-opacity-10 pt-3">
+              <button type="button" @click="staffModifyModalActive = false" class="btn btn-outline-light rounded-pill px-4 py-2 fs-8">Cancel</button>
+              <button type="submit" class="btn btn-success rounded-pill px-5 py-2.5 fw-bold text-dark fs-8 shadow-sm">Sync Field Data</button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -186,11 +242,19 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const trekData = ref(null)
 const loading = ref(true)
 const checkoutActive = ref(false)
+const showCheckoutButton = ref(true)
 
 const modifyModalActive = ref(false)
 const staffOptions = ref([])
 const updateGalleryFiles = ref([])
 const editForm = ref({})
+const staffModifyModalActive = ref(false)
+
+const staffEditForm = ref({
+  status: '',
+  available_slots: 0,
+  description: ''
+})
 
 const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
 
@@ -312,8 +376,39 @@ async function submitModificationForm() {
   } catch (err) { alertStore.showAlert(`Patch drop: ${err.message}`, 'danger') }
 }
 
-function handleStaffStatusChange() {
-  alertStore.showAlert('Toggling route visibility operations lifecycle flags...', 'warning')
+function openStaffModifyModal() {
+  // Seed the form with current operational parameters
+  staffEditForm.value = {
+    status: trekData.value.status,
+    available_slots: trekData.value.available_slots,
+    description: trekData.value.description
+  }
+  staffModifyModalActive.value = true
+}
+
+async function submitStaffFieldUpdate() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/trek_staff/treks/${trekData.value.trek_id}/update-field-data`, {
+      method: 'PATCH',
+      headers: { 
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify(staffEditForm.value)
+    })
+    
+    const data = await res.json()
+    
+    if (res.ok) {
+      alertStore.showAlert('Field parameters synchronized with apex matrices.', 'success')
+      staffModifyModalActive.value = false
+      await fetchLiveTrekDetails() // Re-fetch all variables cleanly to update the UI
+    } else {
+      alertStore.showAlert(data.message || 'Operation denied by core systems.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
+  }
 }
 
 onMounted(() => {

@@ -176,6 +176,7 @@
                 <label class="input-label-tag">Status</label>
                 <div class="interactive-input-wrapper">
                     <select v-model="staffFormFields.status" class="clean-profile-field bg-transparent" required>
+                        <option value="" disabled hidden >Activity</option>
                         <option value="Active" >Active</option>
                         <option value="Inactive">Inactive</option>
                         <option value="On Leave">On Leave</option>
@@ -387,9 +388,21 @@ async function submitStaffForm() {
 }
 
 function openStaffModal() {
-  // Deep copy the active values into input proxies so cancel operations keep historical metrics safe
-  staffFormFields.value = hasStaffData.value ? { ...staffProfile.value } : {
-    specialization: '', experience_years: 0, certifications: '', status: '', emergency_contact: '', bio: ''
+
+  if (hasStaffData.value) {
+    // If they have real data, deep copy it into the form input proxies
+    staffFormFields.value = { ...staffProfile.value }
+  } else {
+    // If it's still 'Pending' (or completely missing), initialize empty values 
+    // instead of letting 'Pending' populate your text fields.
+    staffFormFields.value = {
+      specialization: '',
+      experience_years: '', // Empty input allows placeholder to render cleanly
+      certifications: '',
+      status: 'Active',
+      emergency_contact: '',
+      bio: ''
+    }
   }
   staffModalVisible.value = true
 }

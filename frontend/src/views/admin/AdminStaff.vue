@@ -70,20 +70,12 @@
 
           <form @submit.prevent="submitStaffForm" class="d-flex flex-column gap-3">
                 <div class="form-group-capsule">
-                    <label class="modal-input-label">Staff Name</label>
-                    <div class="modal-input-wrapper"><input v-model="form.name" type="text" required class="modal-clean-field"></div>
-                </div>
-                <div class="form-group-capsule">
                     <label class="modal-input-label">Staff Email</label>
                     <div class="modal-input-wrapper"><input v-model="form.email" type="email" required class="modal-clean-field"></div>
                 </div>
                 <div class="form-group-capsule">
                     <label class="modal-input-label">Staff Password</label>
                     <div class="modal-input-wrapper"><input v-model="form.password" type="password" required class="modal-clean-field"></div>
-                </div>
-                <div class="form-group-capsule">
-                    <label class="modal-input-label">Staff Contact</label>
-                    <div class="modal-input-wrapper"><input v-model="form.contact" type="text" required class="modal-clean-field"></div>
                 </div>
 
             <!-- Trigger Button Rows -->
@@ -127,7 +119,7 @@
             <div v-for="trek in availableTreksList" :key="trek.trek_id" class="p-3 bg-opacity-5 rounded-3 border border-white border-opacity-5 d-flex align-items-center justify-content-between gap-3 fs-8">
               <div>
                 <strong class="text-white d-block">{{ trek.trek_name }}</strong>
-                <span class="text-white-50 extra-small">📍 {{ trek.location }} — Current Guide: <span class="text-success">{{ trek.staff?.name || 'None' }}</span></span>
+                <span class="text-white-50 extra-small">📍 {{ trek.location }} — Current Guide: <span class="text-success">{{ trek.assigned_staff.name || 'None' }}</span></span>
               </div>
               <button @click="processStaffAssignment(trek.trek_id, false)" class="btn btn-sm btn-light text-dark fw-bold rounded-pill px-3 fs-9">
                 Assign Here
@@ -144,6 +136,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import UserProfile from '../../components/UserProfile.vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
@@ -152,6 +145,7 @@ import { useConfirmStore } from '@/stores/confirm.js'
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
 const confirmStore = useConfirmStore()
+const router = useRouter()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const staffList = ref([])
 const searchQuery = ref('')

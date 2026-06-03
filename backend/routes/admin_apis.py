@@ -443,10 +443,8 @@ def add_trek_staff():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    name = data.get('name')
-    contact = data.get('contact')
 
-    if not all([email, password, name, contact]):
+    if not all([email, password]):
         return make_response(jsonify({"message": "All fields are required"}), 400)
 
     if User.query.filter_by(email=email).first():
@@ -456,14 +454,29 @@ def add_trek_staff():
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     new_staff = User(
-        name=name.strip().title(),
+        name='Staff',
         email=email.strip().lower(),
         password=hashed_password,
-        contact=contact.strip(),
+        contact='123456780',
         profile_pic='/static/Profile_pics/trek_staff.png',
         role=staff_role
     )
+    
     db.session.add(new_staff)
+    id = User.query.filter_by(email=email).first().id
+    
+    # Dummy staff profile with default values to satisfy non-nullable constraints and allow future updates
+    new_staff_profile = StaffProfile(
+        user_id=id,
+        specialization='Pending',
+        certification='Pending',
+        experience_years='0',
+        status='Active',
+        emergency_contact='1234567890',
+        bio='Pending'
+    )
+    
+    db.session.add(new_staff_profile)
     db.session.commit()
     return make_response(jsonify({"message": "Trek staff account generated successfully"}), 201)
 

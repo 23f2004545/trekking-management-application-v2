@@ -19,11 +19,11 @@
 
     <!-- EXCALIDRAW ELEMENT 3: DUAL FEEDBACK MATRIX FORM -->
     <div class="glass-history-block p-4 rounded-4 border border-white border-opacity-10 shadow-sm">
-      <h5 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1">✍️ Give Feedback Matrix Evaluations</h5>
+      <h5 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1">Feedback Matrix Evaluations</h5>
       
       <!-- CONDITION A: Review Already Submitted (Render Read-Only Frame) -->
       <div v-if="booking.review_submitted" class="read-only-review-display bg-opacity-5 p-4 rounded-3 border border-white border-opacity-5">
-        <span class="badge completed-badge mb-3 text-uppercase fs-9">✔ Evaluation Active Inside Database Columns</span>
+        <span class="badge completed-badge mb-3 text-uppercase fs-10">✔ Evaluation Added </span>
         
         <div class="row g-4">
           <div class="col-md-6 border-end border-white border-opacity-10">

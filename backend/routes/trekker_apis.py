@@ -313,16 +313,17 @@ def book_trek_slot():
     if trek.available_slots <= 0:
         return make_response(jsonify({"message": "Booking denied: Base camp slots are completely full."}), 400)
         
+    number_of_persons = data.get('adults') + data.get('children') + data.get('seniors')
     try:
         # Deduct slot reservation dynamically
-        trek.available_slots -= 1
+        trek.available_slots -= int(number_of_persons)
         
         new_booking = Booking(
             user_id=user_id,
             trek_id=trek_id,
             booking_date=datetime.now(timezone.utc),
             status='Booked' ,# Default state tracking label
-            number_of_persons=data.get('adults') + data.get('children') + data.get('seniors'),
+            number_of_persons=number_of_persons,
             payment_method=data.get('payment_method'),
             total_amount=trek.price_per_person * (data.get('adults') + data.get('children') + data.get('seniors')),
         )
@@ -406,15 +407,34 @@ def get_completed_history():
         if b.trek.status == 'Completed' or (b.status == 'Booked' and is_past_date):
             
             # Check for existing feedback
-            review = Review.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
+            user_review = Review.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
+            reviews = Review.query.filter_by(trek_id=b.trek_id).all() 
+            
+            trek_reviews_list = []
+            staff_reviews_list = []
+            staff_rating_avg = None
+            trek_rating_avg = None
+            
+            if hasattr(b.trek, 'reviews') and b.trek.reviews:
+                trek_reviews_list = [{
+                    "id": r.id, "trekker": r.author.name, "stars": r.trek_rating, "comment": r.trek_experience or 'No review provided'
+                } for r in b.trek.reviews]
+                trek_rating_avg = round(sum([r.trek_rating for r in b.trek.reviews]) / len(b.trek.reviews))
+
+            if reviews :
+                staff_reviews_list = [{
+                    "id": r.id, "trekker": r.author.name, "stars": r.staff_rating, "comment": r.staff_experience or 'No review provided'
+                } for r in reviews]
+                staff_rating_avg = round(sum([r.staff_rating for r in reviews]) / len(reviews))
             
             gallery = [img.image_url for img in b.trek.images] if b.trek.images else []
             
-            staff_info = {"name": "Unknown", "profile_pic": ""}
+            staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg , "staff_reviews": staff_reviews_list}
+            print(b.trek.assigned_staff_id , b.trek.assigned_staff)
             if b.trek.assigned_staff_id and b.trek.assigned_staff:
                 staff_user = User.query.get(b.trek.assigned_staff.user_id)
                 if staff_user:
-                    staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic}
+                    staff_info = {"specialization": staff_user.specialization, "certification": staff_user.certification, "experience_years": staff_user.experience_years , "status" : staff_user.status}
 
             results.append({
                 "booking_id": b.booking_id,
@@ -438,14 +458,15 @@ def get_completed_history():
                 "updated_at": b.trek.updated_at.strftime("%Y-%m-%d"),
                 "description": b.trek.description,
                 "images": gallery,
+                "trek_rating_avg": trek_rating_avg ,
+                "trek_reviews": trek_reviews_list,                
                 "staff": staff_info,
                 
                 # Review Component Mapping
-                "review_submitted": True if review else False,
-                "existing_trek_review": {"stars": review.trek_rating, "comment": review.trek_experience} if review else None,
-                "existing_staff_review": {"stars": review.staff_rating, "comment": review.staff_experience} if review else None
+                "review_submitted": True if user_review else False,
+                "existing_trek_review": {"stars": user_review.trek_rating, "comment": user_review.trek_experience} if user_review else None,
+                "existing_staff_review": {"stars": user_review.staff_rating, "comment": user_review.staff_experience} if user_review else None
             })
-    print(user_bookings[1].status)
             
     return make_response(jsonify(results), 200)
 

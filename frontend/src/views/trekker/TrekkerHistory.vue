@@ -35,72 +35,15 @@
         </button>
       </div>
 
-      <!-- REUSE CARD A: Master Terrain Specifications Block -->
+      <!-- REUSE CARD A-->
       <TrekDetail :trek="selectedTripForDetails" :showCheckoutButton="false" />
 
-      <!-- REUSE CARD B: Excalidraw-Optimized Financial Form Block Component -->
+      <!-- REUSE CARD B -->
       <TrekHistory :booking="selectedTripForDetails" @commit-review="handlePublishedReview" />
     </div>
 
   </div>
 </template>
-
-<!-- <script setup>
-import { ref } from 'vue'
-import TrekDetail from '../../components/TrekDetail.vue'
-import TrekHistory from '../../components/TrekHistory.vue'
-import { useAlertStore } from '../../stores/alert'
-
-const alertStore = useAlertStore()
-const selectedTripForDetails = ref(null)
-
-function handlePublishedReview(formData) {
-  selectedTripForDetails.value.review_submitted = true
-  selectedTripForDetails.value.existing_trek_review = { stars: formData.trek_rating, comment: formData.trek_comment }
-  selectedTripForDetails.value.existing_staff_review = { stars: formData.staff_rating, comment: formData.staff_comment }
-  alertStore.showAlert('Success: Review variables committed downstream inside dynamic components.', 'success')
-}
-
-// Complete mock dataset containing required child mapping models matching your framework configuration
-const historicTrips = ref([
-  {
-    booking_id: 7035,
-    trek_name: 'Kheerganga Ridge Trek',
-    booking_date: '2026-04-12',
-    total_trekkers: 3,
-    total_amount_paid: '19,497',
-    payment_type: 'UPI Transfer',
-    payment_status: 'Paid / Settled',
-    booking_created_at: '2026-04-01 14:22:10',
-    trek_id: 3,
-    location: 'Parvati Valley, Himachal Pradesh',
-    difficulty: 'Moderate',
-    duration_days: 3,
-    available_slots: 0,
-    status: 'Completed',
-    max_altitude: 2960,
-    price_per_person: 6499,
-    created_at: '2026-03-15', updated_at: '2026-04-15',
-    description: 'Hike along cascading thermal stream fields and ancient oak boundaries before setting base operations at the legendary high hot springs meadows.',
-    images: [
-      'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1486915309851-b0cc1f8a0084?auto=format&fit=crop&w=800&q=80'
-    ],
-    staff: {
-      name: 'Guide Rohan Negi', experience: '4 Years', last_login_at: '2 hours ago',
-      specialization: 'High Altitude Medical', certification: 'ABVIMAS Certified', rating: 4,
-      profile_pic: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-      staff_reviews: []
-    },
-    trek_reviews: [],
-    review_submitted: true,
-    existing_trek_review: { stars: 5, comment: 'The thermal valleys and cedar junctions tracking parameters were flawless.' },
-    existing_staff_review: { stars: 4, comment: 'Rohan kept group pacing speed exceptionally balanced across steep slopes.' }
-  }
-])
-</script> -->
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -131,6 +74,7 @@ async function fetchCompletedHistory() {
         if (trip.staff.profile_pic && !trip.staff.profile_pic.startsWith('http')) {
           trip.staff.profile_pic = `${BACKEND_URL}${trip.staff.profile_pic}`
         }
+        console.log('Resolved Trip Data:', trip) // Debug log to verify data structure
         return trip
       })
     }

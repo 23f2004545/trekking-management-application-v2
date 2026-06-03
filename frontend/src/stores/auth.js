@@ -24,8 +24,9 @@ export const useAuthStore = defineStore('auth', {
           { label: 'Bookings', route: '/portal/admin/bookings' }
         ],
         trek_staff: [
-          { label: 'My Treks', route: '/portal/staff/dashboard' },
-          { label: 'Registrations', route: '/portal/staff/participants' }
+          { label: 'Home', route: '/portal/trek_staff/dashboard' },
+          { label: 'My Treks', route: '/portal/trek_staff/treks' },
+          { label: 'Trekkers', route: '/portal/trek_staff/participants' }
         ],
         trekker: [
           { label: 'Home', route: '/portal/trekker/dashboard' },
