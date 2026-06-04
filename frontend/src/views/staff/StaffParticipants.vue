@@ -9,7 +9,7 @@
     <div v-if="loading" class="text-white-50 small opacity-50 py-5 text-center">Syncing tactical manifests...</div>
 
     <div v-else-if="manifests.length === 0" class="empty-state-glass p-5 text-center rounded-4 border border-white border-opacity-10">
-      <span class="fs-1">📋</span>
+      <span class="fs-1"><i class="bi bi-exclamation-triangle text-warning"></i></span>
       <h5 class="fw-bold mt-2 mb-1">No Active Rosters</h5>
       <p class="m-0 text-white-50 small">There are no booked explorers for your upcoming or ongoing routes.</p>
     </div>
@@ -55,7 +55,7 @@
                 <span class="badge payment-badge" :class="explorer.payment_status.toLowerCase()">₹ {{ explorer.payment_status }}</span>
                 <div v-if="!explorer.medical_record_exists">
                     <span  class="badge bg-warning text-dark fw-bold rounded-pill border-0">
-                    ⚠️ No Medical Profile Linked
+                    <i class="bi bi-exclamation-triangle text-warning"></i> No Medical Profile Linked
                     </span>
                 </div>
                 <div v-else>

@@ -12,7 +12,7 @@
         <div class="booking-glass-row p-3 rounded-3 border border-white border-opacity-10 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-3">
           
           <div class="d-flex align-items-center gap-3">
-            <div class="booking-icon-shield fs-4 p-2 rounded-2">🎒</div>
+            <div class="booking-icon-shield fs-4 p-2 rounded-2"><i class="bi bi-backpack2-fill text-danger"></i></div>
             <div>
               <span class="fs-9 text-white-50 fw-semibold tracking-wider">BOOKING PASS ID: #APX-B{{ book.booking_id }}</span>
               <h5 class="fw-bold m-0 text-white mt-0.5">{{ book.trek_name }}</h5>
@@ -80,10 +80,10 @@
             <!-- Full Width Verified Guide Contact Info Cluster Box -->
             <div class="col-12 mt-2">
               <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-2 border-bottom border-white border-opacity-5 pb-1">Assigned Guide Assignment Node</h6>
-              <div class="staff-contact-glass p-3 rounded-3 border border-white border-opacity-10 d-flex flex-column gap-1.5 fs-8">
-                <div>👨‍✈️ <strong>Guide Leader Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
-                <div>✉️ <strong>Emergency Comm Registry:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
-                <div>📞 <strong>Secure Satellite Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
+              <div class="staff-contact-glass p-3 rounded-3 border border-white border-opacity-10 d-flex flex-column gap-1 fs-8">
+                <div><i class="bi bi-person"></i> <strong>Guide Leader Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
+                <div><i class="bi bi-envelope"></i> <strong>Emergency Comm Registry:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
+                <div><i class="bi bi-telephone"></i> <strong>Secure Satellite Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
               </div>
             </div>
           </div>
@@ -110,46 +110,6 @@
 </template>
 
 <script setup>
-// import { ref } from 'vue'
-// import { useAlertStore } from '../../stores/alert'
-// import { useConfirmStore } from '../../stores/confirm'
-
-// const alertStore = useAlertStore()
-// const confirmStore = useConfirmStore()
-
-// const modalTarget = ref(null)
-
-// const activeBookingsList = ref([
-//   { 
-//     booking_id: 9024, trek_name: 'Solang Valley Alpine Pass', booking_date: '2026-05-20', booking_status: 'Booked', payment_status: 'Paid',
-//     duration_days: 4, total_people: 3, trek_image: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?auto=format&fit=crop&w=300&q=80',
-//     staff: { name: 'Captain Vikram Singh', email: 'vikram.singh@apex.com', contact: '+91 98765 43210' }
-//   },
-//   { 
-//     booking_id: 8142, trek_name: 'Rohtang Pass Crest Loop', booking_date: '2026-05-14', booking_status: 'Cancelled', payment_status: 'Refunded',
-//     duration_days: 5, total_people: 1, trek_image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=300&q=80',
-//     staff: { name: 'Guide Rohan Negi', email: 'rohan.negi@apex.com', contact: '+91 88776 55443' }
-//   }
-// ])
-
-// function openDeepContextModal(record) {
-//   modalTarget.value = record
-// }
-
-// function triggerRouteCancellation(id) {
-//   confirmStore.ask(
-//     `Are you completely certain you want to revoke Expedition Pass #${id}? This restores slot boundaries immediately.`, 
-//     () => {
-//       const target = activeBookingsList.value.find(b => b.booking_id === id)
-//       if (target) {
-//         target.booking_status = 'Cancelled'
-//         target.payment_status = 'Refunded'
-//       }
-//       modalTarget.value = null // Terminate modal context stack view
-//       alertStore.showAlert(`Expedition Pass #${id} cancelled. Financial refund loop initializing.`, 'warning')
-//     }
-//   )
-// }
 
 import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
@@ -258,5 +218,4 @@ onMounted(() => {
 .italic { font-style: italic; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
-.gap-1.5 { gap: 6px; }
 </style>

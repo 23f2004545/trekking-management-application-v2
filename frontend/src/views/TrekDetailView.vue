@@ -12,7 +12,7 @@
     </div>
     
     <div v-else-if="!trekData" class="text-center py-5 text-danger">
-      ❌ Expedition profile coordinates failed verification checkpoint.
+      <i class="bi bi-exclamation-triangle-fill text-danger"></i> Expedition profile coordinates failed verification checkpoint.
     </div>
 
     <div v-else>
@@ -64,7 +64,7 @@
             </div>
 
             <div v-if="form.seniors > 0" class="alert-senior-msg p-2 rounded small text-warning text-center border border-warning border-opacity-10 fs-9">
-              ⚠️ Senior slots require submitting a physical fitness certificate at basecamp arrival.
+              <i class="bi bi-exclamation-triangle-fill text-warning"></i> Senior slots require submitting a physical fitness certificate at basecamp arrival.
             </div>
 
             <div class="mt-3">
@@ -81,7 +81,7 @@
 
     <Transition name="modal-fade">
       <div v-if="modifyModalActive" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
-        <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start" style="max-width: 650px;">
+        <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-12 text-start" style="max-width: 35rem; max-height: 45rem;">
           
           <button @click="modifyModalActive = false" class="btn-close-modal">✕</button>
           <h4 class="fw-bold tracking-tight text-white m-0 mb-4 text-center">Modify Trek Matrix</h4>
@@ -132,8 +132,8 @@
                 <label class="modal-input-label">Status Lifecycle State</label>
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.status" class="modal-clean-field bg-transparent select-fix">
-                    <option value="Pending">Pending</option> <option value="Approved">Approved</option>
-                    <option value="Open">Open</option> <option value="Closed">Closed</option> <option value="Completed">Completed</option>
+                    <option value="Open">Open</option> <option value="Ongoing">On going</option> <option value="Closed">Closed</option> 
+                    <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
@@ -185,10 +185,11 @@
                 <label class="modal-input-label">Route Lifecycle State</label>
                 <div class="modal-input-wrapper">
                   <select v-model="staffEditForm.status" class="modal-clean-field bg-transparent select-fix" required>
-                    <option value="Open">🟢 Open (Accepting Slots)</option>
-                    <option value="Ongoing">🔵 Ongoing (On Trail)</option>
-                    <option value="Closed">🔴 Closed (Weather/Halted)</option>
-                    <option value="Completed">⚪ Completed (Ended)</option>
+                    <option value="Open">Open</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Closed">Closed </option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled </option>
                   </select>
                 </div>
               </div>

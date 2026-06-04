@@ -2,7 +2,7 @@
   <div class="user-profile-shared-component text-white text-start animate-fade-in">
     
     <div v-if="profile.blacklisted" class="alert alert-danger border border-danger border-opacity-20 rounded-3 p-3 mb-4 bg-danger bg-opacity-10">
-      ⚠️ <strong>Account Flag Restriction Status Active:</strong> This exploration profile coordinate layer has been blacklisted by administration.
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Account Flag Restriction Status Active:</strong> This exploration profile coordinate layer has been blacklisted by administration.
     </div>
 
     <div class="row g-4">
@@ -19,28 +19,28 @@
             </label>
           </div>
 
-          <h4 class="fw-bold tracking-tight m-0">{{ profile.name }}</h4>
+          <h4 class="fw-bold tracking-tight mb-2">{{ profile.name }}</h4>
           <span class="badge role-indicator-badge mt-1.5 px-3 py-1 rounded-pill small uppercase">{{ profileRole }}</span>
           
           <hr class="my-4 border-white border-opacity-10" />
 
-          <div class="telemetry-logs text-start gap-3 d-flex flex-column fs-8 text-white-50">
+          <div class="telemetry-logs text-start gap-3 d-flex flex-column fs-9 text-white-50">
             <div class="log-item d-flex justify-content-between">
-              <span>Account Integrity:</span>
+              <span>Status</span>
               <span class="fw-bold" :class="profile.is_active ? 'text-success' : 'text-danger'">
-                ● {{ profile.is_active ? 'Active Sync' : 'Deactivated System' }}
+                ● {{ profile.is_active ? 'Active' : 'Deactivated' }}
               </span>
             </div>
             <div class="log-item d-flex justify-content-between">
-              <span>Ecosystem Key Code:</span>
+              <span>Key Code:</span>
               <span class="fw-bold text-white">#APX-U{{ profile.id }}</span>
             </div>
             <div class="log-item d-flex justify-content-between" v-if="profile.created_at">
-              <span>Created Coordinates:</span>
+              <span>Created </span>
               <span class="fw-bold text-white">{{ profile.created_at }}</span>
             </div>
             <div class="log-item d-flex justify-content-between">
-              <span>Last Network Entry:</span>
+              <span>Last Entry:</span>
               <span class="fw-bold text-success text-glow">● {{ profile.last_login_at }}</span>
             </div>
           </div>
@@ -54,21 +54,21 @@
           
           <form @submit.prevent="$emit('patch-profile', localForm)" class="d-flex flex-column gap-3.5">
             
-            <div class="profile-input-group">
+            <div class="profile-input-group mb-3">
               <label class="input-label-tag">Registered Identity Name</label>
               <div class="interactive-input-wrapper" :class="{ 'locked-input opacity-75': mode === 'audit' }">
                 <input v-model="localForm.name" type="text" class="clean-profile-field w-100" :disabled="mode === 'audit'" required>
               </div>
             </div>
 
-            <div class="profile-input-group">
+            <div class="profile-input-group mb-3">
               <label class="input-label-tag">Contact Number Channel</label>
               <div class="interactive-input-wrapper" :class="{ 'locked-input opacity-75': mode === 'audit' }">
                 <input v-model="localForm.contact" type="tel" class="clean-profile-field w-100" :disabled="mode === 'audit'" required>
               </div>
             </div>
 
-            <div class="profile-input-group">
+            <div class="profile-input-group mb-3">
               <label class="input-label-tag opacity-50">Email Reference Coordinate (Immutable Identity Key)</label>
               <div class="interactive-input-wrapper locked-input opacity-60">
                 <input :value="profile.email" type="email" class="clean-profile-field w-100" disabled>
@@ -101,7 +101,7 @@
                 </button>
               </div>
 
-              <div v-else-if="mode === 'audit'" class="d-flex justify-content-end gap-2 w-100">
+              <div v-else-if="mode === 'audit'" class="d-flex justify-content-end gap-2 w-100 pt-3">
                 <button type="button" @click="$emit('admin-toggle-blacklist', profile.id)" class="btn btn-sm btn-outline-warning rounded-pill px-4 py-2 fs-9 fw-semibold">
                   {{ profile.blacklisted ? 'Whitelist Account' : 'Blacklist Profile' }}
                 </button>

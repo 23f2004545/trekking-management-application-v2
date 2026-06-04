@@ -12,7 +12,7 @@
         <div v-for="trip in historicTrips" :key="trip.booking_id" class="col-12">
           <div class="history-glass-row p-3 rounded-3 border border-white border-opacity-10 d-flex align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-              <div class="icon-shield fs-4 p-2 rounded-2">🏔️</div>
+              <div class="icon-shield fs-4 p-2 rounded-2"><i class="bi bi-backpack2-fill text-danger"></i></div>
               <div>
                 <span class="badge completed-badge mb-1 text-uppercase fs-9">● Completed</span>
                 <h5 class="fw-bold m-0 text-white">{{ trip.trek_name }}</h5>

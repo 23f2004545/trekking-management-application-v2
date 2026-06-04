@@ -76,7 +76,7 @@
           <div class="meta-profile-zone">
             <div class="mb-3">
               <h3 class="fw-bold tracking-tight m-0 text-white fs-4">{{ trek.trek_name }}</h3>
-              <p class="fs-8 text-success fw-medium m-0 mt-1">📍 {{ trek.location }}</p>
+              <p class="fs-8 text-warning fw-medium m-0 mt-1"> <i class="bi bi-geo-alt"></i> {{ trek.location }}</p>
               
               <span class="fs-8 text-light">Trek Registered : {{ trek.created_at }}</span><br />
               <span class="fs-8 text-info">Last Update : {{ trek.updated_at }}</span>
@@ -120,7 +120,7 @@
             </button>
 
             <div v-else-if="authStore.role === 'admin'" class="d-flex flex-column gap-2">
-              <span class="d-block fs-9 text-warning mb-1 opacity-75">⚠️ ADMINISTRATIVE CONTROL OVERRIDE</span>
+              <span class="d-block fs-9 text-warning mb-1 opacity-75"><i class="bi bi-exclamation-triangle-fill text-warning"></i> ADMINISTRATIVE CONTROL OVERRIDE</span>
               <div class="d-flex gap-2">
                 <button @click="$emit('admin-modify')" class="btn btn-sm btn-light rounded-pill flex-grow-1 py-2 fw-semibold text-dark fs-9">Modify Route</button>
                 <button @click="$emit('admin-delete')" class="btn btn-sm btn-danger rounded-pill flex-grow-1 py-2 fw-semibold text-white fs-9">Purge Track</button>
@@ -128,7 +128,7 @@
             </div>
 
             <div v-else-if="authStore.role === 'trek_staff'" class="text-start">
-              <span class="d-block fs-9 text-warning mb-2 opacity-75"> ⚠️ TRAIL MODIFICATIONS </span>
+              <span class="d-block fs-9 text-warning mb-2 opacity-75"> <i class="bi bi-exclamation-triangle-fill text-warning"></i> TRAIL MODIFICATIONS </span>
               <button @click="$emit('staff-toggle-status')" class="btn btn-sm btn-outline-success rounded-pill w-100 py-2 fs-9 fw-semibold border-opacity-35 text-white">
                 Toggle Lifecycle Status (Open/Closed)
               </button>

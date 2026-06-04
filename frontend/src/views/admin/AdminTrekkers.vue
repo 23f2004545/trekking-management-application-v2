@@ -11,7 +11,7 @@
       <div class="row g-2 align-items-center">
         <div class="col-md-6">
           <div class="search-field-capsule px-3 py-1.5 rounded-3 d-flex align-items-center">
-            <span class="me-2 text-white-50 opacity-40">🔍</span>
+            <span class="me-2 text-white-50 opacity-40"><i class="bi bi-search"></i></span>
             <input v-model="searchQuery" type="text" placeholder="Search by name, specialized field, or license metrics..." class="bg-transparent border-0 text-white w-100 fs-8 clean-field">
           </div>
         </div>
@@ -41,7 +41,7 @@
             {{ trekker.blacklisted ? 'Whitelist' : 'Blacklist' }}
           </button>
           
-          <button @click="launchAuditView(trekker.id)" class="btn btn-sm btn-success rounded-pill px-3.5 fs-8 fw-bold text-dark shadow-sm">
+          <button @click="launchAuditView(trekker.id)" class="btn btn-sm btn-success rounded-pill px-3 fs-8 fw-bold text-dark shadow-sm">
             View Profile
           </button>
         </div>
@@ -174,19 +174,14 @@ onMounted(() => {
 .clean-field:focus { outline: none; }
 
 /* Modal layer specifications */
-.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999999; }
-.glass-modal-card { background: rgba(20, 28, 24, 0.9) !important; backdrop-filter: blur(35px); width: 100%; max-width: 850px; }
+.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 12, 0.341); backdrop-filter: blur(5px); z-index: 999; }
+.glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
 .max-vh-90 { max-height: 90vh; }
 
 .btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
 
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; }
-
-/* Modal overlay layouts */
-.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999; }
-.glass-modal-card { background: rgba(20, 28, 24, 0.9) !important; backdrop-filter: blur(35px); width: 100%; max-width: 650px; }
-.max-vh-90 { max-height: 90vh; }
 
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }

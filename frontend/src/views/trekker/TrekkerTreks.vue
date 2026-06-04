@@ -14,7 +14,7 @@
         <!-- Text Lookup Search -->
         <div class="col-md-3">
           <div class="search-box px-3 py-1.5 rounded-3 d-flex align-items-center">
-            <span class="me-2 text-white-50 opacity-50">🔍</span>
+            <span class="me-2 text-white-50 opacity-50"><i class="bi bi-search"></i></span>
             <input v-model="filters.query" type="text" placeholder="Search by name or grid..." class="bg-transparent border-0 text-white w-100 fs-8 clean-field">
           </div>
         </div>
@@ -44,7 +44,7 @@
          2. EXISTING EXPEDITIONS GRID CANVAS
          =================================================================== -->
     <div v-if="filteredTreks.length === 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
-      <span class="fs-1">🗺️</span>
+      <span class="fs-1"><i class="bi bi-map"></i></span>
       <h5 class="fw-bold mt-2">No Expedition Inventories Map Matches</h5>
       <p class="text-white-50 small m-0">Reset parameters filters or configure a brand new track route.</p>
     </div>
@@ -63,11 +63,11 @@
           <div class="p-3_5 flex-grow-1 d-flex flex-column justify-content-between">
             <div>
               <div class="d-flex align-items-center justify-content-between text-white-50 fs-9 fw-bold mb-1.5">
-                <span class="text-uppercase tracking-wider">🧗 {{ trek.difficulty }}</span>
-                <span>🏔️ {{ trek.max_altitude }}m</span>
+                <span class="text-uppercase tracking-wider text-info"> {{ trek.difficulty }}</span>
+                <span><i class="bi bi-caret-up-fill text-success fs-8"></i> {{ trek.max_altitude }}m</span>
               </div>
               <h4 class="fw-bold tracking-tight m-0 mb-1 text-white">{{ trek.trek_name }}</h4>
-              <p class="fs-8 text-white-50 m-0 mb-3">📍 {{ trek.location }}</p>
+              <p class="fs-8 text-white-50 m-0 mb-3"><i class="bi bi-geo-alt"></i> {{ trek.location }}</p>
             </div>
 
             <div class="pt-3 border-top border-white border-opacity-10 d-flex align-items-center justify-content-between">

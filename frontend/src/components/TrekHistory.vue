@@ -2,7 +2,7 @@
   <div class="booking-history-sub-component text-white text-start">
     
     <div class="glass-history-block p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
-      <h5 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1">📋 Secure Booking Specifications</h5>
+      <h5 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1"><i class="bi bi-card-checklist"></i> Secure Booking Specifications</h5>
       
       <div class="spec-column-grid p-4 rounded-3 border border-white border-opacity-5  bg-opacity-5 fs-8">
         <div class="row g-3">

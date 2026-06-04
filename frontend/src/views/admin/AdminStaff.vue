@@ -15,8 +15,8 @@
     <div class="glass-container p-3 rounded-4 mb-4 shadow-sm">
       <div class="row g-2 align-items-center">
         <div class="col-md-6">
-          <div class="search-field-capsule px-3 py-1.5 rounded-3 d-flex align-items-center">
-            <span class="me-2 text-white-50 opacity-40">🔍</span>
+          <div class="search-field-capsule px-3 py-1 rounded-3 d-flex align-items-center">
+            <span class="me-2 text-white-50 opacity-40"><i class="bi bi-search"></i></span>
             <input v-model="searchQuery" type="text" placeholder="Search by name, specialized field, or license metrics..." class="bg-transparent border-0 text-white w-100 fs-8 clean-field">
           </div>
         </div>
@@ -36,7 +36,7 @@
               <h5 class="fw-bold m-0 text-white tracking-tight">{{ member.name }}</h5>
               <span v-if="member.blacklisted" class="badge bg-danger extra-small py-0.5 rounded px-2">BLACKLISTED</span>
             </div>
-            <p class="m-0 fs-9 text-success fw-medium mt-0.5">🏔️ {{ member.specialization }} ({{ member.experience }} Exp)</p>
+            <p class="m-0 fs-9 text-success fw-medium mt-0.5"><i class="bi bi-briefcase-fill"></i> {{ member.specialization }} ({{ member.experience }} Exp)</p>
             <p class="m-0 extra-small text-white-50 opacity-60 mt-0.5">Last login: {{ member.last_login_at }}</p>
           </div>
         </div>
@@ -50,7 +50,7 @@
             {{ member.blacklisted ? 'Whitelist' : 'Blacklist' }}
           </button>
           
-          <button @click="launchAuditView(member.id)" class="btn btn-sm btn-success rounded-pill px-3.5 fs-8 fw-bold text-dark shadow-sm">
+          <button @click="launchAuditView(member.id)" class="btn btn-sm btn-success rounded-pill px-3 fs-8 fw-bold text-dark shadow-sm">
             View Profile
           </button>
         </div>
@@ -119,7 +119,7 @@
             <div v-for="trek in availableTreksList" :key="trek.trek_id" class="p-3 bg-opacity-5 rounded-3 border border-white border-opacity-5 d-flex align-items-center justify-content-between gap-3 fs-8">
               <div>
                 <strong class="text-white d-block">{{ trek.trek_name }}</strong>
-                <span class="text-white-50 extra-small">📍 {{ trek.location }} — Current Guide: <span class="text-success">{{ trek.assigned_staff.name || 'None' }}</span></span>
+                <span class="text-white-50 extra-small"><i class="bi bi-geo-alt"></i> {{ trek.location }} — Current Guide: <span class="text-success">{{ trek.assigned_staff.name || 'None' }}</span></span>
               </div>
               <button @click="processStaffAssignment(trek.trek_id, false)" class="btn btn-sm btn-light text-dark fw-bold rounded-pill px-3 fs-9">
                 Assign Here
@@ -332,8 +332,8 @@ onMounted(() => {
 .clean-field:focus { outline: none; }
 
 /* Modal layer specifications */
-.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999999; }
-.glass-modal-card { background: rgba(20, 28, 24, 0.9) !important; backdrop-filter: blur(35px); width: 100%; max-width: 850px; }
+.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 12, 0.341); backdrop-filter: blur(5px); z-index: 999; }
+.glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
 .max-vh-90 { max-height: 90vh; }
 
 .btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
@@ -342,9 +342,9 @@ onMounted(() => {
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; }
 
 /* Modal overlay layouts */
-.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999; }
-.glass-modal-card { background: rgba(20, 28, 24, 0.9) !important; backdrop-filter: blur(35px); width: 100%; max-width: 650px; }
-.max-vh-90 { max-height: 90vh; }
+/* .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 12, 0.335); backdrop-filter: blur(5px); z-index: 999; }
+.glass-modal-card { background: rgba(0, 0, 0, 0.241) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
+.max-vh-90 { max-height: 90vh; } */
 
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }

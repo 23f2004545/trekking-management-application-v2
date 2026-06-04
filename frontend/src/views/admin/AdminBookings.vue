@@ -37,7 +37,7 @@
       </div>
 
       <div v-if="activeAuditDetail.booking_status === 'Cancelled'" class="alert alert-danger p-4 rounded-4 border border-danger border-opacity-20 bg-danger bg-opacity-10 mb-4 animate-scale-up">
-        <h6 class="fw-bold m-0 text-white tracking-tight">🚨 SECURITY DEACTIVATION STATEMENT LOG</h6>
+        <h6 class="fw-bold m-0 text-white tracking-tight"><i class="bi bi-exclamation-triangle text-warning"></i> SECURITY DEACTIVATION STATEMENT LOG</h6>
         <p class="m-0 fs-8 text-white-50 mt-2"><strong>Revocation Date:</strong> {{ activeAuditDetail.cancelled_date }}</p>
         <p class="m-0 fs-8 text-white-50 mt-1"><strong>Reason Column:</strong> {{ activeAuditDetail.cancelled_reason }}</p>
       </div>
@@ -46,8 +46,8 @@
         <h6 class="fw-bold small tracking-wider text-uppercase text-success mb-3">1. Expedition Trail Specifications</h6>
         <div class="row g-3 fs-8 text-white-50">
           <div class="col-sm-6">Name Coordinate: <strong class="text-white">{{ activeAuditDetail.trek.name }}</strong></div>
-          <div class="col-sm-6">Ecosystem Location: <strong class="text-white">📍 {{ activeAuditDetail.trek.location }}</strong></div>
-          <div class="col-sm-6">Schedule Bounds: <strong class="text-white">🗓️ {{ activeAuditDetail.trek.schedule }}</strong></div>
+          <div class="col-sm-6">Ecosystem Location: <strong class="text-white"><i class="bi bi-geo-alt"></i> {{ activeAuditDetail.trek.location }}</strong></div>
+          <div class="col-sm-6">Schedule Bounds: <strong class="text-white"><i class="bi bi-calendar"></i> {{ activeAuditDetail.trek.schedule }}</strong></div>
           <div class="col-sm-6">Difficulty Intensity: <strong class="text-white">{{ activeAuditDetail.trek.difficulty }}</strong></div>
         </div>
       </div>

@@ -20,13 +20,13 @@
         <!-- Text Lookup Search -->
         <div class="col-md-3">
           <div class="search-box px-3 py-1.5 rounded-3 d-flex align-items-center">
-            <span class="me-2 text-white-50 opacity-50">🔍</span>
+            <span class="me-2 text-white-50 opacity-50"><i class="bi bi-search"></i></span>
             <input v-model="filters.query" type="text" placeholder="Search by name or grid..." class="bg-transparent border-0 text-white w-100 fs-8 clean-field">
           </div>
         </div>
         <!-- Difficulty Dropdown Filter -->
         <div class="col-md-3">
-          <select v-model="filters.difficulty" class="select-glass w-100 px-3 py-1.5 rounded-3 text-white fs-8">
+          <select v-model="filters.difficulty" class="select-glass w-100 px-3 py-1 rounded-3 text-white fs-8">
             <option value="">All Intensities</option>
             <option value="Easy">Easy Trails</option>
             <option value="Moderate">Moderate Tracks</option>
@@ -50,7 +50,7 @@
          2. EXISTING EXPEDITIONS GRID CANVAS
          =================================================================== -->
     <div v-if="filteredTreks.length === 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
-      <span class="fs-1">🗺️</span>
+      <span class="fs-1"><i class="bi bi-map"></i></span>
       <h5 class="fw-bold mt-2">No Expedition Inventories Map Matches</h5>
       <p class="text-white-50 small m-0">Reset parameters filters or configure a brand new track route.</p>
     </div>
@@ -68,15 +68,15 @@
           </div>
 
           <!-- Body Technical Parameters Details -->
-          <div class="p-3.5 flex-grow-1 d-flex flex-column justify-content-between">
+          <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
             <div>
               <div class="d-flex justify-content-between text-white-50 fs-9 mb-1.5 fw-medium">
-                <span>🧗 {{ trek.difficulty }}</span>
-                <span>🏔️ {{ trek.max_altitude }}m</span>
+                <span class="text-info">{{ trek.difficulty }}</span>
+                <span><i class="bi bi-caret-up-fill text-success"></i> {{ trek.max_altitude }}m</span>
               </div>
-              <h5 class="fw-bold tracking-tight text-white m-0 text-truncate">{{ trek.trek_name }}</h5>
-              <p class="fs-9 text-white-50 m-0 mt-0.5 mb-2">📍 Location: {{ trek.location }}</p>
-              <p class="fs-9 text-white-50 m-0 opacity-75">👨‍✈️ Guide: <span class="text-success">{{ trek.assigned_staff.name }}</span></p>
+              <h5 class="fw-bold tracking-tight text-white mb-1 text-truncate">{{ trek.trek_name }}</h5>
+              <p class="fs-9 text-white-50 m-0 mt-0.5 mb-2"><i class="bi bi-pin-map-fill"></i> Location: {{ trek.location }}</p>
+              <p class="fs-9 text-white-50 m-0 opacity-75"><i class="bi bi-person-fill "></i> Guide: <span class="text-warning fw-bold">{{ trek.assigned_staff.name }}</span></p>
             </div>
 
             <!-- Double Bottom Action Execution Nodes Row -->
@@ -378,5 +378,4 @@ onMounted(() => {
 .extra-small { font-size: 0.68rem; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
-.p-3.5 { padding: 14px; }
 </style>

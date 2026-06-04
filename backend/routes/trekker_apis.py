@@ -325,7 +325,7 @@ def book_trek_slot():
             status='Booked' ,# Default state tracking label
             number_of_persons=number_of_persons,
             payment_method=data.get('payment_method'),
-            total_amount=trek.price_per_person * (data.get('adults') + data.get('children') + data.get('seniors')),
+            total_amount=trek.price_per_person * number_of_persons,
         )
         
         db.session.add(new_booking)
@@ -352,8 +352,11 @@ def get_bookings():
     results = []
     for b in user_bookings:
         # 1. Lifecycle Tracking Logic
+        if b.trek.status == 'Completed':
+            continue
+        
         calc_status = b.status
-        if b.status == 'Booked' and b.trek:
+        if b.status == 'Booked' and b.trek :
             if current_date < b.trek.start_date.date():
                 calc_status = 'Upcoming'
             elif b.trek.start_date.date() <= current_date <= b.trek.end_date.date():
@@ -361,6 +364,9 @@ def get_bookings():
             else:
                 calc_status = 'Completed'
                 
+        if calc_status == 'Completed':
+            continue
+
         # 2. Extract First Trek Image
         trek_img = ""
         if b.trek and b.trek.images:

@@ -303,12 +303,15 @@ def update_trek_field_data(trek_id):
         return make_response(jsonify({"message": "Unauthorized: Route belongs to another guide."}), 403)
 
     data = request.get_json()
+    status_changed = False
+    new_status = data.get('status')
     
     # 1. Update Lifecycle Status
-    if 'status' in data:
-        allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed']
-        if data['status'] in allowed_statuses:
-            trek.status = data['status']
+    if new_status:
+        allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed' , 'Cancelled']
+        if new_status in allowed_statuses and trek.status != new_status:
+            trek.status = new_status
+            status_changed = True
             
     # 2. Update Live Slot Capacities (e.g., if a tent breaks or weather limits capacity)
     if 'available_slots' in data:
@@ -319,6 +322,22 @@ def update_trek_field_data(trek_id):
         trek.description = data['description'].strip()
 
     trek.updated_at = db.func.current_timestamp()
+
+    if status_changed:
+        # All currently active bookings for this specific trek
+        active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
+        
+        for booking in active_bookings:
+            if new_status == 'Completed':
+                booking.status = 'Completed'
+                booking.updated_at = datetime.now(timezone.utc)
+                
+            elif new_status == 'Cancelled':
+                booking.status = 'Cancelled'
+                booking.payment_status = 'Refunded' # Trigger refund pipeline state
+                booking.cancellation_reason = "Route operations halted by field administration."
+                booking.cancelled_at = datetime.now(timezone.utc)
+                booking.updated_at = datetime.now(timezone.utc)
 
     try:
         db.session.commit()

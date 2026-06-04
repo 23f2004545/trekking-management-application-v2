@@ -67,7 +67,7 @@
       <!-- CTA Panel -->
       <div class="col-lg-4">
         <div class="cta-glass-card p-4 p-md-5 rounded-4 shadow-sm h-100 d-flex flex-column justify-content-center text-center border border-success border-opacity-25">
-          <span class="fs-1 mb-3">🏔️</span>
+          <span class="fs-1 mb-3"><i class="bi bi-compass"></i></span>
           <h3 class="fw-bold tracking-tight mb-2">Ready for the Summit?</h3>
           <p class="text-white-50 fs-8 mb-4">The alpine grids are open. Discover new routes, review guide logs, and secure your authorization pass today.</p>
           <button @click="$router.push('/portal/trekker/treks')" class="btn btn-success rounded-pill py-3 fw-bold text-dark fs-8 shadow w-100">
@@ -79,7 +79,7 @@
       <!-- Altitude Progression Chart -->
       <div class="col-lg-8">
         <div class="chart-glass-container p-4 p-md-5 rounded-4 shadow-sm h-100">
-          <h5 class="fw-bold tracking-tight fs-5 mb-1">📈 My Vertical Progression</h5>
+          <h5 class="fw-bold tracking-tight fs-5 mb-1"><i class="bi bi-graph-up-arrow me-2"></i>Vertical Progression</h5>
           <p class="fs-9 text-white-50 mb-4">Tracking maximum altitude metrics conquered across completed expeditions.</p>
           
           <div v-if="stats.chart_data.length === 0" class="d-flex align-items-center justify-content-center h-75">

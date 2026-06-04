@@ -271,10 +271,37 @@ def manage_trek_by_id(trek_id):
         trek.difficulty = data.get('difficulty', trek.difficulty)
         trek.duration_days = int(data.get('duration_days', trek.duration_days))
         trek.available_slots = int(data.get('available_slots', trek.available_slots))
-        trek.status = data.get('status', trek.status)
         trek.description = data.get('description', trek.description).strip()
         trek.max_altitude = float(data.get('max_altitude', trek.max_altitude))
         trek.price_per_person = float(data.get('price_per_person', trek.price_per_person))
+        
+        # Change status of all related bookings 
+        
+        status_changed = False
+        new_status = data.get('status')
+        
+        if new_status:
+            allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed', 'Cancelled']
+            if new_status in allowed_statuses and trek.status != new_status:
+                trek.status = new_status
+                status_changed = True
+                
+        if status_changed:
+        # All currently active bookings for this specific trek
+            active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
+            
+            for booking in active_bookings:
+                if new_status == 'Completed':
+                    booking.status = 'Completed'
+                    booking.updated_at = datetime.now(timezone.utc)
+                    
+                elif new_status == 'Cancelled':
+                    booking.status = 'Cancelled'
+                    booking.payment_status = 'Refunded' # Trigger refund pipeline state
+                    booking.cancellation_reason = "Route operations halted by field administration."
+                    booking.cancelled_at = datetime.now(timezone.utc)
+                    booking.updated_at = datetime.now(timezone.utc)
+                    
         
         staff_id = data.get('assigned_staff_id')
         trek.assigned_staff_id = int(staff_id) if staff_id and staff_id != 'null' else None

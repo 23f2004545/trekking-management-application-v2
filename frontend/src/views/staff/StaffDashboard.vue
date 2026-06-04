@@ -18,7 +18,7 @@
       <div class="row align-items-end justify-content-between g-3">
         <div class="col-lg-8">
           <span class="badge operations-badge mb-2 px-3 py-1.5 rounded-pill fs-9 fw-bold">
-            🌲 ACTIVE FIELD COMMAND
+            <i class="bi bi-globe"></i> ACTIVE FIELD COMMAND
           </span>
           <h1 class="display-5 fw-bold tracking-tight m-0">
             Guide Operations, <span class="text-success-tint">{{ authStore.userName }}</span>
@@ -45,7 +45,7 @@
       <div class="row g-3 mb-5">
         <div class="col-md-4">
           <div class="metric-glass-card p-4 rounded-4 shadow-sm text-center">
-            <div class="metric-icon mb-2">🏔️</div>
+            <div class="metric-icon mb-2"><i class="bi bi-map"></i></div>
             <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider mb-1">Active Assigned Routes</h6>
             <p class="metric-value display-4 fw-bold m-0 tracking-tighter">{{ stats.active_routes }}</p>
           </div>
@@ -53,7 +53,7 @@
         
         <div class="col-md-4">
           <div class="metric-glass-card p-4 rounded-4 shadow-sm text-center border-success border-opacity-25">
-            <div class="metric-icon mb-2">👥</div>
+            <div class="metric-icon mb-2"><i class="bi bi-people"></i></div>
             <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider mb-1">Incoming Explorers</h6>
             <p class="metric-value display-4 fw-bold m-0 text-success tracking-tighter">{{ stats.total_explorers }}</p>
           </div>
@@ -61,7 +61,7 @@
         
         <div class="col-md-4">
           <div class="metric-glass-card p-4 rounded-4 shadow-sm text-center">
-            <div class="metric-icon mb-2">📡</div>
+            <div class="metric-icon mb-2"><i class="bi bi-signal"></i></div>
             <h6 class="metric-label opacity-60 small m-0 uppercase tracking-wider mb-1">Sector Safety Status</h6>
             <p class="metric-value fs-3 fw-bold m-0 mt-2 text-white">ALL CLEAR</p>
           </div>

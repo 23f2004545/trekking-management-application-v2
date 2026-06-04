@@ -11,10 +11,10 @@
 
       <div class="d-flex gap-3">
         <button @click="$router.push('/portal/admin/treks')" class="btn-glass-action rounded-pill px-4 py-2 fs-8 fw-semibold text-white">
-          🗺️ Add Trek Route
+          <i class="bi bi-plus-lg me-2"></i> Add Trek Route
         </button>
         <button @click="$router.push('/portal/admin/staff')" class="btn-glass-action rounded-pill px-4 py-2 fs-8 fw-semibold text-white">
-          👥 Add Staff Guide
+          <i class="bi bi-person-plus me-2"></i> Add Staff Guide
         </button>
       </div>
     </div>
@@ -23,7 +23,7 @@
       <div class="col-xl-3 col-md-6">
         <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="metric-icon">🏔️</div>
+            <div class="metric-icon"><i class="bi bi-map"></i></div>
             <h6 class="card-title-lbl m-0 uppercase tracking-wider">Total Treks</h6>
           </div>
           <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.treks }}</p>
@@ -32,7 +32,7 @@
       <div class="col-xl-3 col-md-6">
         <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="metric-icon">🎒</div>
+            <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
             <h6 class="card-title-lbl m-0 uppercase tracking-wider">Live Bookings</h6>
           </div>
           <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.bookings }}</p>
@@ -41,7 +41,7 @@
       <div class="col-xl-3 col-md-6">
         <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="metric-icon">👨‍✈️</div>
+            <div class="metric-icon"><i class="bi bi-person-check text-success"></i></div>
             <h6 class="card-title-lbl m-0 uppercase tracking-wider">Verified Guides</h6>
           </div>
           <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.staff }}</p>
@@ -50,7 +50,7 @@
       <div class="col-xl-3 col-md-6">
         <div class="stats-glass-card p-4 rounded-4 shadow-sm d-flex flex-column justify-content-center">
           <div class="d-flex align-items-center gap-3 mb-2">
-            <div class="metric-icon">🥾</div>
+            <div class="metric-icon"><i class="bi bi-person text-info"></i></div>
             <h6 class="card-title-lbl m-0 uppercase tracking-wider">System Users</h6>
           </div>
           <p class="display-4 fw-black m-0 tracking-tighter">{{ stats.counters.trekkers }}</p>
@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <h5 class="fw-bold tracking-tight fs-5 mb-4">⭐ Ecosystem Reputation Insights</h5>
+    <h5 class="fw-bold tracking-tight fs-5 mb-4"><i class="bi bi-star-fill text-warning"></i> Ecosystem Reputation Insights</h5>
     <div class="row g-4 mb-5">
       <div class="col-md-4">
         <div class="insight-glass-card p-4 rounded-4 d-flex align-items-center gap-4">
@@ -74,7 +74,7 @@
           <h6 class="fs-9 text-white-50 uppercase tracking-wider mb-2">Highest Rated Trek</h6>
           <div v-if="stats.insights.top_trek">
             <h5 class="fw-bold text-success m-0">{{ stats.insights.top_trek.name }}</h5>
-            <span class="text-warning fs-9 fw-bold">⭐ {{ stats.insights.top_trek.rating }} / 5.0</span>
+            <span class="text-warning fs-9 fw-bold"><i class="bi bi-star-fill text-warning"></i> {{ stats.insights.top_trek.rating }} / 5.0</span>
           </div>
           <div v-else class="text-white-50 italic fs-9 mt-2">Not enough review data.</div>
         </div>
@@ -84,17 +84,17 @@
           <h6 class="fs-9 text-white-50 uppercase tracking-wider mb-2">Top Performing Guide</h6>
           <div v-if="stats.insights.top_staff">
             <h5 class="fw-bold text-success m-0">{{ stats.insights.top_staff.name }}</h5>
-            <span class="text-warning fs-9 fw-bold">⭐ {{ stats.insights.top_staff.rating }} / 5.0</span>
+            <span class="text-warning fs-9 fw-bold"><i class="bi bi-star-fill text-warning"></i> {{ stats.insights.top_staff.rating }} / 5.0</span>
           </div>
           <div v-else class="text-white-50 italic fs-9 mt-2">Not enough review data.</div>
         </div>
       </div>
     </div>
 
-    <h5 class="fw-bold tracking-tight fs-5 mb-4">📈 Growth & Analytics Matrix</h5>
+    <h5 class="fw-bold tracking-tight fs-5 mb-4"><i class="bi bi-graph-up-arrow"></i> Growth & Analytics Matrix</h5>
     
     <div v-if="!stats.charts.has_data" class="empty-data-glass p-5 rounded-4 text-center border border-white border-opacity-10 mb-4">
-      <div class="fs-1 mb-3 opacity-50">📊</div>
+      <div class="fs-1 mb-3 opacity-50"><i class="bi bi-graph-up-arrow"></i></div>
       <h5 class="fw-bold tracking-tight">Analytics Awaiting Telemetry</h5>
       <p class="text-white-50 fs-8 max-w-md mx-auto">
         Visual growth charts and popularity indices will populate here automatically once trekkers begin booking slots and completing routes.
@@ -122,7 +122,7 @@
 
           <div class="mt-4 pt-3 border-top border-white border-opacity-10 d-flex flex-column gap-2 fs-9 text-white-50">
             <div v-for="(item, idx) in stats.charts.popular" :key="idx" class="d-flex justify-content-between">
-              <span class="text-truncate pe-2">📍 {{ item.name }}</span>
+              <span class="text-truncate pe-2"><i class="bi bi-pin-map-fill"></i> {{ item.name }}</span>
               <strong class="text-white">{{ item.bookings }}</strong>
             </div>
           </div>
