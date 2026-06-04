@@ -6,3 +6,9 @@ class config:
     
     # Optional: How long should an access token live? (e.g., 1 hour)
     JWT_ACCESS_TOKEN_EXPIRES = 36000
+    
+    CACHE_TYPE = 'RedisCache'
+    CACHE_REDIS_HOST = 'localhost'
+    CACHE_REDIS_PORT = 6379
+    CACHE_REDIS_DB = 0
+    CACHE_DEFAULT_TIMEOUT = 300

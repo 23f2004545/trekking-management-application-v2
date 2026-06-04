@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.extensions import db
+from controller.extensions import db , cache
 from controller.models import *
 from controller.decorators import trekker_required
 from datetime import datetime, timezone
@@ -247,7 +247,10 @@ def save_medical_record():
 @trekker_bp.route('/treks', methods=['GET'])
 @jwt_required()
 @trekker_required
+@cache.cached(timeout=300, query_string=True) # Cache this endpoint for 5 minutes to optimize performance
 def get_all_treks():
+    
+    query_pipeline = Trek.query.filter_by(status='Open')
     treks = Trek.query.filter_by(status='Open').order_by(Trek.created_at.desc()).all()
     
     results = []

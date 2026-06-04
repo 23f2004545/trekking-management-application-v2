@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.extensions import bcrypt,db
+from controller.extensions import bcrypt,db,cache
 from controller.models import * 
 from controller.decorators import admin_required
 from datetime import datetime, timezone , timedelta
@@ -240,8 +240,8 @@ def create_trek():
                     db.session.add(new_image)
 
         db.session.commit()
+        cache.clear()
             
-        db.session.commit()
         return make_response(jsonify({"message": "Expedition coordinate mapping generated successfully.", "trek_id": new_trek.trek_id}), 201)
     except Exception as e:
         db.session.rollback()
@@ -257,6 +257,7 @@ def manage_trek_by_id(trek_id):
         try:
             db.session.delete(trek)
             db.session.commit()
+            cache.clear()
             return make_response(jsonify({"message": "Trekking route removed successfully"}), 200)
         except Exception as e:
             db.session.rollback()
@@ -330,6 +331,7 @@ def manage_trek_by_id(trek_id):
                     db.session.add(new_image)
 
         db.session.commit()
+        cache.clear()
         return make_response(jsonify({"message": "Trekking route updated successfully"}), 200)
     except Exception as e:
         db.session.rollback()

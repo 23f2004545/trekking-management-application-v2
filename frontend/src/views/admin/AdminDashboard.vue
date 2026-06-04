@@ -165,7 +165,6 @@ async function fetchRealDataMetrics() {
     if (res.ok) {
       const data = await res.json()
       stats.value = data
-      console.log('Fetched Dashboard Stats:', data)
       
       // If true data exists, wait for DOM to un-hide the canvases, then draw
       if (data.charts.has_data) {

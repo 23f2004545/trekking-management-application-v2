@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.extensions import db
+from controller.extensions import db,cache
 from controller.models import Trek, Booking, User , StaffProfile
 from controller.decorators import staff_required
 from datetime import datetime, timezone
@@ -341,6 +341,7 @@ def update_trek_field_data(trek_id):
 
     try:
         db.session.commit()
+        cache.clear()
         return make_response(jsonify({
             "message": "Field operational parameters synchronized.", 
             "new_status": trek.status

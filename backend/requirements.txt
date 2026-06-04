@@ -4,3 +4,5 @@ Flask-JWT-Extended
 flask-cors
 Flask-Bcrypt
 Celery
+Flask-Caching
+redis

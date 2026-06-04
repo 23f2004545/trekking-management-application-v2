@@ -1,5 +1,5 @@
 from flask import Flask 
-from controller.extensions import db, jwt, bcrypt
+from controller.extensions import db, jwt, bcrypt, cache
 from controller.models import User, Role
 from config import config
 from flask_cors import CORS
@@ -23,7 +23,8 @@ def create_app():
     jwt.init_app(app)
     bcrypt.init_app(app)
     db.init_app(app)
-
+    cache.init_app(app)
+    
     with app.app_context():
         db.create_all()
         
