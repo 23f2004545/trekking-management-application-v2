@@ -270,3 +270,23 @@ def monthly_admin_report():
         admin = User.query.filter(User.role.has(name='admin')).first()
 
         send_html_email(admin.email, f"Platform Audit Report: {month_name}", html_body)
+        
+        
+
+# ==========================================================
+# 4. ASYNC: OTP EMAIL FOR PASSWORD RESET
+# ==========================================================
+@celery_app.task(name='tasks.send_otp_email')
+def send_otp_email(user_email, user_name, otp_code):
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; text-align: center; border-radius: 8px;">
+        <h2 style="color: #1a202c; margin-top: 0;">Security Verification</h2>
+        <p style="color: #4a5568;">Hello {user_name},</p>
+        <p style="color: #4a5568;">A request was made to reset your Apex Expeditions security key. Your one-time authorization code is:</p>
+        <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #198754; background-color: #f0fdf4; padding: 15px; margin: 20px 0; border-radius: 8px;">
+            {otp_code}
+        </div>
+        <p style="color: #a0aec0; font-size: 13px;">This code will self-destruct in exactly 5 minutes. If you did not request this, please ignore this transmission.</p>
+    </div>
+    """
+    send_html_email(user_email, "Apex Security: Your Password Reset Code", html_body)

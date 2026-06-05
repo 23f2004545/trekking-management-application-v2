@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.extensions import db , cache
+from controller.extensions import db , cache , bcrypt
 from controller.models import *
 from controller.decorators import trekker_required
 from datetime import datetime, timezone 
@@ -532,3 +532,63 @@ def trigger_csv_export():
     return make_response(jsonify({
         "message": "Export initiated! Your CSV will be emailed to you shortly."
     }), 202)
+    
+
+
+# ==========================================================================
+# 7. Password Reset via OTP Workflow
+# ==========================================================================
+
+@trekker_bp.route('/request-password-otp', methods=['POST'])
+@jwt_required()
+@trekker_required
+def request_password_otp():
+    """Generates a 6-digit OTP, stores it in Redis for 5 mins, and emails it via Celery."""
+    from tasks import send_otp_email
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    # Generate 6 digit string
+    otp_code = str(random.randint(100000, 999999))
+    
+    # Save to Redis Cache with a 300 second (5 min) Time-To-Live
+    cache.set(f"password_otp_{user_id}", otp_code, timeout=300)
+    
+    # Trigger Celery to send email asynchronously
+    send_otp_email.delay(user.email, user.name, otp_code)
+    
+    return make_response(jsonify({"message": "OTP generated and dispatched to your email."}), 200)
+
+
+@trekker_bp.route('/reset-password', methods=['PATCH'])
+@jwt_required()
+@trekker_required
+def reset_password_with_otp():
+    """Validates the Redis OTP and updates the password."""
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    submitted_otp = data.get('otp')
+    new_password = data.get('new_password')
+    
+    if not submitted_otp or not new_password:
+        return make_response(jsonify({"message": "OTP and New Password are required."}), 400)
+        
+    # Retrieve OTP from Redis
+    stored_otp = cache.get(f"password_otp_{user_id}")
+    
+    if not stored_otp:
+        return make_response(jsonify({"message": "OTP has expired or was not requested."}), 400)
+        
+    if str(stored_otp) != str(submitted_otp):
+        return make_response(jsonify({"message": "Invalid OTP code provided."}), 400)
+        
+    # OTP is valid! Hash new password and save
+    user = User.query.get(user_id)
+    user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+    db.session.commit()
+    
+    # Crucial: Delete the OTP from Redis so it cannot be reused
+    cache.delete(f"password_otp_{user_id}")
+    
+    return make_response(jsonify({"message": "Security key successfully updated."}), 200)
