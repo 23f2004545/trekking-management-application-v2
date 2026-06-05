@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db , cache
 from controller.models import *
 from controller.decorators import trekker_required
-from datetime import datetime, timezone
+from datetime import datetime, timezone 
 import os , random
 
 trekker_bp = Blueprint('trekker', __name__)
@@ -274,7 +274,7 @@ def get_all_treks():
             "description": getattr(t, 'description', ""),
             "created_at": t.created_at.strftime("%Y-%m-%d") ,
             "updated_at": t.updated_at.strftime("%Y-%m-%d") ,
-            "image_url": images[0].image_url if images else "/static/Treks/default_trek.jpg",
+            "image_url": images[0].image_url if images else "/static/Treks/default_trek.jpeg",
             "assigned_staff": {
                 "id": staff_user.id if staff_user else None,
                 "name": staff_user.name if staff_user else "Unassigned Guide"
@@ -303,16 +303,16 @@ def book_trek_slot():
     # Query target route under a database session state lock if executing concurrent scales
     trek = Trek.query.get_or_404(trek_id)
     
-    # GUARD 1: Validate trek lifecycle status boundary condition
+    # Validate trek lifecycle status boundary condition
     if trek.status != 'Open':
         return make_response(jsonify({"message": "Booking denied: This route ecosystem is currently closed or completed."}), 400)
         
-    # GUARD 2: Prevent duplicate active bookings for the same trek by the same user
+    # Prevent duplicate active bookings for the same trek by the same user
     existing_active_booking = Booking.query.filter_by(user_id=user_id, trek_id=trek_id).filter(Booking.status == 'Booked').first()
     if existing_active_booking:
         return make_response(jsonify({"message": "Booking denied: You already hold a secured active slot for this expedition."}), 400)
         
-    # GUARD 3: Prevent overbooking beyond physical route capacity constraints
+    # Prevent overbooking beyond physical route capacity constraints
     if trek.available_slots <= 0:
         return make_response(jsonify({"message": "Booking denied: Base camp slots are completely full."}), 400)
         
@@ -352,9 +352,11 @@ def get_bookings():
     user_bookings = Booking.query.filter_by(user_id=user_id).order_by(Booking.booking_date.desc()).all()
     current_date = datetime.now(timezone.utc).date()
     
+    treks = Trek.query.filter_by(status='Open').order_by(Trek.created_at.desc()).all()
+    
     results = []
     for b in user_bookings:
-        # 1. Lifecycle Tracking Logic
+        # Lifecycle Tracking Logic
         if b.trek.status == 'Completed':
             continue
         
@@ -370,12 +372,12 @@ def get_bookings():
         if calc_status == 'Completed':
             continue
 
-        # 2. Extract First Trek Image
+        # Extract First Trek Image
         trek_img = ""
         if b.trek and b.trek.images:
             trek_img = b.trek.images[0].image_url
 
-        # 3. Resolve Assigned Staff Guide
+        # Resolve Assigned Staff Guide
         staff_data = {"name": "Unassigned", "email": "N/A", "contact": "N/A"}
         if b.trek and b.trek.assigned_staff_id:
             staff_user = User.query.get(b.trek.assigned_staff_id)
@@ -439,7 +441,6 @@ def get_completed_history():
             gallery = [img.image_url for img in b.trek.images] if b.trek.images else []
             
             staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg , "staff_reviews": staff_reviews_list}
-            print(b.trek.assigned_staff_id , b.trek.assigned_staff)
             if b.trek.assigned_staff_id and b.trek.assigned_staff:
                 staff_user = User.query.get(b.trek.assigned_staff.user_id)
                 if staff_user:
@@ -510,57 +511,24 @@ def submit_trek_review():
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({"message": str(e)}), 500)
-
-# @trekker_bp.route('/bookings/history', methods=['GET'])
-# @jwt_required()
-# @trekker_required
-# def get_user_trekking_history():
-#     """Retrieve only the personal historical trekking database lines for the logged-in trekker user."""
-#     user_id = get_jwt_identity()
     
-#     # Pull all records attached to this single trekker account mapping
-#     user_bookings = Booking.query.filter_by(user_id=user_id).order_by(Booking.booking_date.desc()).all()
-    
-#     history_cards = []
-#     for b in user_bookings:
-#         # Cross-reference the master trek lifecycle status to determine user visibility parameters
-#         history_cards.append({
-#             "booking_id": b.id,
-#             "booking_date": b.booking_date.strftime("%Y-%m-%d"),
-#             "booking_status": b.status, # Booked / Cancelled / Completed
-#             "trek_id": b.trek.id,
-#             "trek_name": b.trek.name,
-#             "location": b.trek.location,
-#             "duration": b.trek.duration,
-#             "difficulty": b.trek.difficulty,
-#             "trek_status": b.trek.status # Shows if it's currently Ongoing / Completed on the trail
-#         })
-        
-#     return make_response(jsonify(history_cards), 200)
 
+# ==========================================================================
+# 6. Exporting History
+# ==========================================================================
 
-# @trekker_bp.route('/bookings/<int:booking_id>/cancel', methods=['PATCH'])
-# @jwt_required()
-# @trekker_required
-# def cancel_trek_booking(booking_id):
-#     """Allows users to safely cancel an active reservation and restore available slot counts."""
-#     user_id = int(get_jwt_identity())
-#     booking = Booking.query.get_or_404(booking_id)
+@trekker_bp.route('/export-history', methods=['POST'])
+@jwt_required()
+@trekker_required
+def trigger_csv_export():
+    """Triggers the async Celery worker to generate a CSV."""
+    from tasks import export_history_csv
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     
-#     # ISOLATION PRIVILEGE GUARD
-#     if booking.user_id != user_id:
-#         return make_response(jsonify({"message": "Access Denied: Cannot cancel another trekker's payload."}), 403)
-        
-#     if booking.status != 'Booked':
-#         return make_response(jsonify({"message": "This record is already finalized or cancelled."}), 400)
-        
-#     try:
-#         booking.status = 'Cancelled'
-#         # Restore slot capacity value dynamically back to the parent trek map entity row
-#         booking.trek.available_slots += 1
-        
-#         db.session.commit()
-#         return make_response(jsonify({"message": "Expedition registration cancelled successfully. Slots returned."}), 200)
-#     except Exception as e:
-#         db.session.rollback()
-#         return make_response(jsonify({"message": f"Cancellation transaction error: {str(e)}"}), 500)
+    # Use .delay() to send it to Redis/Celery without blocking Flask
+    export_history_csv.delay(user_id, user.email, user.name)
+    
+    return make_response(jsonify({
+        "message": "Export initiated! Your CSV will be emailed to you shortly."
+    }), 202)

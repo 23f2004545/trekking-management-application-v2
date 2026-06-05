@@ -186,7 +186,6 @@ def get_staff_profile():
         "status": record.status,
         "emergency_contact": record.emergency_contact,
         "bio": record.bio
-        # "updated_at": record.updated_at.strftime("%b %d, %Y %H:%M") 
     }), 200)
 
 
@@ -242,9 +241,6 @@ def save_staff_profile():
 @jwt_required()
 @staff_required
 def get_staff_assigned_treks():
-
-    # staff = get_current_staff_profile()
-    # if not staff: return make_response(jsonify([]), 403)
     
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
@@ -278,7 +274,7 @@ def get_staff_assigned_treks():
             "status": t.status,
             "available_slots": t.available_slots,
             "start_date": t.start_date.strftime("%Y-%m-%d"),
-            "image": gallery[0] if gallery else "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b"
+            "image": gallery[0] if gallery else "/static/Treks/default_trek.jpeg"
         })
         
     return make_response(jsonify(results), 200)
@@ -306,18 +302,18 @@ def update_trek_field_data(trek_id):
     status_changed = False
     new_status = data.get('status')
     
-    # 1. Update Lifecycle Status
+    # Update Lifecycle Status
     if new_status:
         allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed' , 'Cancelled']
         if new_status in allowed_statuses and trek.status != new_status:
             trek.status = new_status
             status_changed = True
             
-    # 2. Update Live Slot Capacities (e.g., if a tent breaks or weather limits capacity)
+    # Update Live Slot Capacities (e.g., if a tent breaks or weather limits capacity)
     if 'available_slots' in data:
         trek.available_slots = int(data['available_slots'])
         
-    # 3. Update Trail Description (To provide live field notes/warnings)
+    # Update Trail Description (To provide live field notes/warnings)
     if 'description' in data:
         trek.description = data['description'].strip()
 

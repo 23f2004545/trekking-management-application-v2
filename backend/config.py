@@ -4,7 +4,7 @@ class config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = "super-secret-production-key"
     
-    # Optional: How long should an access token live? (e.g., 1 hour)
+    
     JWT_ACCESS_TOKEN_EXPIRES = 36000
     
     CACHE_TYPE = 'RedisCache'

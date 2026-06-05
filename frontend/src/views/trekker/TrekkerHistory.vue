@@ -1,11 +1,16 @@
 <template>
   <div class="historical-audit-viewport text-white text-start animate-fade-in pb-5">
     
-    <!-- PHASE 1: COMPACT HISTORICAL ROW LIST ARCHITECTURE -->
+    <!-- COMPACT HISTORICAL ROW LIST ARCHITECTURE -->
     <div v-if="!selectedTripForDetails">
-      <div class="mb-4">
-        <h2 class="fw-bold tracking-tight m-0">Expedition History Logs</h2>
-        <p class="m-0 text-white-50 fs-8 mt-1">Review finalized high-alpine routes, evaluate guide staff columns, and audit past data logs.</p>
+      <div class="mb-4 d-flex justify-content-between flex-wrap gap-3 align-items-start">
+        <div>
+          <h2 class="fw-bold tracking-tight m-0">Expedition History Logs</h2>
+          <p class="m-0 text-white-50 fs-8 mt-1">Review finalized high-alpine routes, evaluate guide staff columns, and audit past data logs.</p>
+        </div>
+        <button @click="requestCSVExport" class="btn btn-outline-light rounded-pill fs-9 border-opacity-25">
+          <i class="bi bi-download"></i>  Export History 
+        </button>
       </div>
 
       <div class="row g-3">
@@ -27,7 +32,7 @@
       </div>
     </div>
 
-    <!-- PHASE 2: DETAILED SYSTEM CASCADING DEPLOYMENT -->
+    <!-- DETAILED SYSTEM CASCADING DEPLOYMENT -->
     <div v-else class="extended-history-details-flow">
       <div class="mb-4">
         <button @click="selectedTripForDetails = null" class="btn btn-outline-light rounded-pill px-3.5 py-1.5 fs-9 border-opacity-25">
@@ -110,6 +115,22 @@ async function handlePublishedReview(formData) {
     }
   } catch (err) {
     alertStore.showAlert(`Network Drop: ${err.message}`, 'danger')
+  }
+}
+
+async function requestCSVExport() {
+  try {
+    alertStore.showAlert('Initializing secure CSV data compilation via background workers...', 'info')
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/export-history`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert(data.message, 'success')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Export drop: ${err.message}`, 'danger')
   }
 }
 

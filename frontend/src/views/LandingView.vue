@@ -206,15 +206,6 @@ export default {
   align-items: center;
 }
 
-/* .brand-logo {
-  font-weight: 700;
-  color: #ffffff;
-  text-decoration: none;
-  font-size: 1.35rem;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-} */
-
 .brand-logo {
   display: inline-flex;
   align-items: center;

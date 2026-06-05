@@ -132,6 +132,7 @@
                 <label class="modal-input-label">Status Lifecycle State</label>
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.status" class="modal-clean-field bg-transparent select-fix">
+                    <option value="" disabled selected>Select Status</option>
                     <option value="Open">Open</option> <option value="Ongoing">On going</option> <option value="Closed">Closed</option> 
                     <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
                   </select>

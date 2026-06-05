@@ -54,30 +54,6 @@ const router = createRouter({
       name: 'not-found',
       component: () => import('../views/NotFoundView.vue') // Triggers the customized 404 Lost Trail view
     },
-    // {
-    //   path: '/admin',
-    //   component: () => import('../layouts/AdminLayout.vue'), // The shared layout parent shell
-    //   meta: { requiresAuth: true, role: 'admin' },
-    //   children: [
-    //     { path: 'dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue') }
-    //   ]
-    // },
-    // {
-    //   path: '/staff',
-    //   component: () => import('../layouts/StaffLayout.vue'),
-    //   meta: { requiresAuth: true, role: 'trek_staff' }, // Adjusted to match your exact DB Enum names later
-    //   children: [
-    //     { path: 'dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue') }
-    //   ]
-    // },
-    // {
-    //   path: '/trekker',
-    //   component: () => import('../layouts/TrekkerLayout.vue'),
-    //   meta: { requiresAuth: true, role: 'trekker' },
-    //   children: [
-    //     { path: 'dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue') }
-    //   ]
-    // }
   ],
 })
 

@@ -4,7 +4,6 @@ from controller.models import User, Role
 from config import config
 from flask_cors import CORS
 
-
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     # jwt_data["sub"] contains whatever identity you put in the token when you created it

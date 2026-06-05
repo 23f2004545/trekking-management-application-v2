@@ -196,8 +196,6 @@ def create_trek():
     if not all([name, location, difficulty, duration, available_slots, start_date_str, end_date_str]):
         return make_response(jsonify({"message": "Missing non-optional tracking fields."}), 400)
     
-    # assigned_staff = User.query.get(assigned_staff_id) if assigned_staff_id and assigned_staff_id != 'null' else 1
-    
     staff_id = None
     if assigned_staff_id and assigned_staff_id != 'null' and assigned_staff_id != 'undefined':
         staff_id = int(assigned_staff_id)
@@ -263,7 +261,7 @@ def manage_trek_by_id(trek_id):
             db.session.rollback()
             return make_response(jsonify({"message": f"Database dependency error: {str(e)}"}), 400)
 
-    # PUT Method Execution (Upgraded to support multi-part form payloads)
+    # PUT Method Execution 
     data = request.form if request.form else request.get_json()
     
     try:
@@ -314,7 +312,7 @@ def manage_trek_by_id(trek_id):
             
         trek.updated_at = datetime.now(timezone.utc)
 
-        # 📸 DYNAMIC GALLERY REPLACEMENT LAYER
+        # DYNAMIC GALLERY REPLACEMENT LAYER
         if 'trek_gallery' in request.files:
             uploaded_files = request.files.getlist('trek_gallery')
             if uploaded_files and uploaded_files[0].filename != '':
@@ -345,16 +343,14 @@ def trek_details(trek_id):
 
     trek = Trek.query.get_or_404(trek_id)
     
-    # 1. Gather all gallery paths from our fresh child image table
+    # Gather all gallery paths from our fresh child image table
     gallery_images = [img.image_url for img in trek.images]
 
 
-    # 2. Extract Assigned Staff Guide Profile
+    # Extract Assigned Staff Guide Profile
     staff_user = User.query.get(trek.assigned_staff_id) if trek.assigned_staff_id else None
     reviews = Review.query.filter_by(trek_id=trek_id).all()
-    
-    # 3. Compile Separate Reviews (Trek vs Staff) from feedback metrics tables
-    # (Assuming columns exist or fallback to blank lists until Milestone 6 execution)
+
     trek_reviews_list = [
         # {
         #     "id": 1, 
@@ -508,25 +504,6 @@ def add_trek_staff():
     db.session.add(new_staff_profile)
     db.session.commit()
     return make_response(jsonify({"message": "Trek staff account generated successfully"}), 201)
-
-
-# @admin_bp.route('/users/<int:user_id>/toggle-status', methods=['PATCH'])
-# @jwt_required()
-# @admin_required
-# def toggle_user_active_status(user_id):
-#     """Deactivate or blacklist users and staff by flipping their is_active database field."""
-    
-#     current_user_id = get_jwt_identity()        
-#     user = User.query.get_or_404(user_id)
-#     if user.id == int(current_user_id):
-#         return make_response(jsonify({"message": "Superusers cannot blacklist themselves"}), 400)
-
-#     # Flip the activity boolean status flag
-#     user.is_active = not user.is_active
-#     db.session.commit()
-    
-#     status_label = "Activated" if user.is_active else "Deactivated/Blacklisted"
-#     return make_response(jsonify({"message": f"User status changed to {status_label}"}), 200)
 
 @admin_bp.route('/staff', methods=['GET'])
 @jwt_required()

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, make_response, current_app
+from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from controller.extensions import bcrypt,db
 from controller.models import User,Role
@@ -42,7 +42,7 @@ def refresh():
 @auth_bp.route('/logout', methods=['GET'])
 @jwt_required()
 def logout():
-    # In a real application, you would handle token revocation here
+    
     return make_response(jsonify({"message": "User logged out successfully"}), 200)
 
 
