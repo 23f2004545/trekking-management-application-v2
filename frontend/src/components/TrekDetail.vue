@@ -216,5 +216,5 @@ function resolveImageUrl(url) {
 .text-warning-tint { color: #ffe066; } .text-success-tint { color: #7bf1a8; }
 .glass-badge { background: rgba(255, 255, 255, 0.06); padding: 5px 12px; border-radius: 20px; }
 .text-justify { text-align: justify; } .italic { font-style: italic; }
-.fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; } .p-3.5 { padding: 14px; } .p-2.5 { padding: 10px; }
+.fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; } 
 </style>

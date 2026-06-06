@@ -42,7 +42,7 @@ const icon = computed(() => {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(10, 18, 14, 0.45) !important;
   backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(15px) !important;
-  z-index: 999 !important;
+  z-index: 9999 !important;
 }
 .glass-confirm-card {
   background: rgba(255, 255, 255, 0.1) !important; backdrop-filter: blur(5px);

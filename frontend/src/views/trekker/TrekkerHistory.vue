@@ -1,5 +1,5 @@
 <template>
-  <div class="historical-audit-viewport text-white text-start animate-fade-in pb-5">
+  <div class="historical-audit-viewport text-white text-start animate-fade-in pb-5 px-3">
     
     <!-- COMPACT HISTORICAL ROW LIST ARCHITECTURE -->
     <div v-if="!selectedTripForDetails">
@@ -25,7 +25,7 @@
               </div>
             </div>
             <button @click="selectedTripForDetails = trip" class="btn btn-sm btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm">
-              View Deep Insights & Reviews
+              View 
             </button>
           </div>
         </div>
@@ -35,7 +35,7 @@
     <!-- DETAILED SYSTEM CASCADING DEPLOYMENT -->
     <div v-else class="extended-history-details-flow">
       <div class="mb-4">
-        <button @click="selectedTripForDetails = null" class="btn btn-outline-light rounded-pill px-3.5 py-1.5 fs-9 border-opacity-25">
+        <button @click="selectedTripForDetails = null" class="btn btn-outline-light rounded-pill px-3 py-1 fs-9 border-opacity-25">
           ← Return to History Logs
         </button>
       </div>

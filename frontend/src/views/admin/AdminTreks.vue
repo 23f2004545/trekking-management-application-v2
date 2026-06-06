@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-treks-viewport text-white text-start pb-5 animate-fade-in">
+  <div class="admin-treks-viewport text-white text-start pb-5 animate-fade-in px-3">
     
     <!-- HEADER BAR: High-end title and quick launch trigger -->
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
@@ -15,7 +15,7 @@
     <!-- ===================================================================
          1. COMPACT SEARCH & COMPREHENSIVE FILTER SYSTEM
          =================================================================== -->
-    <div class="glass-container p-3.5 rounded-4 mb-4 shadow-sm">
+    <div class="glass-container p-3 rounded-4 mb-4 shadow-sm">
       <div class="row g-3 align-items-center">
         <!-- Text Lookup Search -->
         <div class="col-md-3">

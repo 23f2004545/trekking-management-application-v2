@@ -1,5 +1,5 @@
 <template>
-  <div class="staff-dashboard-canvas text-white text-start pb-5 animate-fade-in position-relative">
+  <div class="staff-dashboard-canvas text-white text-start pb-5 animate-fade-in position-relative px-3">
     
     <div v-if="!stats.is_onboarded && stats.is_loaded" class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 animate-slide-down">
       <div class="d-flex align-items-center gap-3">
@@ -12,6 +12,10 @@
       <button @click="$router.push('/portal/trek_staff/profile')" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 py-2 fs-8 shadow-sm hover-grow">
         Complete Profile Setup →
       </button>
+    </div>
+
+    <div v-if="stats.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted :</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
     </div>
 
     <div class="welcome-hero-section py-4 mb-4 border-bottom border-white border-opacity-10">

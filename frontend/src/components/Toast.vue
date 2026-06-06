@@ -32,7 +32,7 @@ const icon = computed(() => {
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   background: rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(20px) !important;

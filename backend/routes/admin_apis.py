@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import bcrypt,db,cache
 from controller.models import * 
 from controller.decorators import admin_required
+from routes.utils_apis import create_notification
 from datetime import datetime, timezone , timedelta
 from sqlalchemy import func
 import os
@@ -566,7 +567,9 @@ def toggle_user_blacklist_status(user_id):
     if hasattr(user, 'blacklisted'):
         user.blacklisted = not user.blacklisted
         db.session.commit()
+        type = "danger" if user.blacklisted else "success"
         status_txt = "Blacklisted" if user.blacklisted else "Whitelisted"
+        create_notification(user.id, f"You have been {status_txt}", type)
         return make_response(jsonify({"message": f"User account credentials flagged as {status_txt}."}), 200)
         
     return make_response(jsonify({"message": "Model column definition missing block attributes."}), 500)

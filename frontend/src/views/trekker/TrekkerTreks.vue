@@ -1,5 +1,5 @@
 <template>
-  <div class="treks-exploration-viewport text-white text-start">
+  <div class="treks-exploration-viewport text-white text-start px-3 pb-4">
   
     <div class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">Discover Expedition Trails</h2>
@@ -9,7 +9,7 @@
     <!-- ===================================================================
          1. COMPACT SEARCH & COMPREHENSIVE FILTER SYSTEM
          =================================================================== -->
-    <div class="glass-container p-3.5 rounded-4 mb-4 shadow-sm">
+    <div class="glass-container p-3_5 rounded-4 mb-4 shadow-sm">
       <div class="row g-3 align-items-center">
         <!-- Text Lookup Search -->
         <div class="col-md-3">
@@ -75,7 +75,7 @@
                 <span class="d-block fs-9 text-white-50 opacity-50 fw-semibold">VALUED AT</span>
                 <strong class="fs-6 text-success">₹{{ trek.price_per_person }}</strong>
               </div>
-              <button @click="routeToDeepInsights(trek.trek_id)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fs-8 fw-bold text-dark">
+              <button @click="routeToDeepInsights(trek.trek_id)" class="btn btn-sm btn-light rounded-pill px-3 py-1 fs-8 fw-bold text-dark">
                 View Details
               </button>
             </div>

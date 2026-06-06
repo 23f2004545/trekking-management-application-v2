@@ -1,8 +1,8 @@
 <template>
-  <div class="portal-content-page text-white text-start pb-5">
+  <div class="portal-content-page text-white text-start pb-5 px-3">
     
     <div class="mb-4">
-      <button @click="$router.back()" class="btn btn-sm btn-outline-light rounded-pill px-3.5 py-1.5 fs-9 border-opacity-25">
+      <button @click="$router.back()" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 fs-9 border-opacity-25">
         ← Back to List
       </button>
     </div>

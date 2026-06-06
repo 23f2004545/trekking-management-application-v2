@@ -1,5 +1,5 @@
 <template>
-  <div class="staff-treks-viewport text-white text-start pb-5 animate-fade-in">
+  <div class="staff-treks-viewport text-white text-start pb-5 animate-fade-in px-3">
     
     <div class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">My Assigned Trails</h2>
@@ -59,7 +59,7 @@
               <span class="d-block fs-9 text-white-50 opacity-60 fw-semibold">DEPARTURE</span>
               <strong class="fs-7 text-white">{{ trek.start_date }}</strong>
             </div>
-            <button @click="$router.push(`/portal/trek/view/${trek.id}`)" class="btn btn-sm btn-light rounded-pill px-3.5 py-1.5 fw-bold text-dark">
+            <button @click="$router.push(`/portal/trek/view/${trek.id}`)" class="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-dark">
               View Route Details
             </button>
           </div>

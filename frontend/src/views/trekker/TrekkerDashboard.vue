@@ -1,5 +1,9 @@
 <template>
-  <div class="trekker-dashboard-canvas text-white animate-fade-in pb-5">
+  <div class="trekker-dashboard-canvas text-white animate-fade-in pb-5 px-3">
+
+    <div v-if="stats.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted :</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
+    </div>
     
     <!-- HERO SECTION & FOMO ALERT -->
     <div class="welcome-hero-section text-start py-4 mb-4">
@@ -113,7 +117,8 @@ const stats = ref({
   secured_slots: 0,
   completed_paths: 0,
   total_altitude: 0,
-  chart_data: []
+  chart_data: [],
+  blacklisted: false
 })
 
 const activeFomoEvent = ref({ user: "Apex System", action: "initializing", trek: "Global Grid" })

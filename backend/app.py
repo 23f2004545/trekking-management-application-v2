@@ -14,6 +14,7 @@ from routes.auth_apis import auth_bp
 from routes.admin_apis import admin_bp
 from routes.staff_apis import trek_staff_bp
 from routes.trekker_apis import trekker_bp
+from routes.utils_apis import utils_bp
 
 def create_app():
     app = Flask(__name__)
@@ -65,6 +66,7 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(trek_staff_bp, url_prefix='/api/trek_staff')
 app.register_blueprint(trekker_bp, url_prefix='/api/trekker')
+app.register_blueprint(utils_bp, url_prefix='/api/utils')
 
 if __name__ == '__main__':
     app.run(debug=True)

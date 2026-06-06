@@ -22,9 +22,49 @@
         <!-- ACTION CLUSTER  -->
         <div class="action-icon-cluster d-flex align-items-center gap-3">
           
-          <button class="icon-utility-btn d-none d-lg-flex" title="View Alerts" @click="alertStore.showAlert('No active safety notifications inside your sector.', 'info')">
-            <i class="bi bi-bell text-white-50" style="font-size: 1.25rem;"></i>
-          </button>
+          <div class="notification-wrapper position-relative">
+            <button class="icon-utility-btn d-none d-lg-flex position-relative" title="View Alerts" @click="toggleNotifications">
+              <i class="bi bi-bell text-white-50" style="font-size: 1.3rem;"></i>
+              <span v-if="unreadCount > 0" class="translate-middle p-1 bg-danger border border-dark rounded-circle" style="width: 10px; height: 10px; position:absolute; top:17px; left:23px;"></span>
+            </button>
+
+            <div v-if="showNotifications" @click="showNotifications = false" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;"></div>
+
+            <Transition name="fade-slide">
+              <div v-if="showNotifications" class="notif-dropdown-glass position-absolute end-0 mt-3 rounded-4 shadow-lg border border-white border-opacity-15 overflow-hidden">
+                
+                <div class="d-flex align-items-center justify-content-between p-3 border-bottom border-white border-opacity-10 bg-black bg-opacity-25">
+                  <h6 class="m-0 fw-bold tracking-tight text-white">System Alerts</h6>
+                  <button v-if="notifications.length > 0" @click="clearAllNotifications" class="btn btn-sm btn-link text-white-50 text-decoration-none p-0 fs-9">Clear All</button>
+                </div>
+
+                <div class="notif-list-scroll">
+                  <div v-if="notifications.length === 0" class="p-4 text-center text-white-50 opacity-75 fs-9 italic">
+                    System telemetry is quiet. No active alerts.
+                  </div>
+                  
+                  <div v-else class="d-flex flex-column">
+                    <div v-for="notif in notifications" :key="notif.id" 
+                        class="notif-item p-3 border-bottom border-white border-opacity-5 d-flex align-items-start justify-content-between gap-3"
+                        :class="{ 'bg-opacity-5': !notif.is_read }"
+                        @mouseenter="markAsRead(notif)">
+                      
+                      <div class="d-flex align-items-start gap-2 w-100">
+                        <div class="status-indicator mt-1 rounded-circle flex-shrink-0" :class="`bg-${notif.type}`"></div>
+                        <div>
+                          <p class="m-0 fs-8 lh-sm" :class="notif.is_read ? 'text-white-50' : 'text-white fw-semibold'">{{ notif.message }}</p>
+                          <span class="fs-9 text-white-50 opacity-50">{{ notif.created_at }}</span>
+                        </div>
+                      </div>
+                      
+                      <button @click.stop="deleteNotification(notif.id)" class="btn-close-notif text-white-50 opacity-50 border-0 bg-transparent p-0">✕</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </Transition>
+          </div>
 
           <!-- Avatar (Always visible on mobile & desktop) -->
           <div @click="$router.push(`/portal/${authStore.role}/profile`)" class="avatar-capsule-wrapper d-flex align-items-center cursor-pointer" title="My Profile Settings">
@@ -59,7 +99,7 @@
           </router-link>
         </li>
         <li class="mt-4 pt-4 border-top border-white border-opacity-10">
-          <button @click="handleSignOut" class="btn btn-danger w-100 rounded-pill py-2.5 fw-bold fs-6 shadow-sm">
+          <button @click="confirmStore.ask('Are you ready to break camp and sign out of your current tracking session?', handleSignOut)" class="btn btn-danger w-100 rounded-pill py-2.5 fw-bold fs-6 shadow-sm">
             Sign Out <i class="bi bi-box-arrow-right ms-2"></i>
           </button>
         </li>
@@ -171,6 +211,12 @@ const reactiveMenu = computed(() => authStore.navigationMenu)
 const API_BASE = `http://127.0.0.1:5000/api/${authStore.role}` 
 const profile_pic = ref('')
 
+const showNotifications = ref(false)
+const notifications = ref([])
+
+// Computed property to calculate the red dot visibility
+const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length)
+
 function handleSignOut() {
   isMobileMenuOpen.value = false // close drawer if open
   authStore.logoutUser() // Pinia action cleans session keys
@@ -199,8 +245,49 @@ async function handleProfilePic() {
   }
 }
 
+
+function toggleNotifications() {
+  showNotifications.value = !showNotifications.value
+  if (showNotifications.value && notifications.value.length === 0) {
+    fetchNotifications()
+  }
+}
+
+async function fetchNotifications() {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications`, {
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (res.ok) notifications.value = await res.json()
+  } catch (err) { console.error("Notification sync failed", err) }
+}
+
+async function markAsRead(notif) {
+  if (notif.is_read) return
+  notif.is_read = true // Optimistic UI update
+  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${notif.id}/read`, {
+    method: 'PATCH', headers: { 'Authorization': `Bearer ${authStore.token}` }
+  })
+}
+
+async function deleteNotification(id) {
+  notifications.value = notifications.value.filter(n => n.id !== id) // Optimistic UI update
+  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${id}`, {
+    method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
+  })
+}
+
+async function clearAllNotifications() {
+  notifications.value = [] // Optimistic UI update
+  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/clear`, {
+    method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
+  })
+}
+
+
 onMounted(() => {
   handleProfilePic()
+  fetchNotifications()
 })
 
 </script>
@@ -344,7 +431,7 @@ onMounted(() => {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(15px);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 999999999;
+  z-index: 999 ;
   transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -374,10 +461,45 @@ onMounted(() => {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999999998;
+  z-index: 998;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+
+/* Notification Dropdown Aesthetics */
+.notif-dropdown-glass {
+  width: 340px;
+  background: rgba(18, 25, 20, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  top: 100%;
+  z-index: 9999 !important;
+}
+
+.notif-list-scroll {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar for Dropdown */
+.notif-list-scroll::-webkit-scrollbar { width: 4px; }
+.notif-list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+}
+
+.notif-item { transition: background-color 0.2s; }
+.notif-item:hover { background-color: rgba(255, 255, 255, 0.08) !important; }
+
+.btn-close-notif { transition: opacity 0.2s; }
+.btn-close-notif:hover { opacity: 1 !important; color: #ff8787 !important; }
+
+/* Smooth Fade & Slide Animation */
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.2s ease; }
+.fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
 
 </style>

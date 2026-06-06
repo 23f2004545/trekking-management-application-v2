@@ -1,5 +1,5 @@
 <template>
-  <div class="staff-participants-viewport text-white text-start pb-5 animate-fade-in">
+  <div class="staff-participants-viewport text-white text-start pb-5 animate-fade-in px-3">
     
     <div class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">Tactical Trail Manifests</h2>
@@ -31,7 +31,7 @@
       <!-- Explorers Grid -->
       <div class="row g-3">
         <div v-for="explorer in group.explorers" :key="explorer.booking_id" class="col-lg-6">
-          <div class="roster-card p-3.5 rounded-4 d-flex flex-column gap-3 shadow-sm position-relative overflow-hidden">
+          <div class="roster-card p-3_5 rounded-4 d-flex flex-column gap-3 shadow-sm position-relative overflow-hidden">
             
             <!-- Warning Accent Bar (If Medical Record is missing) -->
             <div v-if="!explorer.medical_record_exists" class="warning-accent-bar position-absolute top-0 start-0 w-100 bg-warning" style="height: 4px;"></div>
@@ -139,5 +139,5 @@ onMounted(() => { fetchManifests() })
 
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.78rem; }
-.p-3\.5 { padding: 14px; }
+.p-3_5 { padding: 14px; }
 </style>

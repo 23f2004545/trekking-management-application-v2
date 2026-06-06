@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-dashboard-canvas text-white text-start pb-5 animate-fade-in">
+  <div class="admin-dashboard-canvas text-white text-start pb-5 animate-fade-in px-3">
     
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-4 py-4 border-bottom border-white border-opacity-10 mb-5">
       <div>

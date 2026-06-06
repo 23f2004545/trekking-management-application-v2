@@ -1,5 +1,5 @@
 <template>
-  <div class="bookings-audit-viewport text-white text-start animate-fade-in pb-5">
+  <div class="bookings-audit-viewport text-white text-start animate-fade-in pb-5 px-3">
     
     <div class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">Active Basecamp Bookings</h2>

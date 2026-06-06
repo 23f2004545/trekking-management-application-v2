@@ -1,8 +1,8 @@
 <template>
-  <div class="admin-staff-viewport text-white text-start pb-5 animate-fade-in">
+  <div class="admin-staff-viewport text-white text-start pb-5 animate-fade-in px-3">
     
 
-    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-3">
         <div class="mb-4">
             <h2 class="fw-bold tracking-tight m-0">Verified Guides Registry</h2>
             <p class="m-0 text-white-50 fs-8 mt-1">Audit active guide staff coordinates, modify account clearances or investigate blacklists.</p>
@@ -332,19 +332,14 @@ onMounted(() => {
 .clean-field:focus { outline: none; }
 
 /* Modal layer specifications */
-.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 12, 0.341); backdrop-filter: blur(5px); z-index: 999; }
+.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.341); backdrop-filter: blur(10px); z-index: 999; }
 .glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
 .max-vh-90 { max-height: 90vh; }
 
-.btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
 
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; }
-
-/* Modal overlay layouts */
-/* .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 15, 12, 0.335); backdrop-filter: blur(5px); z-index: 999; }
-.glass-modal-card { background: rgba(0, 0, 0, 0.241) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
-.max-vh-90 { max-height: 90vh; } */
 
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }

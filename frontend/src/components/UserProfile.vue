@@ -1,8 +1,8 @@
 <template>
   <div class="user-profile-shared-component text-white text-start animate-fade-in">
     
-    <div v-if="profile.blacklisted" class="alert alert-danger border border-danger border-opacity-20 rounded-3 p-3 mb-4 bg-danger bg-opacity-10">
-      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Account Flag Restriction Status Active:</strong> This exploration profile coordinate layer has been blacklisted by administration.
+    <div v-if="profile.blacklisted" class="alert alert-warning border border-danger border-opacity-20 rounded-3 p-3 mb-4 bg-danger bg-opacity-10">
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted:</strong> This exploration profile coordinate layer has been blacklisted by administration.
     </div>
 
     <div class="row g-4">
@@ -52,24 +52,24 @@
         <div class="glass-profile-panel p-4 p-md-5 rounded-4 border border-white border-opacity-10 h-100 shadow-sm">
           <h5 class="fw-bold mb-4 tracking-tight border-bottom border-white border-opacity-10 pb-2">Profile Specifications Registry</h5>
           
-          <form @submit.prevent="$emit('patch-profile', localForm)" class="d-flex flex-column gap-3.5">
+          <form @submit.prevent="$emit('patch-profile', localForm)" class="d-flex flex-column gap-3">
             
             <div class="profile-input-group mb-3">
-              <label class="input-label-tag">Registered Identity Name</label>
+              <label class="input-label-tag">Registered Name</label>
               <div class="interactive-input-wrapper" :class="{ 'locked-input opacity-75': mode === 'audit' }">
                 <input v-model="localForm.name" type="text" class="clean-profile-field w-100" :disabled="mode === 'audit'" required>
               </div>
             </div>
 
             <div class="profile-input-group mb-3">
-              <label class="input-label-tag">Contact Number Channel</label>
+              <label class="input-label-tag">Contact Number</label>
               <div class="interactive-input-wrapper" :class="{ 'locked-input opacity-75': mode === 'audit' }">
                 <input v-model="localForm.contact" type="tel" class="clean-profile-field w-100" :disabled="mode === 'audit'" required>
               </div>
             </div>
 
             <div class="profile-input-group mb-3">
-              <label class="input-label-tag opacity-50">Email Reference Coordinate (Immutable Identity Key)</label>
+              <label class="input-label-tag opacity-50">Email Reference </label>
               <div class="interactive-input-wrapper locked-input opacity-60">
                 <input :value="profile.email" type="email" class="clean-profile-field w-100" disabled>
               </div>
@@ -103,10 +103,10 @@
 
               <div v-else-if="mode === 'audit'" class="d-flex justify-content-end gap-2 w-100 pt-3">
                 <button type="button" @click="$emit('admin-toggle-blacklist', profile.id)" class="btn btn-sm btn-outline-warning rounded-pill px-4 py-2 fs-9 fw-semibold">
-                  {{ profile.blacklisted ? 'Whitelist Account' : 'Blacklist Profile' }}
+                  {{ profile.blacklisted ? 'Whitelist' : 'Blacklist' }}
                 </button>
                 <button type="button" @click="$emit('admin-toggle-active', profile.id)" class="btn btn-sm btn-danger rounded-pill px-4 py-2 fs-9 fw-bold">
-                  {{ profile.is_active ? 'Deactivate Guides Code' : 'Activate User Profile' }}
+                  {{ profile.is_active ? 'Deactivate' : 'Re-Activate' }}
                 </button>
               </div>
 
@@ -157,5 +157,5 @@ watch(() => props.profile, (newProfile) => {
 .clean-profile-field { border: none; background: transparent; color: #ffffff; outline: none; font-size: 0.95rem; }
 
 .btn-security-link { color: #ffc107; cursor: pointer; font-size: 0.85rem; } .btn-security-link:hover { text-decoration: underline; }
-.uppercase { text-transform: uppercase; } .gap-3.5 { gap: 14px; } .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; }
+.uppercase { text-transform: uppercase; } .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; }
 </style>

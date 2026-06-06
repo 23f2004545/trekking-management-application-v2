@@ -1,5 +1,5 @@
 <template>
-  <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-3">
+  <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-2">
     
     <header class="custom-header w-100 px-4 pt-2">
       <div class="nav-container">

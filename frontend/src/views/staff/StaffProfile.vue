@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-dashboard-wrapper container-fluid px-0 text-white animate-fade-in pb-5">
+  <div class="profile-dashboard-wrapper container-fluid text-white animate-fade-in pb-5">
     
     <div class="row mb-4 align-items-center text-start">
       <div class="col-md-12">
@@ -8,8 +8,8 @@
       </div>
     </div>
 
-    <div v-if="userProfile.blacklisted" class="alert alert-danger border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
-      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Account Flag Restrictions Active:</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
+    <div v-if="userProfile.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted :</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
     </div>
 
     <div class="row g-4 text-start mb-4">
@@ -232,6 +232,56 @@
       </div>
     </Transition>
 
+    <Transition name="modal-fade">
+      <div v-if="passwordModalActive" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+        <div class="glass-profile-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
+          
+          <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel">✕</button>
+
+          <h4 class="fw-bold tracking-tight text-white mb-1">Update Security Key</h4>
+          <p class="text-white-50 small mb-4">Request a 6-digit authorization code to your registered email to process this mutation.</p>
+
+          <form @submit.prevent="submitPasswordChange" class="d-flex flex-column gap-3">
+            
+            <div class="profile-input-group">
+              <label class="input-label-tag">New Security Key (Password)</label>
+              <div class="interactive-input-wrapper">
+                <input v-model="securityForm.newPassword" type="password" required class="clean-profile-field w-100" placeholder="••••••••">
+              </div>
+            </div>
+
+            <div class="profile-input-group">
+              <label class="input-label-tag">Confirm Security Key</label>
+              <div class="interactive-input-wrapper">
+                <input v-model="securityForm.confirmPassword" type="password" required class="clean-profile-field w-100" placeholder="••••••••">
+              </div>
+            </div>
+
+            <hr class="border-white border-opacity-10 my-1" />
+
+            <div class="profile-input-group">
+              <div class="d-flex justify-content-between align-items-end mb-1">
+                <label class="input-label-tag m-0">Authorization Code (OTP)</label>
+                <button type="button" @click="requestOTP" :disabled="otpCooldown > 0" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1 fs-9 border-opacity-50 mb-2">
+                  {{ otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Send OTP via Email' }}
+                </button>
+              </div>
+              <div class="interactive-input-wrapper">
+                <input v-model="securityForm.otpCode" type="text" required class="clean-profile-field w-100 fw-bold tracking-widest text-warning" placeholder="000000" maxlength="6">
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-warning w-100 rounded-pill py-2.5 fw-bold text-dark fs-8 shadow-sm">
+                Authorize Password Mutation
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -281,8 +331,16 @@ const staffFormFields = ref({
     bio:''
 })
 
+const passwordModalActive = ref(false)
+const otpCooldown = ref(0)
+const securityForm = ref({
+  newPassword: '',
+  confirmPassword: '',
+  otpCode: ''
+})
+
 // ==========================================================================
-// 3. NETWORK DATA ORCHESTRATION PIPELINES (Fetch Engine)
+//  NETWORK DATA ORCHESTRATION PIPELINES (Fetch Engine)
 // ==========================================================================
 async function fetchProfileAndStaffData() {
   try {
@@ -408,8 +466,66 @@ function openStaffModal() {
 }
 
 function triggerPasswordReset() {
-  alertStore.showAlert('Security Key Protocol: OTP deployment queue initialized via Celery channels.', 'warning')
+  securityForm.value = { newPassword: '', confirmPassword: '', otpCode: '' }
+  passwordModalActive.value = true
 }
+
+// Logic to ask Flask for OTP and start UI cooldown
+async function requestOTP() {
+  try {
+    alertStore.showAlert('Dispatching authorization request to Celery workers...', 'info')
+    const res = await fetch(`${API_BASE}/request-password-otp`, {
+      method: 'POST', headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    
+    if (res.ok) {
+      alertStore.showAlert('OTP dispatched! Please check your communication logs.', 'success')
+      // Start 60 second cooldown to prevent spamming the email server
+      otpCooldown.value = 60
+      const timer = setInterval(() => {
+        otpCooldown.value--
+        if (otpCooldown.value <= 0) clearInterval(timer)
+      }, 1000)
+    } else {
+      alertStore.showAlert('Failed to generate OTP.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
+  }
+}
+
+// Logic to submit the final change
+async function submitPasswordChange() {
+  if (securityForm.value.newPassword !== securityForm.value.confirmPassword) {
+    alertStore.showAlert('Security keys do not match. Please verify your inputs.', 'danger')
+    return
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/reset-password`, {
+      method: 'PATCH',
+      headers: { 
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({
+        otp: securityForm.value.otpCode,
+        new_password: securityForm.value.newPassword
+      })
+    })
+    
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert('Success: Account security key has been mutated.', 'success')
+      passwordModalActive.value = false
+    } else {
+      alertStore.showAlert(data.message || 'Authorization rejected.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
+  }
+}
+
 
 async function uploadAvatarImage(event) {
   const file = event.target.files[0]
@@ -529,4 +645,11 @@ onMounted(() => {
 .gap-3_5 { gap: 14px; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
+
+/* OTP Modal Specific Styles */
+.profile-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 6, 2, 0.459); backdrop-filter: blur(5px); z-index: 999; }
+.glass-profile-card { background: rgba(1, 1, 1, 0.383) !important; backdrop-filter: blur(10px); }
+.btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.btn-close-modal:hover { color: white; }
+.tracking-widest { letter-spacing: 4px; }
 </style>

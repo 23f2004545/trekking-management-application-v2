@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-bookings-viewport text-white text-start pb-5 animate-fade-in">
+  <div class="admin-bookings-viewport text-white text-start pb-5 animate-fade-in px-3">
     
     <div v-if="!activeAuditDetail" class="mb-4">
       <h2 class="fw-bold tracking-tight m-0">Global Explorer Passports</h2>
@@ -14,7 +14,8 @@
           <div>
             <span class="extra-small text-info opacity-40 uppercase tracking-wider">BOOKING ID : #APX-B{{ item.booking_id }}</span>
             <h5 class="fw-bold m-0 text-white tracking-tight mt-0.5">Trek : {{ item.trek_name }}</h5>
-            <p class="m-0 fs-9 text-white-50 mt-0.5">User : <span class=" fw-bold">{{ item.trekker.name }}</span> — Booking Date : {{ item.booking_date }}</p>
+            <p class="m-0 fs-9 text-white-50 mt-0.5">User : <span class=" fw-bold">{{ item.trekker.name }}</span> </p>
+            <p class="m-0 fs-9 text-white-50 mt-0.5"> Booking Date : {{ item.booking_date }}</p>
           </div>
         </div>
 
@@ -32,7 +33,7 @@
 
     <div v-else class="immersive-deep-audit-panel max-w-4xl mx-auto">
       <div class="mb-4 d-flex justify-content-between align-items-center">
-        <button @click="activeAuditDetail = null" class="btn btn-sm btn-outline-light rounded-pill px-3.5 fs-9 border-opacity-25">← Close Audit</button>
+        <button @click="activeAuditDetail = null" class="btn btn-sm btn-outline-light rounded-pill px-3 fs-9 border-opacity-25">← Close Audit</button>
         <span class="badge lifecycle-tag text-uppercase fs-8" :class="activeAuditDetail.booking_status.toLowerCase()">● Status Timeline: {{ activeAuditDetail.booking_status }}</span>
       </div>
 

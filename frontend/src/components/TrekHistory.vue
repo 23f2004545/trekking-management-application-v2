@@ -134,7 +134,6 @@ function submitLocalFeedback() {
 .text-area-fix { resize: none; line-height: 1.5; }
 .text-warning-tint { color: #ffe066; }
 .italic { font-style: italic; }
-.p-3.5 { padding: 14px; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
 </style>

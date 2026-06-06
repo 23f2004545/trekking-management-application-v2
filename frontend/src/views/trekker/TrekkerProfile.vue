@@ -1,15 +1,15 @@
 <template>
-  <div class="profile-dashboard-wrapper container-fluid px-0 text-white animate-fade-in pb-5">
+  <div class="profile-dashboard-wrapper container-fluid text-white animate-fade-in pb-5" style="z-index: 99;">
     
     <div class="row mb-4 align-items-center text-start">
       <div class="col-md-12">
         <h2 class="fw-bold tracking-tight m-0">Account Profile Basecamp</h2>
-        <p class="m-0 text-white-50 fs-8 mt-1">Audit profile registries, manage operational tracking data, and cross-reference access logs.</p>
+        <p class="m-0 text-white-50 fs-8 mt-1 ">Audit profile registries, manage operational tracking data, and cross-reference access logs.</p>
       </div>
     </div>
 
-    <div v-if="userProfile.blacklisted" class="alert alert-danger border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
-      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Account Flag Restrictions Active:</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
+    <div v-if="userProfile.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
+      <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted :</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
     </div>
 
     <div class="row g-4 text-start mb-4">
@@ -333,7 +333,7 @@ const securityForm = ref({
 })
 
 // ==========================================================================
-// 3. NETWORK DATA ORCHESTRATION PIPELINES (Fetch Engine)
+//  NETWORK DATA ORCHESTRATION PIPELINES (Fetch Engine)
 // ==========================================================================
 async function fetchProfileAndMedicalData() {
   try {

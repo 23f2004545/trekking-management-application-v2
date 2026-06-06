@@ -18,6 +18,7 @@ trekker_bp = Blueprint('trekker', __name__)
 def get_trekker_dashboard_stats():
     user_id = get_jwt_identity()
     current_date = datetime.now(timezone.utc).date()
+    user = User.query.get(user_id)
     
     bookings = Booking.query.filter_by(user_id=user_id).all()
     
@@ -67,7 +68,8 @@ def get_trekker_dashboard_stats():
         "total_altitude": int(total_altitude),
         "alerts": "ALL CLEAR",
         "chart_data": altitude_history,
-        "fomo_events": recent_activity[:3] # Send 3 random events
+        "fomo_events": recent_activity[:3], # Send 3 random events
+        "blacklisted": user.blacklisted 
     }), 200)
     
 
@@ -296,12 +298,17 @@ def book_trek_slot():
     user_id = int(get_jwt_identity())
     data = request.get_json()
     trek_id = data.get('trek_id')
+    user = User.query.get(user_id)
     
     if not trek_id:
         return make_response(jsonify({"message": "Trek identification coordinate required."}), 400)
         
     # Query target route under a database session state lock if executing concurrent scales
     trek = Trek.query.get_or_404(trek_id)
+    
+    # Validate User is not blacklisted 
+    if user.blacklisted:
+        return make_response(jsonify({"message": "Booking denied: ACCOUNT BLACKLISTED "}), 400)
     
     # Validate trek lifecycle status boundary condition
     if trek.status != 'Open':
