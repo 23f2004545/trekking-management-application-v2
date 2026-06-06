@@ -27,7 +27,7 @@
     </div>
 
     <Transition name="modal-fade">
-      <div v-if="checkoutActive" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="checkoutActive" @click.self="checkoutActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative">
           
           <button @click="checkoutActive = false" class="btn-close-modal">✕</button>
@@ -80,7 +80,7 @@
 
 
     <Transition name="modal-fade">
-      <div v-if="modifyModalActive" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="modifyModalActive" @click.self="modifyModalActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-12 text-start" style="max-width: 35rem; max-height: 45rem;">
           
           <button @click="modifyModalActive = false" class="btn-close-modal">✕</button>
@@ -171,7 +171,7 @@
          STAFF OVERRIDE: FIELD OPERATIONS POPUP MODAL
          =================================================================== -->
     <Transition name="modal-fade">
-      <div v-if="staffModifyModalActive" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="staffModifyModalActive" @click.self="staffModifyModalActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start" style="max-width: 500px;">
           
           <button @click="staffModifyModalActive = false" class="btn-close-modal">✕</button>

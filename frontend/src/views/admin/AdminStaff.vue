@@ -2,15 +2,15 @@
   <div class="admin-staff-viewport text-white text-start pb-5 animate-fade-in px-3">
     
 
-    <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-3">
+    <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap ">
         <div class="mb-4">
             <h2 class="fw-bold tracking-tight m-0">Verified Guides Registry</h2>
             <p class="m-0 text-white-50 fs-8 mt-1">Audit active guide staff coordinates, modify account clearances or investigate blacklists.</p>
-        </div>
-      <button @click="openCreateModal" class="btn btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm">
-        <i class="bi bi-plus-lg me-2 fs-8"></i> Add Staff Member
-      </button>
-    </div>
+          </div>
+          <button @click="openCreateModal" class="btn btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm mb-2">
+            <i class="bi bi-plus-lg me-2 fs-8"></i> Add Staff Member
+          </button>
+      </div>
 
     <div class="glass-container p-3 rounded-4 mb-4 shadow-sm">
       <div class="row g-2 align-items-center">
@@ -62,7 +62,7 @@
          3. ADD EXPEDITION PATH MODAL METRICS FORM PANEL
          =================================================================== -->
     <Transition name="modal-fade">
-      <div v-if="createModalActive" class="admin-modal-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="createModalActive" @click.self="createModalActive = false" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start">
           
           <h4 class="fw-bold tracking-tight text-white m-0">Add New Staff Member</h4>
@@ -81,7 +81,7 @@
             <!-- Trigger Button Rows -->
             <div class="mt-4 d-flex align-items-center justify-content-end gap-3 border-top border-white border-opacity-10 pt-3">
               <button type="button" @click="createModalActive = false" class="btn btn-outline-light rounded-pill px-4 py-2 fs-8">Cancel</button>
-              <button type="submit" class="btn btn-success rounded-pill px-5 py-2.5 fw-bold text-dark fs-8">Add Staff Member</button>
+              <button type="submit" class="btn btn-success rounded-pill px-5 py-2.5 fw-bold text-dark fs-8">Add Staff</button>
             </div>
           </form>
 
@@ -90,7 +90,7 @@
     </Transition>
 
     <Transition name="modal-fade">
-      <div v-if="auditTargetProfile" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="auditTargetProfile" @click.self="auditTargetProfile = null" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-90 overflow-y-auto position-relative">
           
           <button @click="auditTargetProfile = null" class="btn-close-modal">✕</button>
@@ -108,7 +108,7 @@
     </Transition>
 
     <Transition name="modal-fade">
-      <div v-if="assignModalActive" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="assignModalActive" @click.self="assignModalActive = false" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-90 overflow-y-auto text-start" style="max-width: 520px;">
           
           <button @click="assignModalActive = false" class="btn-close-modal">✕</button>

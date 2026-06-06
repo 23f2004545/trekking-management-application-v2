@@ -27,8 +27,8 @@
               <i class="bi bi-bell text-white-50" style="font-size: 1.3rem;"></i>
               <span v-if="unreadCount > 0" class="translate-middle p-1 bg-danger border border-dark rounded-circle" style="width: 10px; height: 10px; position:absolute; top:17px; left:23px;"></span>
             </button>
-
-            <div v-if="showNotifications" @click="showNotifications = false" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;"></div>
+            
+            <div v-if="showNotifications" @click.self="showNotifications = false" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;"></div>
 
             <Transition name="fade-slide">
               <div v-if="showNotifications" class="notif-dropdown-glass position-absolute end-0 mt-3 rounded-4 shadow-lg border border-white border-opacity-15 overflow-hidden">
@@ -469,12 +469,19 @@ onMounted(() => {
 
 
 /* Notification Dropdown Aesthetics */
+
+.dashboard-header {
+  position: relative;
+  z-index: 9999 !important; 
+}
 .notif-dropdown-glass {
+  position: absolute;
   width: 340px;
-  background: rgba(18, 25, 20, 0.95);
-  backdrop-filter: blur(25px);
+  background: rgba(1, 4, 2, 0.498);
+  backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(25px);
   top: 100%;
+  right: 0;
   z-index: 9999 !important;
 }
 

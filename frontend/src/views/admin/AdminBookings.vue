@@ -65,8 +65,8 @@
           <img :src="BACKEND_URL + activeAuditDetail.trekker.profile_pic" alt="Trekker Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.trekker.name }}</h5>
-            <div>Email Registry: <span class="text-white">{{ activeAuditDetail.trekker.email }}</span></div>
-            <div class="mt-0.5">Satellite Comms Line: <span class="text-success">{{ activeAuditDetail.trekker.contact }}</span></div>
+            <div>Trekker Email: <span class="text-white">{{ activeAuditDetail.trekker.email }}</span></div>
+            <div class="mt-0.5">Contact: <span class="text-success">{{ activeAuditDetail.trekker.contact }}</span></div>
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.staff.name }}</h5>
             <div>Guide Email: <span class="text-white">{{ activeAuditDetail.staff.email }}</span></div>
-            <div class="mt-0.5">Direct Field Radio: <span class="text-success">{{ activeAuditDetail.staff.contact }}</span></div>
+            <div class="mt-0.5">Contact: <span class="text-success">{{ activeAuditDetail.staff.contact }}</span></div>
           </div>
         </div>
       </div>

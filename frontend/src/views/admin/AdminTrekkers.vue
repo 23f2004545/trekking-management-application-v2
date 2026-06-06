@@ -50,7 +50,7 @@
     </div>
 
     <Transition name="modal-fade">
-      <div v-if="auditTargetProfile" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="auditTargetProfile" @click.self="auditTargetProfile = null" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-90 overflow-y-auto position-relative">
           
           <button @click="auditTargetProfile = null" class="btn-close-modal">✕</button>

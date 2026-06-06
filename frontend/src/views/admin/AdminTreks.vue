@@ -100,7 +100,7 @@
          3. ADD EXPEDITION PATH MODAL METRICS FORM PANEL
          =================================================================== -->
     <Transition name="modal-fade">
-      <div v-if="createModalActive" class="admin-modal-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="createModalActive" @click.self="createModalActive = false" class="admin-modal-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start">
           
           <h4 class="fw-bold tracking-tight text-white m-0">Deploy New Trekking Map</h4>
@@ -160,12 +160,14 @@
                 </div>
               </div>
               <div class="col-12">
-                <label class="modal-label">Expedition Media Gallery (Select up to 4 images, Max 500KB each) *</label>
+                <label class="modal-label">Expedition Media Gallery (Select 4 images, Max 500KB each) *</label>
                 <div class="input-wrapper py-1.5">
-                  <input type="file" accept="image/*" multiple @change="handleMultipleImagesSelection" class="modal-field text-white-50" required>
+                  <input id='trek_image' type="file" accept="image/*" multiple @change="handleMultipleImagesSelection" class="hidden-file-input text-white-50" required>
+                  <label for="trek_image" class="file-custom-btn">Choose file</label>
+                  <span class="file-name-label">{{ fileNameDisplay }}</span>
                 </div>
                 <small v-if="selectedGalleryFiles.length" class="text-success-tint mt-1 d-block fs-9 fw-medium">
-                  ✔ {{ selectedGalleryFiles.length }} images selected for compilation queue.
+                  ✔ {{ selectedGalleryFiles.length }} image(s) selected for compilation queue.
                 </small>
               </div>
               <div class="col-12">
@@ -207,6 +209,7 @@ const adminTreks = ref([])
 const staffDropdown = ref([])
 const createModalActive = ref(false)
 const selectedGalleryFiles = ref([])
+const fileNameDisplay = ref('No file chosen')
 
 // Filtering state metrics
 const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
@@ -276,6 +279,7 @@ function handleMultipleImagesSelection(event) {
       return
     }
     selectedGalleryFiles.value.push(file)
+    fileNameDisplay.value = file.name
   }
 }
 
@@ -362,8 +366,8 @@ onMounted(() => {
 .status-pill.completed { background: rgba(13, 110, 253, 0.8); }
 
 /* Modal overlay layouts */
-.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10,15,12,0.6); backdrop-filter: blur(20px); z-index: 999; }
-.glass-modal-card { background: rgba(20, 28, 24, 0.9) !important; backdrop-filter: blur(35px); width: 100%; max-width: 650px; }
+.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
+.glass-modal-card { background: rgba(2, 7, 4, 0.422) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
 .max-vh-90 { max-height: 90vh; }
 
 .modal-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 3px; display: block; }
@@ -371,6 +375,33 @@ onMounted(() => {
 .modal-field { border: none; background: transparent; color: #fff; outline: none; width: 100%; font-size: 0.9rem; }
 .text-area-fix { resize: none; line-height: 1.4; }
 .select-fix option { background: #1c241e; color: white; }
+
+.file-custom-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0;
+  transition: background 0.2s;
+}
+.file-custom-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.hidden-file-input {
+  display: none;
+}
+.file-name-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.88rem;
+  margin-left: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .custom-slider::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.1); border-radius: 5px; height: 4px; }
 .custom-slider::-webkit-slider-thumb { background: #198754; margin-top: -6px; }

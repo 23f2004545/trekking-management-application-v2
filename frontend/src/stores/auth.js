@@ -62,6 +62,7 @@ export const useAuthStore = defineStore('auth', {
       sessionStorage.setItem('user_role', payload.role)
       sessionStorage.setItem('user_name', this.userName)
       sessionStorage.setItem('profile_pic', this.profile_pic)
+      localStorage.setItem('refresh_token', payload.refresh_token)
     },
     updateLocalAvatar(newRelativeKey) {
       this.profile_pic = newRelativeKey
@@ -74,6 +75,31 @@ export const useAuthStore = defineStore('auth', {
       this.profile_pic = null
       sessionStorage.clear()
       localStorage.removeItem('refresh_token')
+    },
+    async attemptTokenRefresh() {
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) return false
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${refreshToken}` }
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        this.token = data.access_token
+        sessionStorage.setItem('access_token', data.access_token)
+        return true
+      } else {
+        // Refresh token expired or blacklisted. Force logout.
+        this.logoutUser()
+        return false
+      }
+    } catch (err) {
+      this.logoutUser()
+      return false
+      }
     }
   }
 })

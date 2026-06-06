@@ -102,13 +102,13 @@
         
         <div v-if="!hasMedicalData" class="medical-alert-pill p-3 px-4 rounded-pill border border-warning border-opacity-20 d-flex align-items-center justify-content-between shadow-sm">
           <div class="d-flex align-items-center gap-3">
-            <span class="fs-4">🚨</span>
+            <!-- <span class="fs-4">🚨</span> -->
             <div>
-              <h6 class="m-0 fw-bold text-warning tracking-tight">System Medical Emergency Profile Missing</h6>
+              <h6 class="m-0 fw-bold text-warning tracking-tight mb-1">System Medical Emergency Profile Missing</h6>
               <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-0.5">Emergency coordinates are mandatory to secure active booking slots on the high trail. Please update your telemetry layout.</p>
             </div>
           </div>
-          <button @click="openMedicalModal" class="btn btn-warning rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm">
+          <button @click="openMedicalModal" class="btn btn-warning rounded-pill px-2 py-1 fs-9 fw-bold text-dark shadow-sm">
             Complete Registry
           </button>
         </div>
@@ -150,7 +150,7 @@
     </div>
 
     <Transition name="modal-fade">
-      <div v-if="medicalModalVisible" class="medical-overlay-backdrop d-flex align-items-center justify-content-center">
+      <div v-if="medicalModalVisible" @click.self="medicalModalVisible = false" class="medical-overlay-backdrop d-flex align-items-center justify-content-center">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up">
           
           <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Field Medical Matrix</h4>
@@ -223,7 +223,7 @@
     </Transition>
 
     <Transition name="modal-fade">
-      <div v-if="passwordModalActive" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="passwordModalActive" @click.self="passwordModalActive = false" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-profile-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
           
           <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel">✕</button>

@@ -49,7 +49,7 @@
          IMMERSIVE AUDIT MODAL OVERLAY (With Staff Access Coordinates)
          =================================================================== -->
     <Transition name="modal-fade">
-      <div v-if="modalTarget" class="bookings-modal-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="modalTarget" @click.self="modalTarget = null" class="bookings-modal-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-audit-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg position-relative text-start animate-scale-up">
           
           <!-- Circle Cross Dismiss Trigger Button -->
@@ -95,7 +95,7 @@
               @click="triggerRouteCancellation(modalTarget.booking_id)"
               class="btn btn-danger rounded-pill px-4 py-2 fs-8 fw-semibold w-100 w-md-auto shadow"
             >
-              Cancel Expedition Pass
+              Cancel Booking
             </button>
             <div v-else class="text-center text-white-50 small opacity-40 italic py-1">
               🔒 This transaction record has been finalized and locked against mutations.

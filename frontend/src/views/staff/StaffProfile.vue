@@ -155,7 +155,7 @@
     </div>
 
     <Transition name="modal-fade">
-      <div v-if="staffModalVisible" class="staff-overlay-backdrop d-flex align-items-center justify-content-center">
+      <div v-if="staffModalVisible" @click.self="staffModalVisible = false" class="staff-overlay-backdrop d-flex align-items-center justify-content-center">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up">
           
           <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Staff Profile Matrix</h4>
@@ -233,7 +233,7 @@
     </Transition>
 
     <Transition name="modal-fade">
-      <div v-if="passwordModalActive" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+      <div v-if="passwordModalActive" @click.self="passwordModalActive = false" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-profile-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
           
           <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel">✕</button>
