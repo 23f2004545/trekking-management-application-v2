@@ -5,7 +5,7 @@ class config:
     JWT_SECRET_KEY = "super-secret-production-key"
     
     
-    JWT_ACCESS_TOKEN_EXPIRES = 300
+    JWT_ACCESS_TOKEN_EXPIRES = 30000
     
     CACHE_TYPE = 'RedisCache'
     CACHE_REDIS_HOST = 'localhost'

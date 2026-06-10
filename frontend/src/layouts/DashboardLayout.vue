@@ -472,12 +472,12 @@ onMounted(() => {
 
 .dashboard-header {
   position: relative;
-  z-index: 9999 !important; 
+  z-index: 999 !important; 
 }
 .notif-dropdown-glass {
   position: absolute;
   width: 340px;
-  background: rgba(1, 4, 2, 0.498);
+  background: rgba(1, 4, 2, 0.961);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(25px);
   top: 100%;

@@ -200,6 +200,7 @@ def create_trek():
     staff_id = None
     if assigned_staff_id and assigned_staff_id != 'null' and assigned_staff_id != 'undefined':
         staff_id = int(assigned_staff_id)
+        staff = User.query.get(staff_id)
     
     try:
         new_trek = Trek(
@@ -239,12 +240,15 @@ def create_trek():
                     db.session.add(new_image)
 
         db.session.commit()
+        if staff_id:
+            create_notification(staff.id, f"You have been assigned to lead TREK : {new_trek.trek_name}.", "info")
         cache.clear()
             
         return make_response(jsonify({"message": "Expedition coordinate mapping generated successfully.", "trek_id": new_trek.trek_id}), 201)
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({"message": f"Database transaction aborted: {str(e)}"}), 500)
+
 
 @admin_bp.route('/treks/<int:trek_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
@@ -254,9 +258,14 @@ def manage_trek_by_id(trek_id):
 
     if request.method == 'DELETE':
         try:
+            staff_id = None
+            if trek.assigned_staff_id and trek.assigned_staff_id != 'null':
+                staff = User.query.get(int(trek.assigned_staff_id))
+                
             db.session.delete(trek)
             db.session.commit()
             cache.clear()
+            create_notification(staff.id, "Your assigned trek has been purged by Admin.", "danger")
             return make_response(jsonify({"message": "Trekking route removed successfully"}), 200)
         except Exception as e:
             db.session.rollback()
@@ -301,10 +310,16 @@ def manage_trek_by_id(trek_id):
                     booking.cancellation_reason = "Route operations halted by field administration."
                     booking.cancelled_at = datetime.now(timezone.utc)
                     booking.updated_at = datetime.now(timezone.utc)
+                    create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Admin", "danger")
+
                     
         
         staff_id = data.get('assigned_staff_id')
+        change = False
+        if (int(staff_id) != trek.assigned_staff_id) :
+            change = True
         trek.assigned_staff_id = int(staff_id) if staff_id and staff_id != 'null' else None
+        staff = User.query.get(int(trek.assigned_staff_id))
         
         if data.get('start_date'):
             trek.start_date = datetime.strptime(data.get('start_date'), "%Y-%m-%d").date()
@@ -330,6 +345,10 @@ def manage_trek_by_id(trek_id):
                     db.session.add(new_image)
 
         db.session.commit()
+        if change:
+            create_notification(staff.id, f"Your have been assigned to lead TREK : {trek.trek_name}", "info")
+        else : 
+            create_notification(staff.id, f"Trek {trek.trek_name} has been modified by Admin", "warning")
         cache.clear()
         return make_response(jsonify({"message": "Trekking route updated successfully"}), 200)
     except Exception as e:
@@ -611,6 +630,7 @@ def assign_staff_override():
     try:
         trek.assigned_staff_id = new_staff.id
         db.session.commit()
+        create_notification(new_staff.id, f"You have been assigned to lead TREK : {trek.trek_name}.", "info")
         return make_response(jsonify({"message": f"Trek '{trek.trek_name}' successfully routed to {new_staff.name}."}), 200)
     except Exception as e:
         db.session.rollback()

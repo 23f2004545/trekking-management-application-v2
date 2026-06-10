@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db,cache,bcrypt
 from controller.models import Trek, Booking, User , StaffProfile
 from controller.decorators import staff_required
+from routes.utils_apis import create_notification
 from datetime import datetime, timezone
 from sqlalchemy import func,case
 import os , random
@@ -338,6 +339,9 @@ def update_trek_field_data(trek_id):
 
     try:
         db.session.commit()
+        admin = User.query.filter_by(name='admin').first()
+        create_notification(admin.id, f"{user.name} has modified TREK : {trek.trek_name}", "warning")
+        print(admin)
         cache.clear()
         return make_response(jsonify({
             "message": "Field operational parameters synchronized.", 
@@ -453,6 +457,7 @@ def reset_password_with_otp():
     user = User.query.get(user_id)
     user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     db.session.commit()
+    create_notification(user.id, "Your security key was successfully updated.", "success")
     
     # Crucial: Delete the OTP from Redis so it cannot be reused
     cache.delete(f"password_otp_{user_id}")

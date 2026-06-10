@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db , cache , bcrypt
 from controller.models import *
 from controller.decorators import trekker_required
+from routes.utils_apis import create_notification
 from datetime import datetime, timezone 
 import os , random
 
@@ -340,6 +341,7 @@ def book_trek_slot():
         
         db.session.add(new_booking)
         db.session.commit()
+        create_notification(user.id, f"Successfully secured a slot for {trek.trek_name} trek", "success")
         return make_response(jsonify({"message": "Base camp slot secured successfully! Expedition booked.", "booking_id": new_booking.booking_id}), 201)
     except Exception as e:
         db.session.rollback()
@@ -535,6 +537,7 @@ def trigger_csv_export():
     
     # Use .delay() to send it to Redis/Celery without blocking Flask
     export_history_csv.delay(user_id, user.email, user.name)
+    create_notification(user.id, "Your CSV data has been exported and emailed.", "info")
     
     return make_response(jsonify({
         "message": "Export initiated! Your CSV will be emailed to you shortly."
@@ -594,6 +597,7 @@ def reset_password_with_otp():
     user = User.query.get(user_id)
     user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     db.session.commit()
+    create_notification(user.id, "Your security key was successfully updated.", "success")
     
     # Crucial: Delete the OTP from Redis so it cannot be reused
     cache.delete(f"password_otp_{user_id}")

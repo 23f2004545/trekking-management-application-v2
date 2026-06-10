@@ -5,6 +5,7 @@ from celery import Celery
 from celery.schedules import crontab
 from controller.extensions import db
 from controller.models import User, Booking, Trek
+from routes.utils_apis import create_notification
 from sqlalchemy import func, extract
 from mail import send_html_email
 
@@ -81,6 +82,8 @@ def daily_trek_reminder():
         
         tomorrow = datetime.now().date() + timedelta(days=1)
         upcoming_treks = Trek.query.filter(db.func.date(Trek.start_date) == tomorrow).all()
+        # upcoming_treks = Trek.query.filter(Trek.status == 'Completed').all()
+        
         
         for trek in upcoming_treks:
             # Safely resolve Staff Guide name
@@ -268,7 +271,7 @@ def monthly_admin_report():
         """
         
         admin = User.query.filter(User.role.has(name='admin')).first()
-
+        create_notification(admin.id, "Monthly executive report generated and emailed.", "info")
         send_html_email(admin.email, f"Platform Audit Report: {month_name}", html_body)
         
         
