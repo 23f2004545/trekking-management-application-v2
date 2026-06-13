@@ -105,6 +105,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import Chart from 'chart.js/auto'
+import { secureFetch } from '@/utils/api'
 
 const authStore = useAuthStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -126,7 +127,7 @@ const fomoQueue = ref([])
 
 async function fetchDashboardMetrics() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/dashboard/stats`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/dashboard/stats`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     

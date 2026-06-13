@@ -94,6 +94,7 @@ import { ref, onMounted ,computed } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useRouter } from 'vue-router'
+import { secureFetch } from '@/utils/api'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -126,13 +127,14 @@ const filteredTreks = computed(() => {
 // ==========================================================================
 async function fetchDiscoverableTreks() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/treks`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/treks`, {
       method: 'GET',
       headers: { 
         'Authorization': `Bearer ${authStore.token}`,
         'Content-Type': 'application/json'
       }
     })
+    console.log(res)
 
     if (res.ok) {
       tracksList.value = await res.json()

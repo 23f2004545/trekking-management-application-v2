@@ -316,7 +316,7 @@ def manage_trek_by_id(trek_id):
         
         staff_id = data.get('assigned_staff_id')
         change = False
-        if (int(staff_id) != trek.assigned_staff_id) :
+        if (staff_id and staff_id != 'null' and int(staff_id) != trek.assigned_staff_id) :
             change = True
         trek.assigned_staff_id = int(staff_id) if staff_id and staff_id != 'null' else None
         staff = User.query.get(int(trek.assigned_staff_id))
@@ -463,7 +463,7 @@ def trek_details(trek_id):
         "trek_rating_avg": trek_rating_avg ,
         "trek_reviews": trek_reviews_list,
         "staff": {
-            "id" : staff_user.id,
+            "id" : staff_user.id if staff_user else "Unassigned",
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
             "experience": staff_user.staff_profile.experience_years if staff_user and staff_user.staff_profile else None,
             "status": staff_user.staff_profile.status if staff_user and staff_user.staff_profile else "Active",
@@ -536,6 +536,32 @@ def get_all_staff():
         
     staff_members = User.query.filter_by(role=staff_role).all()
     
+    # Read query parameters for overlap checking
+    req_start = request.args.get('start_date')
+    req_end = request.args.get('end_date')
+    
+    occupied_staff_ids = set()
+    
+    if req_start and req_end:
+        try:
+            start_dt = datetime.strptime(req_start, "%Y-%m-%d")
+            end_dt = datetime.strptime(req_end, "%Y-%m-%d")
+            
+            # Sub-query optimization: find all guides busy during this window
+            conflicting_treks = Trek.query.filter(
+                Trek.assigned_staff_id.isnot(None),
+                Trek.status.in_(['Open', 'Ongoing', 'Approved' , 'Pending']),
+                Trek.start_date <= end_dt,
+                Trek.end_date >= start_dt
+            ).all()
+            
+            # Map user_ids of occupied profiles
+            for t in conflicting_treks:
+                if t.assigned_staff_id:
+                    occupied_staff_ids.add(t.assigned_staff_id)
+        except ValueError:
+            pass # Handle broken date formats gracefully
+
     results = []
     for s in staff_members:
         results.append({
@@ -545,12 +571,14 @@ def get_all_staff():
             "contact": s.contact,
             "is_active": s.is_active,
             "blacklisted": getattr(s, 'blacklisted', False),
+            "occupied": s.id in occupied_staff_ids,
             "specialization": getattr(s.staff_profile, 'specialization', "General Mountaineering"),
             "certification": getattr(s.staff_profile, 'certification', "Basic Certified"),
             "experience": getattr(s.staff_profile, 'experience', "2+ Years"),
             "last_login_at": s.last_login_at.strftime("%b %d, %I:%M %p") if s.last_login_at else "Offline Logs",
             "profile_pic": s.profile_pic or "/static/Profile_pics/trek_staff.png"
         })
+
     return make_response(jsonify(results), 200)
 
 
@@ -592,6 +620,23 @@ def toggle_user_blacklist_status(user_id):
         return make_response(jsonify({"message": f"User account credentials flagged as {status_txt}."}), 200)
         
     return make_response(jsonify({"message": "Model column definition missing block attributes."}), 500)
+
+
+@admin_bp.route('/users/<int:user_id>/toggle-status', methods=['PATCH','DELETE'])
+@jwt_required()
+@admin_required
+def toggle_user_account_status(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'DELETE':
+        db.session.delete(user)
+        db.session.commit()
+        return make_response(jsonify({"message": f"User's account permanently deleted."}), 200)
+    
+    user.is_active = not user.is_active
+    db.session.commit()
+    return make_response(jsonify({"message": f"User's account temporarily deleted."}), 200)
+
 
 
 # ==========================================================================

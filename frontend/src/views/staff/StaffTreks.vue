@@ -75,6 +75,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useAlertStore } from '../../stores/alert'
+import { secureFetch } from '@/utils/api'
 
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
@@ -99,7 +100,7 @@ function getAbsoluteUrl(url) {
 
 async function fetchMyTreks() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trek_staff/treks`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trek_staff/treks`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) myTreks.value = await res.json()

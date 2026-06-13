@@ -289,6 +289,7 @@
 import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
+import { secureFetch } from '@/utils/api'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -350,7 +351,7 @@ async function fetchProfileAndStaffData() {
     }
 
     // 1. Dispatch Core User Profile Retrieval Request
-    const profileRes = await fetch(`${API_BASE}/profile`, { method: 'GET', headers })
+    const profileRes = await secureFetch(`${API_BASE}/profile`, { method: 'GET', headers })
     if (profileRes.ok) {
       const pData = await profileRes.json()// Debug log for profile data
       userProfile.value = pData
@@ -360,7 +361,7 @@ async function fetchProfileAndStaffData() {
     }
 
     // 2. Dispatch Adaptive Staff Profile Retrieval Request
-    const staffRes = await fetch(`${API_BASE}/staff`, { method: 'GET', headers })
+    const staffRes = await secureFetch(`${API_BASE}/staff`, { method: 'GET', headers })
     if (staffRes.ok) {
       const sData = await staffRes.json()
       if (sData.has_data) {
@@ -388,7 +389,7 @@ async function saveProfileFields() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/profile`, {
+    const res = await secureFetch(`${API_BASE}/profile`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
@@ -423,7 +424,7 @@ async function submitStaffForm() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/staff`, {
+    const res = await secureFetch(`${API_BASE}/staff`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
@@ -474,7 +475,7 @@ function triggerPasswordReset() {
 async function requestOTP() {
   try {
     alertStore.showAlert('Dispatching authorization request to Celery workers...', 'info')
-    const res = await fetch(`${API_BASE}/request-password-otp`, {
+    const res = await secureFetch(`${API_BASE}/request-password-otp`, {
       method: 'POST', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     
@@ -502,7 +503,7 @@ async function submitPasswordChange() {
   }
   
   try {
-    const res = await fetch(`${API_BASE}/reset-password`, {
+    const res = await secureFetch(`${API_BASE}/reset-password`, {
       method: 'PATCH',
       headers: { 
         'Authorization': `Bearer ${authStore.token}`,
@@ -548,7 +549,7 @@ async function uploadAvatarImage(event) {
   try {
     alertStore.showAlert('Syncing new profile picture coordinates...', 'info')
     
-    const res = await fetch(`${API_BASE}/profile`, {
+    const res = await secureFetch(`${API_BASE}/profile`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${authStore.token}`

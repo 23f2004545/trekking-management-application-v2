@@ -76,6 +76,7 @@ import UserProfile from '../../components/UserProfile.vue'
 import { useAlertStore } from '../../stores/alert.js'
 import { useAuthStore } from '../../stores/auth.js'
 import { useConfirmStore } from '@/stores/confirm.js'
+import { secureFetch } from '@/utils/api.js'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -95,7 +96,7 @@ const filteredTrekkers = computed(() => {
 
 async function syncTrekkersDataset() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/trekkers`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/trekkers`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -109,7 +110,7 @@ async function syncTrekkersDataset() {
 
 async function launchAuditView(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/trekker/${id}`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/trekker/${id}`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -123,7 +124,7 @@ async function launchAuditView(id) {
 
 async function toggleBlacklistState(trekker) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${trekker.id}/toggle-blacklist`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${trekker.id}/toggle-blacklist`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -146,7 +147,7 @@ async function handleBlacklistAction(id) {
 
 async function handleDeactivateAction(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/toggle-status`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${id}/toggle-status`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })

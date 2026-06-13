@@ -149,8 +149,8 @@
   min-height: 100vh;
   width: 100%;
   background: linear-gradient(
-      rgba(0, 0, 0, 0.15), 
-      rgba(0, 0, 0, 0.3)
+      rgba(5, 12, 8, 0.587), 
+      rgba(5, 12, 8, 0.748)
     ), 
     url('@/assets/bg.jpeg');
   background-size: cover;

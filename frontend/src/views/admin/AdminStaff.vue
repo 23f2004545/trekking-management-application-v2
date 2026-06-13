@@ -141,6 +141,7 @@ import UserProfile from '../../components/UserProfile.vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useConfirmStore } from '@/stores/confirm.js'
+import { secureFetch } from '@/utils/api.js'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -177,7 +178,7 @@ function openCreateModal() {
 
 async function syncStaffDataset() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/staff`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/staff`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -191,7 +192,7 @@ async function syncStaffDataset() {
 
 async function submitStaffForm() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/staff`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/staff`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
@@ -211,7 +212,7 @@ async function submitStaffForm() {
 
 async function launchAuditView(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/staff/${id}`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/staff/${id}`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -227,7 +228,7 @@ async function openAssignmentWorkflow(member) {
   activeStaffTarget.value = member
   try {
     // Re-use your master endpoint to fetch all present treks arrays mapping context
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -242,7 +243,7 @@ async function openAssignmentWorkflow(member) {
 
 async function processStaffAssignment(trekId, forceSwitchFlag = false) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/assign-staff-override`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/assign-staff-override`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -281,7 +282,7 @@ async function processStaffAssignment(trekId, forceSwitchFlag = false) {
 
 async function toggleBlacklistState(member) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${member.id}/toggle-blacklist`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${member.id}/toggle-status`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -304,8 +305,8 @@ async function handleBlacklistAction(id) {
 
 async function handleDeactivateAction(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/toggle-status`, {
-      method: 'PATCH',
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${id}/toggle-status`, {
+      method: 'DELETE',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
     if (res.ok) {

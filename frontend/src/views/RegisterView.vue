@@ -258,8 +258,8 @@ async function handleRegistration() {
   min-height: 100vh;
   width: 100%;
   background: linear-gradient(
-      rgba(0, 0, 0, 0.15), 
-      rgba(0, 0, 0, 0.3)
+      rgba(5, 12, 8, 0.587), 
+      rgba(5, 12, 8, 0.748)
     ), 
     url('@/assets/bg.jpeg');
   background-size: cover;
@@ -442,7 +442,7 @@ async function handleRegistration() {
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 .btn-auth-submit:hover:not(:disabled) {
-  background-color: #e8f5e9;
+  background-color: #8bdb9291;
 }
 .btn-auth-submit:disabled {
   opacity: 0.5;

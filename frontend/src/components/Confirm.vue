@@ -31,7 +31,6 @@ import { useConfirmStore } from '../stores/confirm'
 const confirmStore = useConfirmStore()
 
 const icon = computed(() => {
-  // Can be dynamic based on confirmStore.type later, if desired
   return '🌲' 
 })
 </script>

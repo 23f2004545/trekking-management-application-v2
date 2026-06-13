@@ -94,6 +94,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useAlertStore } from '../../stores/alert'
+import { secureFetch } from '@/utils/api'
 
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
@@ -104,7 +105,7 @@ const loading = ref(true)
 
 async function fetchManifests() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trek_staff/participants`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trek_staff/participants`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) manifests.value = await res.json()

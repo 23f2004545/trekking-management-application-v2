@@ -155,7 +155,15 @@
                 <div class="input-wrapper">
                   <select v-model="form.assigned_staff_id" class="modal-field bg-transparent select-fix">
                     <option :value="null">Leave Unassigned</option>
-                    <option v-for="s in staffDropdown" :key="s.id" :value="s.id">👨‍✈️ {{ s.name }} (ID: {{ s.id }})</option>
+                    <option 
+                      v-for="s in staffDropdown" 
+                      :key="s.id" 
+                      :value="s.id" 
+                      :disabled="s.occupied"
+                      :class="{ 'text-danger': s.occupied }"
+                    >
+                      👨‍✈️ {{ s.name }} (ID: {{ s.id }})
+                    </option>
                   </select>
                 </div>
               </div>
@@ -193,11 +201,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useConfirmStore } from '../../stores/confirm'
+import { secureFetch } from '@/utils/api'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -210,6 +219,7 @@ const staffDropdown = ref([])
 const createModalActive = ref(false)
 const selectedGalleryFiles = ref([])
 const fileNameDisplay = ref('No file chosen')
+
 
 // Filtering state metrics
 const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
@@ -236,20 +246,32 @@ const filteredTreks = computed(() => {
 async function syncTrekDataset() {
   try {
     const headers = { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks`, { method: 'GET', headers })
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks`, { method: 'GET', headers })
     if (res.ok) {
       adminTreks.value = await res.json()
-    }
-    
-    // Quick async retrieval load to populate staff selectors downstream
-    const staffRes = await fetch(`${BACKEND_URL}/api/admin/staff`, { method: 'GET', headers })
-    if (staffRes.ok) {
-      staffDropdown.value = await staffRes.json()
     }
   } catch (err) {
     alertStore.showAlert(`Telemetry Sync Drop: ${err.message}`, 'danger')
   }
 }
+
+watch(
+  [() => form.value.start_date, () => form.value.end_date],
+  async ([newStart, newEnd]) => {
+    // Only fetch if BOTH dates are provided
+    if (newStart && newEnd) {
+      try {
+        const res = await secureFetch(
+          `${BACKEND_URL}/api/admin/staff?start_date=${newStart}&end_date=${newEnd}`, 
+          { method: 'GET' , headers: { 'Authorization': `Bearer ${authStore.token}` } }
+        )
+        if (res.ok) staffDropdown.value = await res.json()
+      } catch (err) {
+        console.error("Failed to fetch dynamic staff availability.")
+      }
+    }
+  }
+)
 
 function openCreateModal() {
   form.value = {
@@ -294,7 +316,7 @@ async function submitTrekForm() {
   })
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}` },
       body: formData
@@ -317,7 +339,7 @@ function triggerRemoval(id) {
     `Are you entirely sure you want to drop Expedition ID #${id} completely out of system indexes? This action is irreversible.`,
     async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/admin/treks/${id}`, {
+        const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
         })

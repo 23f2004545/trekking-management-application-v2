@@ -117,6 +117,7 @@
 import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
+import { secureFetch } from '@/utils/api'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -127,7 +128,7 @@ const activeAuditDetail = ref(null)
 
 async function fetchGlobalBookingsDataset() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/bookings`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/bookings`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) globalBookings.value = await res.json()
@@ -136,17 +137,12 @@ async function fetchGlobalBookingsDataset() {
 
 async function loadDeepAuditPassport(id) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/bookings/${id}/details`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/bookings/${id}/details`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) activeAuditDetail.value = await res.json() 
   } catch (err) { alertStore.showAlert('Audit retrieval failure.', 'danger') }
 }
-
-// function getAbsoluteUrl(path) {
-//   if (!path) return `${BACKEND_URL}/static/Profile_pics.trekker.png`
-//   return path.startsWith('http') ? path : `${BACKEND_URL} + path`
-// }
 
 onMounted(() => { fetchGlobalBookingsDataset() })
 </script>

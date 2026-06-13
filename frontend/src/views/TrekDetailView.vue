@@ -25,6 +25,10 @@
         @staff-toggle-status="openStaffModifyModal"
       />
     </div>
+    <PaymentModal 
+      :active="terminalActive" 
+      @payment-success="finalizeBookingTransaction" 
+    />
 
     <Transition name="modal-fade">
       <div v-if="checkoutActive" @click.self="checkoutActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
@@ -143,13 +147,29 @@
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.assigned_staff_id" class="modal-clean-field bg-transparent select-fix">
                     <option :value="null">Leave Unassigned</option>
-                    <option v-for="s in staffOptions" :key="s.id" :value="s.id">👨‍✈️ {{ s.name }}</option>
+                    <option 
+                      v-for="s in staffOptions" 
+                      :key="s.id" 
+                      :value="s.id" 
+                      :disabled="s.occupied"
+                      :class="{ 'text-danger': s.occupied }"
+                    >
+                      👨‍✈️ {{ s.name }} 
+                    </option>
                   </select>
                 </div>
               </div>
+
               <div class="col-12">
                 <label class="modal-input-label">Replace Gallery Images (Max 4, Capped at 500KB each)</label>
-                <div class="modal-input-wrapper py-1.5"><input type="file" accept="image/*" multiple @change="handleUpdateFiles" class="modal-clean-field text-white-50"></div>
+                <div class="modal-input-wrapper py-2">
+                  <input id='trek_image' type="file" accept="image/*" multiple @change="handleUpdateFiles" class="hidden-file-input text-white-50" >
+                  <label for="trek_image" class="file-custom-btn">Choose file</label>
+                  <span class="file-name-label">{{ fileNameDisplay }}</span>
+                </div>
+                <small v-if="updateGalleryFiles.length" class="text-success-tint mt-1 d-block fs-9 fw-medium">
+                  ✔ {{ updateGalleryFiles.length }} image(s) selected for compilation queue.
+                </small>
               </div>
               <div class="col-12">
                 <label class="modal-input-label">Description Synopsis</label>
@@ -227,12 +247,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted , watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TrekDetail from '../components/TrekDetail.vue'
 import { useAlertStore } from '../stores/alert'
 import { useAuthStore } from '../stores/auth'
 import { useConfirmStore } from '../stores/confirm'
+import PaymentModal from '../components/PaymentModal.vue'
+import { secureFetch } from '@/utils/api.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -244,11 +266,13 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const trekData = ref(null)
 const loading = ref(true)
 const checkoutActive = ref(false)
+const terminalActive = ref(false)
 const showCheckoutButton = ref(true)
 
 const modifyModalActive = ref(false)
 const staffOptions = ref([])
 const updateGalleryFiles = ref([])
+const fileNameDisplay = ref('No file chosen')
 const editForm = ref({})
 const staffModifyModalActive = ref(false)
 
@@ -269,7 +293,7 @@ const computedTotalPrice = computed(() => {
 async function fetchLiveTrekDetails() {
   try {
     loading.value = true
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks/${route.params.id}/details`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${route.params.id}/details`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -286,8 +310,20 @@ async function fetchLiveTrekDetails() {
 }
 
 async function submitBookingRequest() {
+  // Hide the checkout form
+  checkoutActive.value = false
+  // Show the Cyber-Terminal
+  terminalActive.value = true
+}
+
+async function finalizeBookingTransaction() {
+  terminalActive.value = false 
+  
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/bookings`, {
+    alertStore.showAlert('Executing final ledger commits...', 'info')
+    
+    // Now make the actual backend request to save the booking!
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/bookings`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ trek_id: trekData.value.trek_id, ...form.value })
@@ -296,6 +332,7 @@ async function submitBookingRequest() {
     if (res.ok) {
       alertStore.showAlert(data.message || 'Slot booked successfully!', 'success')
       checkoutActive.value = false
+      terminalActive.value = true
       router.push('/portal/trekker/bookings')
     } else {
       alertStore.showAlert(data.message || 'Booking transaction rejected.', 'danger')
@@ -307,7 +344,7 @@ async function submitBookingRequest() {
 
 function handleAdminDeletePurge() {
   confirmStore.ask('Purge this entire trek out of system tables?', async () => {
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
       method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) {
@@ -319,10 +356,12 @@ function handleAdminDeletePurge() {
 
 async function openModifyFormModal() {
   // Pull drop array lists to map staff choices
-  const staffRes = await fetch(`${BACKEND_URL}/api/admin/staff`, {
+  const staffRes = await secureFetch(`${BACKEND_URL}/api/admin/staff`, {
     method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
   })
-  if (staffRes.ok) staffOptions.value = await staffRes.json()
+  if (staffRes.ok) {
+    staffOptions.value = await staffRes.json()
+  }
 
 
   // Seed model input proxies with active row values context mapping fields perfectly
@@ -353,8 +392,9 @@ function handleUpdateFiles(event) {
       event.target.value = ''
       return
     }
+    updateGalleryFiles.value = files
+    fileNameDisplay.value = f.name
   }
-  updateGalleryFiles.value = files
 }
 
 async function submitModificationForm() {
@@ -367,7 +407,7 @@ async function submitModificationForm() {
   })
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
       method: 'PUT', headers: { 'Authorization': `Bearer ${authStore.token}` }, body: formData
     })
     if (res.ok) {
@@ -390,7 +430,7 @@ function openStaffModifyModal() {
 
 async function submitStaffFieldUpdate() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trek_staff/treks/${trekData.value.trek_id}/update-field-data`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trek_staff/treks/${trekData.value.trek_id}/update-field-data`, {
       method: 'PATCH',
       headers: { 
         'Authorization': `Bearer ${authStore.token}`,
@@ -413,6 +453,24 @@ async function submitStaffFieldUpdate() {
   }
 }
 
+watch(
+  [() => editForm.value.start_date, () => editForm.value.end_date],
+  async ([newStart, newEnd]) => {
+    // Only fetch if BOTH dates are provided
+    if (newStart && newEnd) {
+      try {
+        const res = await secureFetch(
+          `${BACKEND_URL}/api/admin/staff?start_date=${newStart}&end_date=${newEnd}`, 
+          { method: 'GET' , headers: { 'Authorization': `Bearer ${authStore.token}` } }
+        )
+        if (res.ok) staffOptions.value = await res.json()
+      } catch (err) {
+        console.error("Failed to fetch dynamic staff availability.")
+      }
+    }
+  }
+)
+
 onMounted(() => {
   fetchLiveTrekDetails()
 })
@@ -431,4 +489,33 @@ onMounted(() => {
 .btn-close-modal:hover { color: white; }
 .alert-senior-msg { background: rgba(255, 193, 7, 0.08); }
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .gap-3 { gap: 12px; }
+
+.file-custom-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0;
+  transition: background 0.2s;
+}
+.file-custom-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.hidden-file-input {
+  display: none;
+}
+.file-name-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.88rem;
+  margin-left: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>

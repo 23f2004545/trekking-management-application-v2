@@ -196,6 +196,7 @@ import { computed, ref , onMounted} from 'vue'
 import { useAuthStore } from '../stores/auth' 
 import { useAlertStore } from '../stores/alert'
 import { useConfirmStore } from '../stores/confirm'
+import { secureFetch } from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -231,7 +232,7 @@ async function handleProfilePic() {
     }
 
     // 1. Dispatch Core User Profile Retrieval Request
-    const profileRes = await fetch(`${API_BASE}/profile`, { method: 'GET', headers })
+    const profileRes = await secureFetch(`${API_BASE}/profile`, { method: 'GET', headers })
     if (profileRes.ok) {
       const pData = await profileRes.json() // Debug log for profile data
       profile_pic.value = pData.profile_pic || '' // Update reactive profile picture state
@@ -255,7 +256,7 @@ function toggleNotifications() {
 
 async function fetchNotifications() {
   try {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications`, {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications`, {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     if (res.ok) notifications.value = await res.json()
@@ -265,21 +266,21 @@ async function fetchNotifications() {
 async function markAsRead(notif) {
   if (notif.is_read) return
   notif.is_read = true // Optimistic UI update
-  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${notif.id}/read`, {
+  await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${notif.id}/read`, {
     method: 'PATCH', headers: { 'Authorization': `Bearer ${authStore.token}` }
   })
 }
 
 async function deleteNotification(id) {
   notifications.value = notifications.value.filter(n => n.id !== id) // Optimistic UI update
-  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${id}`, {
+  await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/${id}`, {
     method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
   })
 }
 
 async function clearAllNotifications() {
   notifications.value = [] // Optimistic UI update
-  await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/clear`, {
+  await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/notifications/clear`, {
     method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
   })
 }
@@ -299,7 +300,7 @@ onMounted(() => {
   overflow: hidden;
   /* Use your aesthetic, professional background image */
   background: 
-    linear-gradient(rgba(20, 30, 25, 0.45), rgba(25, 35, 30, 0.25)), 
+    linear-gradient(rgba(2, 11, 7, 0.693), rgba(25, 35, 30, 0.25)), 
     url('@/assets/dashboard-bg.jpg'); 
   background-size: cover;
   background-position: center;

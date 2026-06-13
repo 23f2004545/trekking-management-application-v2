@@ -56,6 +56,7 @@ import TrekDetail from '../../components/TrekDetail.vue'
 import TrekHistory from '../../components/TrekHistory.vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
+import { secureFetch } from '@/utils/api.js'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -66,7 +67,7 @@ const historicTrips = ref([])
 
 async function fetchCompletedHistory() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/history`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/history`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
@@ -90,7 +91,7 @@ async function fetchCompletedHistory() {
 
 async function handlePublishedReview(formData) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/reviews`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/reviews`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -121,7 +122,7 @@ async function handlePublishedReview(formData) {
 async function requestCSVExport() {
   try {
     alertStore.showAlert('Initializing secure CSV data compilation via background workers...', 'info')
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/export-history`, {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/export-history`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     })

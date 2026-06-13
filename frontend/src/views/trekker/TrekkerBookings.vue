@@ -115,6 +115,7 @@ import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useConfirmStore } from '../../stores/confirm'
 import { useAuthStore } from '../../stores/auth'
+import { secureFetch } from '@/utils/api'
 
 const alertStore = useAlertStore()
 const confirmStore = useConfirmStore()
@@ -126,7 +127,7 @@ const activeBookingsList = ref([])
 
 async function fetchLiveBookings() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/trekker/bookings`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/trekker/bookings`, {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
@@ -155,7 +156,7 @@ function triggerRouteCancellation(id) {
     `Are you completely certain you want to revoke Expedition Pass #${id}? This restores slot boundaries immediately.`, 
     async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/trekker/bookings/${id}/cancel`, {
+        const res = await secureFetch(`${BACKEND_URL}/api/trekker/bookings/${id}/cancel`, {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${authStore.token}` }
         })

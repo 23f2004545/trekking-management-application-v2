@@ -139,6 +139,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useAlertStore } from '../../stores/alert'
 import Chart from 'chart.js/auto'
+import { secureFetch } from '@/utils/api'
 
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
@@ -158,7 +159,7 @@ const stats = ref({
 
 async function fetchRealDataMetrics() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/dashboard/stats`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/dashboard/stats`, {
       method: 'GET', headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
     
