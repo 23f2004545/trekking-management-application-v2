@@ -145,3 +145,11 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     user = db.relationship('User', backref=db.backref('notifications', lazy=True, cascade='all, delete-orphan'))
+    
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    action = db.Column(db.String(50), nullable=False) # e.g., 'CREATED', 'DELETED', 'BLACKLISTED'
+    details = db.Column(db.String(255), nullable=False)
+    severity = db.Column(db.String(20), default='info') # info, warning, danger, success
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

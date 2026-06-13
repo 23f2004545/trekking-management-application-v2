@@ -386,6 +386,8 @@ onMounted(() => {
 .status-pill.pending { background: rgba(255, 193, 7, 0.8); color: black; }
 .status-pill.closed { background: rgba(220, 53, 69, 0.8); }
 .status-pill.completed { background: rgba(13, 110, 253, 0.8); }
+.status-pill.ongoing { background: rgba(255, 193, 7, 0.8); color: black; }
+
 
 /* Modal overlay layouts */
 .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }

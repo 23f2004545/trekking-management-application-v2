@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db,cache,bcrypt
 from controller.models import Trek, Booking, User , StaffProfile
 from controller.decorators import staff_required
-from routes.utils_apis import create_notification
+from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone
 from sqlalchemy import func,case
 import os , random
@@ -324,7 +324,8 @@ def update_trek_field_data(trek_id):
     if status_changed:
         # All currently active bookings for this specific trek
         active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
-        
+        if new_status == 'Cancelled':
+                log_system_audit("CANCEL", f"Trek #{trek_id} halted by Staff {user.email}.", "danger")
         for booking in active_bookings:
             if new_status == 'Completed':
                 booking.status = 'Completed'

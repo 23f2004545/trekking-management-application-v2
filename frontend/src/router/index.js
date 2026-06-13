@@ -32,6 +32,7 @@ const router = createRouter({
         { path: 'admin/staff', name: 'admin-staff', component: () => import('../views/admin/AdminStaff.vue'), meta: { role: 'admin' } },
         { path: 'admin/trekkers', name: 'admin-trekkers', component: () => import('../views/admin/AdminTrekkers.vue'), meta: { role: 'admin' } },
         { path: 'admin/bookings', name: 'admin-bookings', component: () => import('../views/admin/AdminBookings.vue'), meta: { role: 'admin' } },
+        { path: 'admin/profile', name: 'admin-profile', component: () => import('../views/admin/AdminProfile.vue'), meta: { role: 'admin' } },
 
 
         { path: 'trek_staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },

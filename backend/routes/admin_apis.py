@@ -3,10 +3,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import bcrypt,db,cache
 from controller.models import * 
 from controller.decorators import admin_required
-from routes.utils_apis import create_notification
+from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone , timedelta
 from sqlalchemy import func
-import os
+import os , redis , socket
 
 
 admin_bp = Blueprint('admin', __name__)
@@ -14,39 +14,6 @@ admin_bp = Blueprint('admin', __name__)
 # ==========================================================================
 # 1. ADMIN DASHBOARD STATS & OVERVIEW
 # ==========================================================================
-
-@admin_bp.route('/profile', methods=['GET'])
-@jwt_required()
-@admin_required
-def get_profile_data():
-    user_id = get_jwt_identity()
-    user = User.query.get_or_404(user_id)
-    
-    # Formats timestamps to match the UI visual parameters cleanly
-    created_formatted = user.created_at.strftime("%B %d, %Y") 
-    
-    # Calculate a simple human-readable delta for last login matrix tracking
-    last_login_str = "Just now"
-    if user.last_login_at:
-        delta = datetime.now(timezone.utc) - user.last_login_at.replace(tzinfo=timezone.utc)
-        if delta.seconds < 60:
-            last_login_str = "Seconds ago"
-        elif delta.seconds < 3600:
-            last_login_str = f"{delta.seconds // 60} minutes ago"
-        else:
-            last_login_str = user.last_login_at.strftime("%Y-%m-%d %H:%M")
-
-    return make_response(jsonify({
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "contact": user.contact,
-        "is_active": user.is_active,
-        "blacklisted": user.blacklisted, # Fallback safety check
-        "created_at": created_formatted,
-        "last_login_at": last_login_str,
-        "profile_pic": user.profile_pic 
-    }), 200)
 
 @admin_bp.route('/dashboard/stats', methods=['GET'])
 @jwt_required()
@@ -132,9 +99,125 @@ def get_dashboard_stats():
             "popular": popular_treks
         }
     }), 200)
+    
+    
+# ==========================================================================
+# 2. PROFILE MANAGEMENT 
+# ==========================================================================
+
+@admin_bp.route('/profile', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_profile_data():
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    
+    # Formats timestamps to match the UI visual parameters cleanly
+    created_formatted = user.created_at.strftime("%B %d, %Y") 
+    
+    # Calculate a simple human-readable delta for last login matrix tracking
+    last_login_str = "Just now"
+    if user.last_login_at:
+        delta = datetime.now(timezone.utc) - user.last_login_at.replace(tzinfo=timezone.utc)
+        if delta.seconds < 60:
+            last_login_str = "Seconds ago"
+        elif delta.seconds < 3600:
+            last_login_str = f"{delta.seconds // 60} minutes ago"
+        else:
+            last_login_str = user.last_login_at.strftime("%Y-%m-%d %H:%M")
+
+    return make_response(jsonify({
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "contact": user.contact,
+        "is_active": user.is_active,
+        "blacklisted": user.blacklisted, # Fallback safety check
+        "created_at": created_formatted,
+        "last_login_at": last_login_str,
+        "profile_pic": user.profile_pic 
+    }), 200)
+    
+    
+@admin_bp.route('/profile/system-health', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_system_health():
+    from tasks import celery_app
+    """Pings microservices to verify infrastructure stability."""
+    health = {
+        "database": {"status": "Online", "color": "success"},
+        "redis": {"status": "Offline", "color": "danger"},
+        "celery": {"status": "Offline", "color": "danger"},
+        "mailpit": {"status": "Offline", "color": "danger"}
+    }
+    
+    # Ping Redis
+    try:
+        r = redis.Redis(host='localhost', port=6379, db=0, socket_timeout=1)
+        if r.ping(): health["redis"] = {"status": "Online", "color": "success"}
+    except: pass
+
+    # Ping Mailpit (SMTP Port 1025)
+    try:
+        with socket.create_connection(('127.0.0.1', 1025), timeout=1):
+            health["mailpit"] = {"status": "Online", "color": "success"}
+    except: pass
+
+    # Ping Celery Workers
+    try:
+        # Pings active workers. If dict is empty, no workers are alive.
+        inspector = celery_app.control.inspect(timeout=1)
+        if inspector.ping(): health["celery"] = {"status": "Active", "color": "success"}
+    except: pass
+
+    return make_response(jsonify(health), 200)
+
+@admin_bp.route('/profile/active-operations', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_active_operations():
+    """Fetches currently 'Ongoing' trails with live field data."""
+    ongoing_treks = Trek.query.filter_by(status='Ongoing').all()
+    results = []
+    
+    for t in ongoing_treks:
+        # Sum participants currently on this trail
+        active_trekkers = db.session.query(db.func.sum(Booking.number_of_persons)).filter_by(trek_id=t.trek_id, status='Booked').scalar() or 0
+        
+        staff_data = {"name": "Unassigned", "contact": "N/A"}
+        if t.assigned_staff_id:
+            staff_user = User.query.get(t.assigned_staff_id)
+            if staff_user:
+                staff_data = {"name": staff_user.name, "contact": staff_user.contact}
+                
+        results.append({
+            "trek_id": t.trek_id,
+            "name": t.trek_name,
+            "location": t.location,
+            "staff": staff_data,
+            "active_trekkers": int(active_trekkers),
+            "end_date": t.end_date.strftime("%b %d, %Y")
+        })
+    return make_response(jsonify(results), 200)
+
+@admin_bp.route('/profile/audit-logs', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_audit_logs():
+    """Fetches the latest 50 system events."""
+    logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(50).all()
+    return make_response(jsonify([{
+        "action": l.action,
+        "details": l.details,
+        "severity": l.severity,
+        "time": l.created_at.strftime("%H:%M"),
+        "date": l.created_at.strftime("%b %d")
+    } for l in logs]), 200)   
+    
 
 # ==========================================================================
-# 2. MANAGE TREKKING ROUTES (CRUD)
+# 3. MANAGE TREKKING ROUTES (CRUD)
 # ==========================================================================
 
 @admin_bp.route('/treks', methods=['GET'])
@@ -243,7 +326,7 @@ def create_trek():
         if staff_id:
             create_notification(staff.id, f"You have been assigned to lead TREK : {new_trek.trek_name}.", "info")
         cache.clear()
-            
+        log_system_audit("CREATE", f"New Route '{new_trek.trek_name}' deployed.", "info")
         return make_response(jsonify({"message": "Expedition coordinate mapping generated successfully.", "trek_id": new_trek.trek_id}), 201)
     except Exception as e:
         db.session.rollback()
@@ -261,10 +344,12 @@ def manage_trek_by_id(trek_id):
             staff_id = None
             if trek.assigned_staff_id and trek.assigned_staff_id != 'null':
                 staff = User.query.get(int(trek.assigned_staff_id))
-                
+            
+            name = trek.trek_name
             db.session.delete(trek)
             db.session.commit()
             cache.clear()
+            log_system_audit("PURGE", f"Trek {name} purged from database.", "danger")
             create_notification(staff.id, "Your assigned trek has been purged by Admin.", "danger")
             return make_response(jsonify({"message": "Trekking route removed successfully"}), 200)
         except Exception as e:
@@ -298,6 +383,8 @@ def manage_trek_by_id(trek_id):
         if status_changed:
         # All currently active bookings for this specific trek
             active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
+            if new_status == 'Cancelled':
+                log_system_audit("CANCEL", f"Trek #{trek_id} halted by Admin.", "danger")
             
             for booking in active_bookings:
                 if new_status == 'Completed':
@@ -477,7 +564,7 @@ def trek_details(trek_id):
     return make_response(jsonify(payload), 200)
 
 # ==========================================================================
-# 3. ADD AND MANAGE TREK STAFF / USER BLACKLISTS
+# 4. ADD AND MANAGE TREK STAFF / USER BLACKLISTS
 # ==========================================================================
 
 @admin_bp.route('/staff', methods=['POST'])
@@ -617,6 +704,7 @@ def toggle_user_blacklist_status(user_id):
         type = "danger" if user.blacklisted else "success"
         status_txt = "Blacklisted" if user.blacklisted else "Whitelisted"
         create_notification(user.id, f"You have been {status_txt}", type)
+        log_system_audit(status_txt, f"Trekker {user.email} flagged as {status_txt}.", type)
         return make_response(jsonify({"message": f"User account credentials flagged as {status_txt}."}), 200)
         
     return make_response(jsonify({"message": "Model column definition missing block attributes."}), 500)
@@ -631,16 +719,21 @@ def toggle_user_account_status(user_id):
     if request.method == 'DELETE':
         db.session.delete(user)
         db.session.commit()
+        log_system_audit(status_txt, f"Staff {user.email} account is permanently deleted.", "warning")
         return make_response(jsonify({"message": f"User's account permanently deleted."}), 200)
     
     user.is_active = not user.is_active
+    user.blacklisted = not user.blacklisted
     db.session.commit()
+    type = "danger" if user.blacklisted else "success"
+    status_txt = "Blacklisted" if user.blacklisted else "Whitelisted"
+    log_system_audit(status_txt, f"Staff {user.email} flagged as {status_txt}", type)
     return make_response(jsonify({"message": f"User's account temporarily deleted."}), 200)
 
 
 
 # ==========================================================================
-# 4. ASSIGN OR INTERCHANGE STAFF OPERATIONS GATEWAY
+# 5. ASSIGN OR INTERCHANGE STAFF OPERATIONS GATEWAY
 # ==========================================================================
 
 @admin_bp.route('/assign-staff-override', methods=['PATCH'])
@@ -680,59 +773,6 @@ def assign_staff_override():
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({"message": f"Mutation failed: {str(e)}"}), 500)
-
-# ==========================================================================
-# 5. SEARCH & AUDIT CORE ENGINE (Treks, Staff, Users, Bookings)
-# ==========================================================================
-@admin_bp.route('/search', methods=['GET'])
-@jwt_required()
-@admin_required
-def global_admin_search():
-        
-    target = request.args.get('target', 'treks') # Default search domain targets treks
-    query = request.args.get('query', '')
-
-    results = []
-    
-    if target == 'treks':
-        # Search by ID integer or Name string matching patterns
-        trek_query = Trek.query
-        if query.isdigit():
-            trek_query = trek_query.filter(Trek.id == int(query))
-        elif query:
-            trek_query = trek_query.filter(Trek.name.ilike(f"%{query}%") | Trek.location.ilike(f"%{query}%"))
-        
-        results = [{
-            "id": t.id, "name": t.name, "location": t.location, 
-            "difficulty": t.difficulty, "slots": t.available_slots, "status": t.status
-        } for t in trek_query.all()]
-
-    elif target in ['staff', 'users']:
-        role_target = 'trek_staff' if target == 'staff' else 'trekker'
-        user_query = User.query.join(Role).filter(Role.name == role_target)
-        
-        if query.isdigit():
-            user_query = user_query.filter(User.id == int(query))
-        elif query:
-            user_query = user_query.filter(User.name.ilike(f"%{query}%") | User.email.ilike(f"%{query}%"))
-            
-        results = [{
-            "id": u.id, "name": u.name, "email": u.email, 
-            "contact": u.contact, "is_active": u.is_active
-        } for u in user_query.all()]
-
-    elif target == 'bookings':
-        booking_query = Booking.query
-        if query.isdigit():
-            booking_query = booking_query.filter((Booking.id == int(query)) | (Booking.user_id == int(query)))
-            
-        results = [{
-            "booking_id": b.id, "user_name": b.user.name, "trek_name": b.trek.name,
-            "date": b.booking_date.strftime("%Y-%m-%d"), "status": b.status
-        } for b in booking_query.all()]
-
-    return make_response(jsonify(results), 200)
-
 
 # ==========================================================================
 # 6. ADD AND MANAGE TREKKER / USER BLACKLISTS

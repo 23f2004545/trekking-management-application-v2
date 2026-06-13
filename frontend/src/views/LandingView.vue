@@ -91,7 +91,7 @@
               <h6 class="fw-bold text-white m-0">{{ review.author }}</h6>
               <span class="text-warning text-nowrap fs-8">{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</span>
             </div>
-            <p class="text-white-50 fs-8 lh-base m-0 italic ">"{{ review.comment }}"</p>
+            <p class="text-white-50 fs-8 lh-base m-0 italic edit-text">"{{ review.comment }}"</p>
           </div>
         </div>
       </div>
@@ -477,6 +477,15 @@ onUnmounted(() => {
   transition: transform 0.3s, background 0.3s;
 }
 .review-glass-card:hover { transform: translateY(-4px); background: rgba(255, 255, 255, 0.08); border-color: rgba(255,255,255,0.2); }
+
+.edit-text {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3; /* Max number of lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 @keyframes marquee-scroll {
   0% { transform: translateX(0); }

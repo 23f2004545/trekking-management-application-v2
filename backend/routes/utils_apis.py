@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.models import Notification , Trek , User , Booking , Review
+from controller.models import Notification , Trek , User , Booking , Review , AuditLog
 from controller.extensions import db
 from sqlalchemy import func
 
@@ -10,6 +10,10 @@ def create_notification(user_id, message, alert_type="info"):
     db.session.add(new_notif)
     db.session.commit()
 
+def log_system_audit(action, details, severity="info"):
+    new_log = AuditLog(action=action, details=details, severity=severity)
+    db.session.add(new_log)
+    db.session.commit()
 
 utils_bp = Blueprint('utils', __name__)
 

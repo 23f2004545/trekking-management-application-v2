@@ -1,13 +1,22 @@
 <template>
   <div class="admin-bookings-viewport text-white text-start pb-5 animate-fade-in px-3">
     
-    <div v-if="!activeAuditDetail" class="mb-4">
-      <h2 class="fw-bold tracking-tight m-0">Global Explorer Passports</h2>
-      <p class="m-0 text-white-50 fs-8 mt-1">Audit active reservations parameters, inspect timeline flags, or track completed loops feedback.</p>
+    <div v-if="!activeAuditDetail" class="mb-4 d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="fw-bold tracking-tight m-0">Global Explorer Passports</h2>
+        <p class="m-0 text-white-50 fs-8 mt-1">Audit active reservations parameters and timeline flags.</p>
+      </div>
+      <select v-model="statusFilter" class="form-select bg-dark text-white border-white border-opacity-25 shadow-sm rounded-pill px-4 py-2 fs-8" style="width: auto; cursor: pointer;">
+        <option value="All">All Statuses</option>
+        <option value="Upcoming"> Upcoming</option>
+        <option value="Ongoing"> Ongoing</option>
+        <option value="Completed"> Completed</option>
+        <option value="Cancelled"> Cancelled</option>
+      </select>
     </div>
 
     <div v-if="!activeAuditDetail" class="d-flex flex-column gap-3">
-      <div v-for="item in globalBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
+      <div v-for="item in filteredBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
           <img :src="BACKEND_URL + item.trekker.profile_pic" alt="Trekker" class="rect-profile-img shadow" />
@@ -114,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api'
@@ -125,6 +134,12 @@ const authStore = useAuthStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const globalBookings = ref([])
 const activeAuditDetail = ref(null)
+const statusFilter = ref('All')
+
+const filteredBookings = computed(() => {
+  if (statusFilter.value === 'All') return globalBookings.value
+  return globalBookings.value.filter(b => b.booking_status === statusFilter.value)
+})
 
 async function fetchGlobalBookingsDataset() {
   try {
