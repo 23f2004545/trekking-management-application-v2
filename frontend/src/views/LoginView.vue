@@ -35,7 +35,7 @@
         <div class="input-group-container mb-4">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <label class="input-label mb-0">Password</label>
-            <RouterLink to="/forgot-password" class="helper-link">Forgot password?</RouterLink>
+            <p @click="openForgotModal" class="helper-link">Forgot password?</p>
           </div>
           <div class="input-field-wrapper">
             <span class="field-icon">🔒</span>
@@ -64,7 +64,55 @@
       </p>
 
     </div>
+
+    <Transition name="modal-fade">
+      <div v-if="forgotModalActive" @click.self="closeForgotModal" class="login-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
+          
+          <button @click="closeForgotModal" class="btn-close-modal">✕</button>
+
+          <h4 class="fw-bold tracking-tight text-white mb-1">Secure Access</h4>
+          <p class="text-white-50 small mb-4">
+            {{ otpStep === 1 ? 'Enter your registered email to receive a temporary authorization token.' : 'Enter the 6-digit token sent to your terminal.' }}
+          </p>
+
+          <form v-if="otpStep === 1" @submit.prevent="requestLoginOTP" class="d-flex flex-column gap-3">
+            <div class="input-group-capsule">
+              <label class="modal-input-label">Registered Email</label>
+              <div class="modal-input-wrapper">
+                <input v-model="forgotEmail" type="email" required class="modal-clean-field w-100" placeholder="explorer@apex.com">
+              </div>
+            </div>
+            <button type="submit" :disabled="isProcessing" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-dark mt-2 shadow-sm">
+              {{ isProcessing ? 'Pinging Servers...' : 'Transmit Token' }}
+            </button>
+          </form>
+
+          <form v-else @submit.prevent="verifyLoginOTP" class="d-flex flex-column gap-3">
+            <div class="input-group-capsule">
+              <div class="d-flex justify-content-between align-items-end mb-1">
+                <label class="modal-input-label m-0">Authorization Code</label>
+                <span class="fs-9 text-warning">Expires in 5:00</span>
+              </div>
+              <div class="modal-input-wrapper">
+                <input v-model="forgotOTP" type="text" required class="modal-clean-field w-100 fw-bold tracking-widest text-warning text-center fs-4" placeholder="000000" maxlength="6">
+              </div>
+            </div>
+            <button type="submit" :disabled="isProcessing" class="btn btn-warning w-100 rounded-pill py-2.5 fw-bold text-dark mt-2 shadow-sm">
+              {{ isProcessing ? 'Verifying...' : 'Authorize & Connect' }}
+            </button>
+            <button type="button" @click="otpStep = 1" class="btn btn-link text-white-50 text-decoration-none fs-9 w-100 mt-1">
+              ← Use a different email
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </Transition>
+
   </div>
+
+  
 </template>
 
 <script setup>
@@ -81,6 +129,13 @@
   const password = ref('');
 
   const emailError = ref('');
+
+  const forgotModalActive = ref(false)
+  const otpStep = ref(1)
+  const forgotEmail = ref('')
+  const forgotOTP = ref('')
+  const isProcessing = ref(false)
+
 
   function validateEmail() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -139,8 +194,67 @@
       }
 
     }
-
   }
+
+  function openForgotModal() {
+  forgotEmail.value = ''
+  forgotOTP.value = ''
+  otpStep.value = 1
+  forgotModalActive.value = true
+  }
+
+  function closeForgotModal() {
+    forgotModalActive.value = false
+  }
+
+  async function requestLoginOTP() {
+    isProcessing.value = true
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/request-login-otp`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.value })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alertStore.showAlert(data.message, 'success')
+        otpStep.value = 2 // Move to verification step
+      } else {
+        alertStore.showAlert(data.message, 'danger')
+      }
+    } catch (err) {
+      alertStore.showAlert('Network configuration error.', 'danger')
+    } finally {
+      isProcessing.value = false
+    }
+  }
+
+  async function verifyLoginOTP() {
+    isProcessing.value = true
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/verify-login-otp`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.value, otp: forgotOTP.value })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alertStore.showAlert('Authorization accepted.', 'success')
+        authStore.loginUser(data)
+        closeForgotModal()
+        
+        // Route based on role
+        if (data.role === 'admin') router.push('/portal/admin/dashboard')
+        else if (data.role === 'trek_staff') router.push('/portal/trek_staff/dashboard')
+        else router.push('/portal/trekker/dashboard')
+      } else {
+        alertStore.showAlert(data.message || 'Invalid token.', 'danger')
+      }
+    } catch (err) {
+      alertStore.showAlert('Network configuration error.', 'danger')
+    } finally {
+      isProcessing.value = false
+    }
+  }
+
 </script>
 
 <style scoped>
@@ -261,6 +375,12 @@
 }
 
 /* Action Links & Helper Styling */
+p.helper-link {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .helper-link, .action-link {
   color: rgba(255, 255, 255, 0.85);
   font-size: 0.82rem;
@@ -319,4 +439,14 @@
   color: rgba(255, 255, 255, 0.75);
   font-size: 0.88rem;
 }
+
+.login-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
+.glass-modal-card { background: rgba(2, 7, 4, 0.422) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
+.max-vh-90 { max-height: 90vh; }
+
+.btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
+.btn-close-modal:hover { color: white; }
+.modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
+.modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
+.modal-clean-field { border: none; background: transparent; color: #ffffff; width: 100%; font-size: 0.92rem; outline: none; }
 </style>

@@ -323,8 +323,12 @@ def book_trek_slot():
     # Prevent overbooking beyond physical route capacity constraints
     if trek.available_slots <= 0:
         return make_response(jsonify({"message": "Booking denied: Base camp slots are completely full."}), 400)
-        
+    
     number_of_persons = data.get('adults') + data.get('children') + data.get('seniors')
+    
+    if number_of_persons > trek.available_slots:
+        return make_response(jsonify({"message": "Booking denied: Not enough slots available."}), 400)
+        
     try:
         # Deduct slot reservation dynamically
         trek.available_slots -= int(number_of_persons)

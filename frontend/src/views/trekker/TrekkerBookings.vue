@@ -196,7 +196,7 @@ onMounted(() => {
 /* Immersive Audit Modal Box elements */
 .bookings-modal-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(1, 23, 12, 0.454) !important;
+  background: rgba(1, 8, 5, 0.454) !important;
   backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(20px) !important;
   z-index: 999 !important;
 }

@@ -21,12 +21,14 @@ export const useAuthStore = defineStore('auth', {
           { label: 'Treks', route: '/portal/admin/treks' },
           { label: 'Staff', route: '/portal/admin/staff' },
           { label: 'Trekkers', route: '/portal/admin/trekkers' },
-          { label: 'Bookings', route: '/portal/admin/bookings' }
+          { label: 'Bookings', route: '/portal/admin/bookings' },
+          { label: 'History', route: '/portal/admin/history' },
         ],
         trek_staff: [
           { label: 'Home', route: '/portal/trek_staff/dashboard' },
           { label: 'My Treks', route: '/portal/trek_staff/treks' },
-          { label: 'Trekkers', route: '/portal/trek_staff/participants' }
+          { label: 'Trekkers', route: '/portal/trek_staff/participants' },
+          { label: 'History', route: '/portal/trek_staff/history' },
         ],
         trekker: [
           { label: 'Home', route: '/portal/trekker/dashboard' },

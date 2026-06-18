@@ -136,7 +136,7 @@
                 <label class="modal-input-label">Status Lifecycle State</label>
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.status" class="modal-clean-field bg-transparent select-fix">
-                    <option value="" disabled selected>Select Status</option>
+                    <option :value="Pending" disabled selected>Select Status</option>
                     <option value="Open">Open</option> <option value="Ongoing">On going</option> <option value="Closed">Closed</option> 
                     <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
                   </select>
@@ -368,7 +368,7 @@ async function openModifyFormModal() {
   editForm.value = {
     trek_name: trekData.value.trek_name, location: trekData.value.location,
     difficulty: trekData.value.difficulty, duration_days: trekData.value.duration_days,
-    available_slots: trekData.value.available_slots, status: trekData.value.status,
+    available_slots: trekData.value.available_slots, status: trekData.value.status || "Pending",
     start_date: trekData.value.start_date, end_date: trekData.value.end_date,
     max_altitude: trekData.value.max_altitude, price_per_person: trekData.value.price_per_person,
     description: trekData.value.description, assigned_staff_id: trekData.value.staff.id  || null

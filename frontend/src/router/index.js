@@ -33,12 +33,14 @@ const router = createRouter({
         { path: 'admin/trekkers', name: 'admin-trekkers', component: () => import('../views/admin/AdminTrekkers.vue'), meta: { role: 'admin' } },
         { path: 'admin/bookings', name: 'admin-bookings', component: () => import('../views/admin/AdminBookings.vue'), meta: { role: 'admin' } },
         { path: 'admin/profile', name: 'admin-profile', component: () => import('../views/admin/AdminProfile.vue'), meta: { role: 'admin' } },
+        { path: 'admin/history', name: 'admin-history', component: () => import('../views/admin/AdminHistory.vue'), meta: { role: 'admin' } },
 
 
         { path: 'trek_staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/profile', name: 'staff-profile', component: () => import('../views/staff/StaffProfile.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/treks', name: 'staff-treks', component: () => import('../views/staff/StaffTreks.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/participants', name: 'staff-participants', component: () => import('../views/staff/StaffParticipants.vue'), meta: { role: 'trek_staff' } },
+        { path: 'trek_staff/history', name: 'staff-history', component: () => import('../views/staff/StaffHistory.vue'), meta: { role: 'trek_staff' } },
 
         { path: 'trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
         { path: 'trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },

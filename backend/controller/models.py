@@ -43,7 +43,7 @@ class Trek(db.Model):
     duration_days = db.Column(db.Integer, nullable=False)  # in days
     available_slots = db.Column(db.Integer, nullable=False)
     assigned_staff_id = db.Column(db.Integer, db.ForeignKey('staff_profile.staff_id'))  
-    status = db.Column(db.String(20), default='Open', nullable=False)  # Pending, Approved, Open, Closed, Completed
+    status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Approved, Open, Closed, Completed
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     description = db.Column(db.Text)
@@ -77,9 +77,9 @@ class Booking(db.Model):
     booking_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id'), nullable=False) 
-    booking_date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp()) # remove , same as created_at
+    booking_date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp()) 
     status = db.Column(db.String(20), default='Booked', nullable=False)  # Booked, Cancelled, Completed
-    payment_status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Paid, Refunded
+    payment_status = db.Column(db.String(20), default='Paid', nullable=False)  # Pending, Paid, Refunded
     number_of_persons = db.Column(db.Integer, default=1, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     cancellation_reason = db.Column(db.Text)

@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from controller.extensions import bcrypt,db
+from controller.extensions import bcrypt,db,cache
 from controller.models import User,Role
 from datetime import datetime, timezone
-import os , re
+from tasks import send_otp_email
+import os , re , random
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -117,3 +118,56 @@ def register():
     db.session.commit()
     
     return make_response(jsonify({"message": "User registered successfully"}), 201)
+
+
+@auth_bp.route('/request-login-otp', methods=['POST'])
+def request_login_otp():
+    """Generates an OTP for passwordless login."""
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+    
+    if not user:
+        # We return a generic message to prevent 'Email Enumeration' hacking
+        return make_response(jsonify({"message": "If this email exists, an OTP has been sent."}), 200)
+        
+    if not user.is_active:
+        return make_response(jsonify({"message": "Account suspended."}), 403)
+
+    otp_code = str(random.randint(100000, 999999))
+    cache.set(f"login_otp_{email}", otp_code, timeout=300) # 5 minutes TTL
+    
+    send_otp_email.delay(user.email, user.name, otp_code)
+    
+    return make_response(jsonify({"message": "If this email exists, an OTP has been sent."}), 200)
+
+
+@auth_bp.route('/verify-login-otp', methods=['POST'])
+def verify_login_otp():
+    """Validates the OTP and instantly logs the user in."""
+    email = request.json.get('email')
+    submitted_otp = request.json.get('otp')
+    
+    stored_otp = cache.get(f"login_otp_{email}")
+    
+    if not stored_otp or str(stored_otp) != str(submitted_otp):
+        return make_response(jsonify({"message": "Invalid or expired OTP."}), 401)
+        
+    user = User.query.filter_by(email=email).first()
+    
+    # OTP is valid! Log them in.
+    cache.delete(f"login_otp_{email}") # Destroy OTP
+    
+    user.last_login_at = datetime.now(timezone.utc)
+    db.session.commit()
+    
+    # Generate identical payload to your normal /login route
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
+    
+    return make_response(jsonify({
+        "access_token": access_token, 
+        "refresh_token": refresh_token, 
+        "role": user.role.name, 
+        "name": user.name, 
+        "profile_pic": user.profile_pic
+    }), 200)

@@ -7,16 +7,16 @@
     </div>
 
     <!-- Search & Filter Controls -->
-    <div class="filter-glass-panel p-3 rounded-4 mb-4 shadow-sm border border-white border-opacity-10">
+    <div class="filter-glass-panel p-2 rounded-4 mb-4 shadow-sm border border-white border-opacity-10">
       <div class="row g-3 align-items-center">
         <div class="col-md-6">
-          <div class="search-input-box px-3 py-2 rounded-3 d-flex align-items-center">
+          <div class="search-input-box px-3 py-2 rounded-3 d-flex align-items-center" style="height: 2rem;">
             <span class="me-2 opacity-60"><i class="bi bi-search"></i></span>
             <input v-model="filters.query" type="text" placeholder="Search route by name or location..." class="bg-transparent border-0 text-white w-100 clean-field">
           </div>
         </div>
         <div class="col-md-6">
-          <select v-model="filters.status" class="select-glass-box w-100 px-3 py-2 rounded-3 text-white">
+          <select v-model="filters.status" class="select-glass-box w-100 px-3 py-1 rounded-3 text-white" >
             <option value="">All Operational Statuses</option>
             <option value="Open">Open (Booking Active)</option>
             <option value="Ongoing">Ongoing (On-Trail)</option>
@@ -125,13 +125,14 @@ onMounted(() => { fetchMyTreks() })
 .search-input-box, .select-glass-box {
   background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
 }
-.select-glass-box { outline: none; }
+.select-glass-box { outline: none; height: 2rem; }
 .select-glass-box option { background: #16241c; color: white; }
 .clean-field:focus { outline: none; }
 
 .status-pill { padding: 4px 10px; border-radius: 20px; font-weight: 600; }
 .status-pill.open { background: rgba(25, 135, 84, 0.8); }
-.status-pill.ongoing { background: rgba(0, 123, 255, 0.8); }
+.status-pill.ongoing { background: rgba(220, 208, 36, 0.558); }
+.status-pill.pending { background: rgba(198, 192, 101, 0.768); }
 .status-pill.completed { background: rgba(9, 105, 214, 0.78); }
 .status-pill.cancelled { background: rgba(220, 53, 69, 0.8); }
 

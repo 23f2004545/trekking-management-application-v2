@@ -115,3 +115,93 @@ def clear_all():
     db.session.commit()
     return make_response(jsonify({"message": "All cleared"}), 200)
 
+
+@utils_bp.route('/history', methods=['GET'])
+@jwt_required()
+def get_historical_treks():
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    
+    # Base query: Only Completed Treks
+    query = Trek.query.filter_by(status='Completed')
+    
+    # RBAC Security Check
+    if user.role.name == 'trek_staff':
+        # Restrict to ONLY this guide's treks
+        if not user.staff_profile:
+            return make_response(jsonify({"message": "Staff profile missing."}), 403)
+        query = query.filter_by(assigned_staff_id=user.id)
+    elif user.role.name != 'admin':
+        return make_response(jsonify({"message": "Unauthorized role."}), 403)
+        
+    completed_treks = query.order_by(Trek.end_date.desc()).all()
+    results = []
+    
+    # Use the aggregation logic we mapped out earlier
+    for trek in completed_treks:
+        completed_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Completed').all()
+        cancelled_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Cancelled').all()
+        
+        comp_pax = sum(b.number_of_persons for b in completed_bookings)
+        canc_pax = sum(b.number_of_persons for b in cancelled_bookings)
+        revenue = sum(b.total_amount for b in completed_bookings if b.payment_status == 'Paid')
+        
+        reviews = Review.query.filter_by(trek_id=trek.trek_id).all()
+        avg_trek = sum(r.trek_rating for r in reviews) / len(reviews) if reviews else 0
+        
+        # Unique accounts that booked
+        unique_accounts = {b.user.id for b in completed_bookings}
+        
+        # Roster details
+        roster = []
+        for b in completed_bookings:
+            roster.append({
+                "name": b.user.name,
+                "email": b.user.email,
+                "contact": b.user.contact,
+                "pax": b.number_of_persons,
+                # "medical" : b.instructions 
+            })
+
+        avg_staff = sum(r.staff_rating for r in reviews if r.staff_rating) / len([r for r in reviews if r.staff_rating]) if reviews else 0
+        
+        if trek.assigned_staff_id:
+            staff = User.query.get(int(trek.assigned_staff_id))
+        
+        results.append({
+            "trek_id": trek.trek_id,
+            "trek_info": {
+                "name": trek.trek_name,
+                "duration": trek.duration_days,
+                "difficulty": trek.difficulty,
+                "description": trek.description,
+                "location": trek.location,
+                "start_date": trek.start_date.strftime("%b %d, %Y"),
+                "end_date": trek.end_date.strftime("%b %d, %Y"),
+                "altitude": trek.max_altitude,
+                "price": trek.price_per_person
+            },
+            "staff_info": {
+                "name": staff.name if staff else "Unassigned",
+                "contact": staff.contact if staff else "N/A",
+                "email" : staff.email if staff else None,
+                "experience": getattr(staff.staff_profile, 'experience_years', "Verified Guide") if staff else "N/A",
+                "certification": getattr(staff.staff_profile, 'certification', "ABVIMAS Certified") if staff else "N/A"
+            },
+            "analytics": {
+                "total_revenue": revenue,
+                "accounts_booked": len(unique_accounts),
+                "completed_participants": comp_pax,
+                "cancelled_participants": canc_pax,
+                "completion_rate": int((comp_pax / (comp_pax + canc_pax) * 100)) if (comp_pax + canc_pax) > 0 else 0
+            },
+            "roster": roster,
+            "reviews": {
+                "trek_avg": round(avg_trek, 1),
+                "staff_avg": round(avg_staff, 1),
+                "trek_list": [{"id": r.id, "author": r.author.name, "stars": r.trek_rating, "comment": r.trek_experience} for r in reviews if r.trek_rating],
+                "staff_list": [{"id": r.id, "author": r.author.name, "stars": r.staff_rating, "comment": r.staff_experience} for r in reviews if r.staff_rating]
+            }
+        })
+        
+    return make_response(jsonify(results), 200)
