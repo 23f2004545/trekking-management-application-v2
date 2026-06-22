@@ -36,12 +36,12 @@
         <!-- Price Range Filter Slider -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Budget: <span class="text-success fw-bold">₹{{ filters.price }}</span></label>
-          <input v-model.number="filters.price" type="range" min="3000" max="25000" step="500" class="form-range custom-slider">
+          <input v-model.number="filters.price" type="range" :min="filterExtremes.min_price" :max="filterExtremes.max_price" step="250" class="form-range custom-slider">
         </div>
         <!-- Altitude Cap Filter -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Altitude: <span class="text-success fw-bold">{{ filters.altitude }}m</span></label>
-          <input v-model.number="filters.altitude" type="range" min="2500" max="6000" step="200" class="form-range custom-slider">
+          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="200" class="form-range custom-slider">
         </div>
       </div>
     </div>
@@ -219,10 +219,10 @@ const staffDropdown = ref([])
 const createModalActive = ref(false)
 const selectedGalleryFiles = ref([])
 const fileNameDisplay = ref('No file chosen')
-
+const filterExtremes = ref({ max_altitude: 6000 , max_price: 50000 , min_altitude: 0, min_price: 0})
 
 // Filtering state metrics
-const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
+const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 5000 })
 
 // Model alignment fields mapping
 const form = ref({
@@ -235,7 +235,7 @@ const form = ref({
 const filteredTreks = computed(() => {
   return adminTreks.value.filter(t => {
     const matchesQuery = t.trek_name.toLowerCase().includes(filters.value.query.toLowerCase()) || 
-                         t.location.toLowerCase().includes(filters.value.query.toLowerCase())
+    t.location.toLowerCase().includes(filters.value.query.toLowerCase())
     const matchesDiff = !filters.value.difficulty || t.difficulty === filters.value.difficulty
     const matchesPrice = t.price_per_person <= filters.value.price
     const matchesAlt = t.max_altitude <= filters.value.altitude
@@ -254,6 +254,19 @@ async function syncTrekDataset() {
     alertStore.showAlert(`Telemetry Sync Drop: ${err.message}`, 'danger')
   }
 }
+
+async function syncMinMax() {
+  try {
+    const headers = { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
+    const res = await secureFetch(`${BACKEND_URL}/api/utils/trek-extremes`, { method: 'GET', headers })
+    if (res.ok) {
+      filterExtremes.value = await res.json()
+    }
+  } catch (err) {
+    alertStore.showAlert(`Telemetry Sync Drop: ${err.message}`, 'danger')
+  }
+}
+
 
 watch(
   [() => form.value.start_date, () => form.value.end_date],
@@ -286,9 +299,11 @@ function handleMultipleImagesSelection(event) {
   const files = Array.from(event.target.files)
   selectedGalleryFiles.value = []
   
-  if (files.length > 4) {
-    alertStore.showAlert('Validation Warning: Gallery space capped at a maximum parameter of 4 images.', 'danger')
-    event.target.value = ''
+  // Strict 4-image rule
+  if (files.length !== 4) {
+    alertStore.showAlert('You must select exactly 4 images for the terrain gallery.', 'warning')
+    event.target.value = '' // Reset the input
+    form.value.trek_gallery = []
     return
   }
 
@@ -363,6 +378,7 @@ function routeToDeepInsights(id) {
 }
 
 onMounted(() => {
+  syncMinMax()
   syncTrekDataset()
 })
 </script>
@@ -385,6 +401,7 @@ onMounted(() => {
 .status-pill.open { background: rgba(25, 135, 84, 0.8); }
 .status-pill.pending { background: rgba(255, 193, 7, 0.8); color: black; }
 .status-pill.closed { background: rgba(220, 53, 69, 0.8); }
+.status-pill.cancelled { background: rgba(220, 53, 69, 0.8); }
 .status-pill.completed { background: rgba(13, 110, 253, 0.8); }
 .status-pill.ongoing { background: rgba(255, 193, 7, 0.8); color: black; }
 

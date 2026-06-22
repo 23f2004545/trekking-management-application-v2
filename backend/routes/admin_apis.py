@@ -23,7 +23,7 @@ def get_dashboard_stats():
     
     # 1. CORE COUNTERS (Fallback to 0 naturally if empty)
     total_treks = Trek.query.count()
-    total_bookings = Booking.query.count()
+    total_bookings = Booking.query.filter_by(status='Booked').count()
     
     # Count specific roles safely using relationships
     total_staff = User.query.filter(User.role.has(name='trek_staff')).count()
@@ -306,6 +306,8 @@ def create_trek():
         # 📸 PROCESS MULTIPLE UPLOADS LOOP (Max 4 elements)
         if 'trek_gallery' in request.files:
             uploaded_files = request.files.getlist('trek_gallery')
+            if len(uploaded_files) != 4:
+                return make_response(jsonify({"message": "Platform architecture requires exactly 4 gallery images."}), 400)
             for index, file in enumerate(uploaded_files[:4]):
                 if file and file.filename != '':
                     timestamp = int(datetime.now(timezone.utc).timestamp())
@@ -373,6 +375,7 @@ def manage_trek_by_id(trek_id):
         
         status_changed = False
         new_status = data.get('status')
+        abort_reason = data.get('cancellation_reason')
         
         if new_status:
             allowed_statuses = ['Open', 'Ongoing', 'Closed', 'Completed', 'Cancelled']
@@ -394,7 +397,7 @@ def manage_trek_by_id(trek_id):
                 elif new_status == 'Cancelled':
                     booking.status = 'Cancelled'
                     booking.payment_status = 'Refunded' # Trigger refund pipeline state
-                    booking.cancellation_reason = "Route operations halted by field administration."
+                    booking.cancellation_reason = f"Admin Abort Override: {abort_reason}"
                     booking.cancelled_at = datetime.now(timezone.utc)
                     booking.updated_at = datetime.now(timezone.utc)
                     create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Admin", "danger")
@@ -418,6 +421,8 @@ def manage_trek_by_id(trek_id):
         # DYNAMIC GALLERY REPLACEMENT LAYER
         if 'trek_gallery' in request.files:
             uploaded_files = request.files.getlist('trek_gallery')
+            if len(uploaded_files) != 4:
+                return make_response(jsonify({"message": "Platform architecture requires exactly 4 gallery images."}), 400)
             if uploaded_files and uploaded_files[0].filename != '':
                 # Safely clear historical child references out of database lines
                 TrekImage.query.filter_by(trek_id=trek.trek_id).delete()
@@ -572,9 +577,13 @@ def trek_details(trek_id):
 @admin_required
 def add_trek_staff():
     
+    from tasks import send_staff_credentials_email
+    
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    send_creds = data.get('send_credentials', False)
+    personal_email = data.get('personal_email')
 
     if not all([email, password]):
         return make_response(jsonify({"message": "All fields are required"}), 400)
@@ -610,7 +619,15 @@ def add_trek_staff():
     
     db.session.add(new_staff_profile)
     db.session.commit()
+    
+    if send_creds:
+        send_staff_credentials_email.delay(personal_email, email, password)
+        log_system_audit("STAFF_PROVISION", f"Created guide {email} and transmitted keys.", "success")
+    else:
+        log_system_audit("STAFF_PROVISION", f"Created guide {email}.", "info")
+        
     return make_response(jsonify({"message": "Trek staff account generated successfully"}), 201)
+
 
 @admin_bp.route('/staff', methods=['GET'])
 @jwt_required()
@@ -684,31 +701,12 @@ def get_single_staff_profile(staff_id):
         "created_at": staff.created_at.strftime("%B %d, %Y") if staff.created_at else "N/A",
         "last_login_at": staff.last_login_at.strftime("%I:%M %p") if staff.last_login_at else "Never",
         "profile_pic": staff.profile_pic or "/static/Profile_pics/trek_staff.png",
-        "specialization": getattr(staff.staff_profile, 'specialization', "Glacier Survival"),
-        "certification": getattr(staff.staff_profile, 'certification', "NIM Advanced"),
-        "experience": getattr(staff.staff_profile, 'experience', "5 Years")
+        "specialization": getattr(staff.staff_profile, 'specialization', "Pending"),
+        "certification": getattr(staff.staff_profile, 'certification', "Pending"),
+        "status": getattr(staff.staff_profile, 'status', "Active"),
+        "emergency_contact": getattr(staff.staff_profile, 'emergency_contact', "Pending"),
+        "experience": getattr(staff.staff_profile, 'experience_years', 0)
     }), 200)
-
-
-@admin_bp.route('/users/<int:user_id>/toggle-blacklist', methods=['PATCH'])
-@jwt_required()
-@admin_required
-def toggle_user_blacklist_status(user_id):
-    """Flips the blacklisted attribute state flag to restrict ecosystem logins."""
-    user = User.query.get_or_404(user_id)
-    
-    # Check if column parameter attribute exists inside your models.py
-    if hasattr(user, 'blacklisted'):
-        user.blacklisted = not user.blacklisted
-        db.session.commit()
-        type = "danger" if user.blacklisted else "success"
-        status_txt = "Blacklisted" if user.blacklisted else "Whitelisted"
-        create_notification(user.id, f"You have been {status_txt}", type)
-        log_system_audit(status_txt, f"Trekker {user.email} flagged as {status_txt}.", type)
-        return make_response(jsonify({"message": f"User account credentials flagged as {status_txt}."}), 200)
-        
-    return make_response(jsonify({"message": "Model column definition missing block attributes."}), 500)
-
 
 @admin_bp.route('/users/<int:user_id>/toggle-status', methods=['PATCH','DELETE'])
 @jwt_required()
@@ -717,18 +715,18 @@ def toggle_user_account_status(user_id):
     user = User.query.get_or_404(user_id)
     
     if request.method == 'DELETE':
-        db.session.delete(user)
+        user.is_active = not user.is_active
         db.session.commit()
-        log_system_audit(status_txt, f"Staff {user.email} account is permanently deleted.", "warning")
-        return make_response(jsonify({"message": f"User's account permanently deleted."}), 200)
+        log_system_audit("Deleted", f"User {user.email} account is deleted.", "warning")
+        return make_response(jsonify({"message": f"User's account deleted."}), 200)
     
-    user.is_active = not user.is_active
+    
     user.blacklisted = not user.blacklisted
     db.session.commit()
     type = "danger" if user.blacklisted else "success"
     status_txt = "Blacklisted" if user.blacklisted else "Whitelisted"
-    log_system_audit(status_txt, f"Staff {user.email} flagged as {status_txt}", type)
-    return make_response(jsonify({"message": f"User's account temporarily deleted."}), 200)
+    log_system_audit(status_txt, f"User {user.email} flagged as {status_txt}", type)
+    return make_response(jsonify({"message": f"User account credentials flagged as {status_txt}."}), 200)
 
 
 
@@ -894,7 +892,11 @@ def get_admin_booking_deep_details(booking_id):
         "booking_date": b.booking_date.strftime("%B %d, %Y"),
         "booking_status": calculated_status,
         "cancelled_date": "2026-05-28" if b.status == 'Cancelled' else None, # Example tracking placeholder
-        "cancelled_reason": "Route environmental warnings / high windfall advisory." if b.status == 'Cancelled' else None,
+        "cancelled_reason": b.cancellation_reason if b.status == 'Cancelled' else None,
+        "payment_status": b.payment_status,
+        "payment_method": b.payment_method or "Unspecified",
+        "number_of_persons": b.number_of_persons,
+        "total_amount": b.total_amount,
         "trek": {
             "name": b.trek.trek_name if b.trek else "Unknown Pass",
             "location": b.trek.location if b.trek else "Grid offline",
@@ -905,9 +907,10 @@ def get_admin_booking_deep_details(booking_id):
         },
         "trekker": {
             "name": b.user.name, "email": b.user.email, "contact": b.user.contact,
-            "profile_pic": b.user.profile_pic or ""
+            "profile_pic": b.user.profile_pic or "" , "id": b.user.id
         },
         "staff": {
+            "id" : staff_user.id,
             "name": staff_user.name if staff_user else "Unassigned Guide",
             "email": staff_user.email if staff_user else "N/A",
             "contact": staff_user.contact if staff_user else "N/A",

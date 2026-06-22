@@ -124,7 +124,7 @@ async function launchAuditView(id) {
 
 async function toggleBlacklistState(trekker) {
   try {
-    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${trekker.id}/toggle-blacklist`, {
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${trekker.id}/toggle-status`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
@@ -148,7 +148,7 @@ async function handleBlacklistAction(id) {
 async function handleDeactivateAction(id) {
   try {
     const res = await secureFetch(`${BACKEND_URL}/api/admin/users/${id}/toggle-status`, {
-      method: 'PATCH',
+      method: 'DELETE',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
     })
     if (res.ok) {

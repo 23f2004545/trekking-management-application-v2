@@ -114,7 +114,7 @@
         </div>
 
         <div v-else class="glass-profile-panel p-4 p-md-5 rounded-4 border border-white border-opacity-10 shadow-sm animate-scale-up">
-          <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4">
+          <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4 flex-wrap gap-2">
             <h5 class="fw-bold tracking-tight m-0"><i class="bi bi-hospital mx-2" style="font-size:1rem;"></i> Staff Specific Details</h5>
             <div class="d-flex align-items-center gap-3 fs-9 text-white-50">
               <!-- <span>Last Updated : {{ staffProfile.updated_at }}</span> -->

@@ -17,7 +17,7 @@ def login():
     if user and bcrypt.check_password_hash(user.password, data.get("password")):
         
         if not user.is_active:
-           return make_response(jsonify({"message": "This account is restricted by Administration."}), 403)
+           return make_response(jsonify({"message": "Account Deactivated"}), 403)
     
         # Create the token using the user's ID as the "subject" (sub)
         access_token = create_access_token(identity=str(user.id))

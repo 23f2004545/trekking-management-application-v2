@@ -1,11 +1,14 @@
 <template>
   <div class="profile-dashboard-wrapper container-fluid text-white animate-fade-in pb-5" style="z-index: 99;">
     
-    <div class="row mb-4 align-items-center text-start">
-      <div class="col-md-12">
-        <h2 class="fw-bold tracking-tight m-0">Account Profile Basecamp</h2>
-        <p class="m-0 text-white-50 fs-8 mt-1 ">Audit profile registries, manage operational tracking data, and cross-reference access logs.</p>
-      </div>
+    <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap ">
+        <div class="mb-4">
+            <h2 class="fw-bold tracking-tight m-0">Account Profile Basecamp</h2>
+            <p class="m-0 text-white-50 fs-8 mt-1">Audit profile registries, manage operational tracking data, and cross-reference access logs.</p>
+        </div>
+          <button @click="confirmStore.ask('Are you sure you want to delete your account permanently?', deleteAccount)" class="btn btn-outline-danger rounded-pill px-4 py-2 fs-8 shadow-sm mb-2">
+             Delete Account
+          </button>
     </div>
 
     <div v-if="userProfile.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
@@ -86,7 +89,7 @@
                   <i class="bi bi-gear"></i> Reset System Security Key (Password)
                 </button>
                 
-                <button type="submit" class="btn-profile-submit rounded-3 px-5 py-2.5 fw-bold text-dark border-0">
+                <button type="submit" class="btn-profile-submit rounded-5 px-5 py-1 fw-bold text-dark border-0">
                   Patch Profile Coordinates
                 </button>
               </div>
@@ -102,7 +105,7 @@
         
         <div v-if="!hasMedicalData" class="medical-alert-pill p-3 px-4 rounded-pill border border-warning border-opacity-20 d-flex align-items-center justify-content-between shadow-sm">
           <div class="d-flex align-items-center gap-3">
-            <!-- <span class="fs-4">🚨</span> -->
+
             <div>
               <h6 class="m-0 fw-bold text-warning tracking-tight mb-1">System Medical Emergency Profile Missing</h6>
               <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-0.5">Emergency coordinates are mandatory to secure active booking slots on the high trail. Please update your telemetry layout.</p>
@@ -114,7 +117,7 @@
         </div>
 
         <div v-else class="glass-profile-panel p-4 p-md-5 rounded-4 border border-white border-opacity-10 shadow-sm animate-scale-up">
-          <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4">
+          <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4 flex-wrap">
             <h5 class="fw-bold tracking-tight m-0"><i class="bi bi-hospital mx-2" style="font-size:1rem;"></i> Medical Diagnostics & Field Safeguards</h5>
             <div class="d-flex align-items-center gap-3 fs-9 text-white-50">
               <span>Last Updated : {{ medicalProfile.updated_at }}</span>
@@ -277,13 +280,17 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api'
+import { useConfirmStore } from '../../stores/confirm'
 
 const alertStore = useAlertStore()
+const router = useRouter()
 const authStore = useAuthStore()
 const backend_url = import.meta.env.VITE_BACKEND_URL
+const confirmStore = useConfirmStore()
 
 const API_BASE = 'http://127.0.0.1:5000/api/trekker'
 
@@ -556,6 +563,21 @@ async function uploadAvatarImage(event) {
     alertStore.showAlert(`Upload connection drops detected: ${err.message}`, 'danger')
   } finally {
     event.target.value = '' 
+  }
+}
+
+async function deleteAccount(id) {
+  try {
+    const res = await secureFetch(`${API_BASE}/profile`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
+    })
+    if (res.ok) {
+      authStore.logoutUser() 
+      router.push('/')
+    }
+  } catch (err) {
+    alertStore.showAlert('Failed to delete account', 'danger')
   }
 }
 

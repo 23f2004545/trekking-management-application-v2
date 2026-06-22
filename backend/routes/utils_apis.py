@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, make_response
+from flask import Blueprint, jsonify, make_response , request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.models import Notification , Trek , User , Booking , Review , AuditLog
 from controller.extensions import db
@@ -17,6 +17,29 @@ def log_system_audit(action, details, severity="info"):
 
 utils_bp = Blueprint('utils', __name__)
 
+
+@utils_bp.route('/trek-extremes', methods=['GET'])
+def get_trek_extremes():
+    
+    status_filter = request.args.get('status')
+    
+    query = Trek.query
+    if status_filter:
+        # If Trekker requests it, only looking at Open/Ongoing treks
+        query = query.filter(Trek.status=='Open')
+        
+    max_price = db.session.query(db.func.max(query.subquery().c.price_per_person)).scalar() or 10000
+    min_price = db.session.query(db.func.min(query.subquery().c.price_per_person)).scalar() or 0
+    max_alt = db.session.query(db.func.max(query.subquery().c.max_altitude)).scalar() or 5000
+    min_alt = db.session.query(db.func.min(query.subquery().c.max_altitude)).scalar() or 0
+        
+    return jsonify({
+        "max_price": int(max_price),
+        "min_price": int(min_price),
+        "max_altitude": int(max_alt),
+        "min_altitude": int(min_alt)
+    }), 200
+    
 
 @utils_bp.route('/public/landing-data', methods=['GET'])
 def get_landing_data():

@@ -303,6 +303,7 @@ def update_trek_field_data(trek_id):
     data = request.get_json()
     status_changed = False
     new_status = data.get('status')
+    abort_reason = data.get('cancellation_reason')
     
     # Update Lifecycle Status
     if new_status:
@@ -310,6 +311,7 @@ def update_trek_field_data(trek_id):
         if new_status in allowed_statuses and trek.status != new_status:
             trek.status = new_status
             status_changed = True
+
             
     # Update Live Slot Capacities (e.g., if a tent breaks or weather limits capacity)
     if 'available_slots' in data:
@@ -334,7 +336,7 @@ def update_trek_field_data(trek_id):
             elif new_status == 'Cancelled':
                 booking.status = 'Cancelled'
                 booking.payment_status = 'Refunded' # Trigger refund pipeline state
-                booking.cancellation_reason = "Route operations halted by field administration."
+                booking.cancellation_reason = f"Guide Abort Override: {abort_reason}"
                 booking.cancelled_at = datetime.now(timezone.utc)
                 booking.updated_at = datetime.now(timezone.utc)
 
@@ -342,7 +344,6 @@ def update_trek_field_data(trek_id):
         db.session.commit()
         admin = User.query.filter_by(name='admin').first()
         create_notification(admin.id, f"{user.name} has modified TREK : {trek.trek_name}", "warning")
-        print(admin)
         cache.clear()
         return make_response(jsonify({
             "message": "Field operational parameters synchronized.", 
@@ -398,8 +399,8 @@ def get_trail_manifests():
             "emergency_name": b.user.medical_record.emergency_name if b.user.medical_record else 'N/A' ,
             "emergency_contact": b.user.medical_record.emergency_contact if b.user.medical_record else 'N/A' ,
             "blood_group": b.user.medical_record.blood_group if b.user.medical_record else 'N/A',
-            "allergies" : b.user.medical_record.allergies if b.user.medical_record.allergies else None,
-            "medications" : b.user.medical_record.medications if b.user.medical_record.medications else None
+            "allergies" : b.user.medical_record.allergies if b.user.medical_record else None,
+            "medications" : b.user.medical_record.medications if b.user.medical_record else None
         })
                 
     # Convert grouped dict to an array list

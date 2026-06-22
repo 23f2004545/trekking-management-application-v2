@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db , cache , bcrypt
 from controller.models import *
 from controller.decorators import trekker_required
-from routes.utils_apis import create_notification
+from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone 
 import os , random
 
@@ -112,12 +112,18 @@ def get_profile_data():
     }), 200)
 
 
-@trekker_bp.route('/profile', methods=['PATCH'])
+@trekker_bp.route('/profile', methods=['PATCH' , 'DELETE'])
 @jwt_required()
 @trekker_required
 def update_profile():
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
+    
+    if request.method == 'DELETE':
+        user.is_active = not user.is_active
+        db.session.commit()
+        log_system_audit("Deleted", f"User {user.email} deleted their account", "warning")
+        return make_response(jsonify({"message": f"User's account deleted."}), 200)
     
     if request.is_json:
         data = request.get_json()
@@ -351,6 +357,25 @@ def book_trek_slot():
         db.session.rollback()
         return make_response(jsonify({"message": f"Transaction aborted: {str(e)}"}), 500)
     
+    
+@trekker_bp.route('/cancel_booking/<int:id>', methods=['PATCH'])
+@jwt_required()
+@trekker_required
+def cancel_booking(id):
+    
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    
+    booking = Booking.query.get_or_404(id)
+    booking.status = 'Cancelled'
+    booking.payment_status = 'Refunded'
+    booking.cancelled_at = datetime.now(timezone.utc)
+    booking.updated_at = datetime.now(timezone.utc)
+    booking.trek.available_slots -= booking.number_of_persons
+    db.session.commit()
+    
+    log_system_audit("Cancelled", f"Booking cancelled by user {user.email}", "danger")
+    return make_response(jsonify({"message": "Booking Cancelled"}), 200)
 
 # ==========================================================================
 # 4. TRACK ACTIVE BOOKINGS & HISTORICAL RECORDS

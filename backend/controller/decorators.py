@@ -22,8 +22,11 @@ def staff_required(f):
         current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
         
+        if not user or user.blacklisted:
+            return make_response(jsonify({"message": "Account access restricted."}), 403)
+        
         if not user or not user.is_active:
-            return make_response(jsonify({"message": "Account restricted."}), 403)
+            return make_response(jsonify({"message": "Account deleted."}), 403)
             
         if not user.role or user.role.name != 'trek_staff':
             return make_response(jsonify({"message": "Unauthorized Access."}), 403)
@@ -39,7 +42,7 @@ def trekker_required(f):
         user = User.query.get(current_user_id)
         
         if not user or not user.is_active:
-            return make_response(jsonify({"message": "Account restricted."}), 403)
+            return make_response(jsonify({"message": "Account deleted."}), 403)
             
         if not user.role or user.role.name != 'trekker':
             return make_response(jsonify({"message": "Unauthorized Access."}), 403)

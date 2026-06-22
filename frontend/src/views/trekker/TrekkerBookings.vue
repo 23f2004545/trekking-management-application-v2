@@ -36,7 +36,10 @@
 
           <!-- REFINED BUTTON ZONE: Exactly one single clean programmatic details viewer button -->
           <div class="d-flex align-items-center">
-            <button @click="openDeepContextModal(book)" class="btn btn-sm btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm">
+            <!-- <button @click="confirmStore.ask('Are you sure you want to cancel your booking?', cancelBooking)" class="btn btn-sm btn-danger rounded-pill px-2 py-1 fs-8 fw-bold text-dark shadow-sm m-2">
+              Cancel Booking
+            </button> -->
+            <button @click="openDeepContextModal(book)" class="btn btn-sm btn-success rounded-pill px-2 py-1 fs-8 fw-bold text-dark shadow-sm">
               View Details
             </button>
           </div>
@@ -60,30 +63,30 @@
 
           <div class="row g-3">
             <!-- Left Grid Segment: Route thumbnail graphic -->
-            <div class="col-md-4">
+            <!-- <div class="col-md-4">
               <div class="modal-thumbnail-wrapper rounded-3 overflow-hidden border border-white border-opacity-10 h-100">
-                <img :src="modalTarget.trek_image" alt="Trek Layout Thumbnail" class="w-100 h-100 object-cover" />
+                <img :src="modalTarget.trek_image" alt="Trek Layout Thumbnail" class="w-100 h-100 object-fit" />
               </div>
-            </div>
+            </div> -->
 
             <!-- Right Grid Segment: Multi-column meta specification rows -->
-            <div class="col-md-8 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-white border-opacity-5">
-              <div><strong>Booking ID Key:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>
-              <div><strong>Expedition Trail Name:</strong> <span class="text-white fw-bold">{{ modalTarget.trek_name }}</span></div>
-              <div><strong>Trail Duration Matrix:</strong> <span class="text-white-50">{{ modalTarget.duration_days }} Days</span></div>
-              <div><strong>Reservation Logged Date:</strong> <span class="text-white-50">{{ modalTarget.booking_date }}</span></div>
+            <div class="col-md-12 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-white border-opacity-5">
+              <div><strong>Booking ID:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>
+              <div><strong>Trail Name:</strong> <span class="text-white fw-bold">{{ modalTarget.trek_name }}</span></div>
+              <div><strong>Trail Duration:</strong> <span class="text-white-50">{{ modalTarget.duration_days }} Days</span></div>
+              <div><strong>Reservation Date:</strong> <span class="text-white-50">{{ modalTarget.booking_date }}</span></div>
               <div><strong>Group Headcount Size:</strong> <span class="text-white-50 text-success fw-bold">{{ modalTarget.total_people }} Explorers</span></div>
               <div><strong>Financial Status:</strong> <span class="badge payment-badge" :class="modalTarget.payment_status.toLowerCase()">{{ modalTarget.payment_status }}</span></div>
-              <div><strong>Lifecycle State Flag:</strong> <span class="badge status-badge" :class="modalTarget.booking_status.toLowerCase()">● {{ modalTarget.booking_status }}</span></div>
+              <div><strong>Status:</strong> <span class="badge status-badge" :class="modalTarget.booking_status.toLowerCase()">● {{ modalTarget.booking_status }}</span></div>
             </div>
 
             <!-- Full Width Verified Guide Contact Info Cluster Box -->
             <div class="col-12 mt-2">
               <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-2 border-bottom border-white border-opacity-5 pb-1">Assigned Guide Assignment Node</h6>
               <div class="staff-contact-glass p-3 rounded-3 border border-white border-opacity-10 d-flex flex-column gap-1 fs-8">
-                <div><i class="bi bi-person"></i> <strong>Guide Leader Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
-                <div><i class="bi bi-envelope"></i> <strong>Emergency Comm Registry:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
-                <div><i class="bi bi-telephone"></i> <strong>Secure Satellite Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
+                <div><i class="bi bi-person"></i> <strong>Guide Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
+                <div><i class="bi bi-envelope"></i> <strong>Guide Email:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
+                <div><i class="bi bi-telephone"></i> <strong>Guide Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
               </div>
             </div>
           </div>
@@ -91,7 +94,7 @@
           <!-- Bottom Action Gate Condition Lock: Render cancellation control exclusively if active 'Booked' -->
           <div class="mt-4 pt-3 border-top border-white border-opacity-10 text-end">
             <button 
-              v-if="modalTarget.booking_status === 'Booked'"
+              v-if="modalTarget.booking_status === 'Upcoming'"
               @click="triggerRouteCancellation(modalTarget.booking_id)"
               class="btn btn-danger rounded-pill px-4 py-2 fs-8 fw-semibold w-100 w-md-auto shadow"
             >
@@ -156,7 +159,7 @@ function triggerRouteCancellation(id) {
     `Are you completely certain you want to revoke Expedition Pass #${id}? This restores slot boundaries immediately.`, 
     async () => {
       try {
-        const res = await secureFetch(`${BACKEND_URL}/api/trekker/bookings/${id}/cancel`, {
+        const res = await secureFetch(`${BACKEND_URL}/api/trekker/cancel_booking/${id}`, {
           method: 'PATCH',
           headers: { 'Authorization': `Bearer ${authStore.token}` }
         })
@@ -190,8 +193,9 @@ onMounted(() => {
 .payment-badge.refunded { background: rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.5); }
 
 .status-badge { padding: 4px 10px; font-size: 0.72rem; border-radius: 20px; font-weight: 600; }
-.status-badge.booked { background: rgba(25, 135, 84, 0.2); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.3); }
+.status-badge.upcoming { background: rgba(192, 208, 68, 0.2); color: #d7e364; border: 1px solid rgba(179, 205, 49, 0.3); }
 .status-badge.cancelled { background: rgba(220, 53, 69, 0.15); color: #ff8787; border: 1px solid rgba(220, 53, 69, 0.25); }
+.status-badge.ongoing { background: rgba(95, 220, 53, 0.15); color: #68ad43; border: 1px solid rgba(114, 193, 94, 0.25); }
 
 /* Immersive Audit Modal Box elements */
 .bookings-modal-backdrop {
@@ -208,7 +212,7 @@ onMounted(() => {
 
 /* Circle Cross Dismiss Mechanics */
 .btn-dismiss-circle-cross {
-  position: absolute; top: 20px; right: 20px;
+  position: absolute; top: 1rem; right: 0.5rem;
   background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
   color: rgba(255,255,255,0.6); width: 30px; height: 30px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;

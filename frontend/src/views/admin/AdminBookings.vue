@@ -62,16 +62,61 @@
         </div>
       </div>
 
-      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm text-center bg-white bg-opacity-5">
+      <!-- <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm text-center bg-white bg-opacity-5">
         <span class="fs-9 text-white-50 opacity-40 d-block tracking-widest text-uppercase">AUTHENTICATED LEDGER REFERENCE TOKEN</span>
         <h3 class="fw-black text-white m-0 my-1 tracking-tighter fs-2">#APX-B{{ activeAuditDetail.booking_id }}</h3>
         <p class="m-0 fs-9 text-success fw-medium">Secure Payment Verified On: {{ activeAuditDetail.booking_date }}</p>
+      </div> -->
+      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-white border-opacity-10 pb-3">
+          <h6 class="fw-bold small tracking-wider text-uppercase text-info m-0">2. Booking Ledger Specifications</h6>
+          <span class="badge border border-white border-opacity-20 text-warning rounded-pill px-3 py-2 fs-9 tracking-tighter">
+            # APX-B{{ activeAuditDetail.booking_id }}
+          </span>
+        </div>
+        
+        <div class="row g-3 fs-8 text-white-50">
+          <div class="col-sm-6">Transaction Date: <strong class="text-white"><i class="bi bi-calendar-check"></i> {{ activeAuditDetail.booking_date }}</strong></div>
+          <div class="col-sm-6">Total Processed: <strong class="text-white"><i class="bi bi-currency-rupee"></i> {{ activeAuditDetail.total_amount }}</strong></div>
+          
+          <div class="col-sm-6">Party Size : <strong class="text-white"><i class="bi bi-people"></i> {{ activeAuditDetail.number_of_persons }} </strong></div>
+          <div class="col-sm-6">Payment Route: <strong class="text-white"><i class="bi bi-credit-card"></i> {{ activeAuditDetail.payment_method }}</strong></div>
+          
+          <div class="col-sm-6">Ledger Status: 
+            <strong :class="activeAuditDetail.status === 'Cancelled' ? 'text-danger' : 'text-success'">
+              ● {{ activeAuditDetail.booking_status }}
+            </strong>
+          </div>
+          <div class="col-sm-6">Financial State: 
+            <strong :class="activeAuditDetail.payment_status === 'Paid' ? 'text-success' : 'text-warning'">
+              <i v-if="activeAuditDetail.payment_status === 'Paid'" class="bi bi-shield-check"></i> {{ activeAuditDetail.payment_status }}
+            </strong>
+          </div>
+
+          <div v-if="activeAuditDetail.status === 'Cancelled'" class="col-12 mt-3 pt-3 border-top border-white border-opacity-5">
+            <div class="bg-danger bg-opacity-10 border border-danger border-opacity-20 rounded-3 p-3 text-danger text-start">
+              <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle"></i> Cancellation Registered: {{ activeAuditDetail.cancelled_date }}</div>
+              <div class="opacity-75 fs-9">Reason: {{ activeAuditDetail.cancelled_reason }}</div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
-        <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">2. Registered Explorer Telemetry</h6>
+      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm position-relative">
+        <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">
+          2. Registered Explorer 
+        </h6>
+        
+        <button 
+          @click="fetchAndOpenQuickView(activeAuditDetail.trekker.id, 'trekker')" 
+          class="btn btn-sm btn-outline-info position-absolute top-0 end-0 m-2 rounded-pill px-3 fs-9 fw-semibold">
+          View Profile
+        </button>
+
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + activeAuditDetail.trekker.profile_pic" alt="Trekker Avatar" class="audit-avatar-circle" />
+          <img :src="BACKEND_URL + (activeAuditDetail.trekker.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.trekker.name }}</h5>
             <div>Trekker Email: <span class="text-white">{{ activeAuditDetail.trekker.email }}</span></div>
@@ -79,9 +124,18 @@
           </div>
         </div>
       </div>
+ 
+      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm position-relative">
+        <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">
+          3. Assigned Guide 
+        </h6>
+        
+        <button 
+          @click="fetchAndOpenQuickView(activeAuditDetail.staff.id, 'trek_staff')" 
+          class="btn btn-sm btn-outline-info position-absolute top-0 end-0 m-2 rounded-pill px-3 fs-9 fw-semibold">
+          View Profile
+        </button>
 
-      <div class="glass-audit-card p-4 rounded-4 border border-white border-opacity-10 mb-4 shadow-sm">
-        <h6 class="fw-bold small tracking-wider text-uppercase opacity-50 mb-3 border-bottom border-white border-opacity-10 pb-1">3. Assigned Trail Guide Node</h6>
         <div class="d-flex align-items-center gap-3">
           <img :src="BACKEND_URL + (activeAuditDetail.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
@@ -119,12 +173,29 @@
 
     </div>
 
+    <Transition name="modal-fade">
+      <div v-if="showProfileModal" @click.self="showProfileModal = false" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
+        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-90 overflow-y-auto position-relative">
+          
+          <button @click="showProfileModal = false" class="btn-close-modal">✕</button>
+          
+          <UserProfile 
+            :profile="quickViewProfile" 
+            :profileRole="quickViewRole" 
+            mode="readonly"
+          />
+
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
+import UserProfile from '../../components/UserProfile.vue'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api'
 
@@ -135,6 +206,10 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const globalBookings = ref([])
 const activeAuditDetail = ref(null)
 const statusFilter = ref('All')
+const showProfileModal = ref(false)
+const quickViewProfile = ref(null)
+const quickViewRole = ref('trekker')
+
 
 const filteredBookings = computed(() => {
   if (statusFilter.value === 'All') return globalBookings.value
@@ -159,6 +234,36 @@ async function loadDeepAuditPassport(id) {
   } catch (err) { alertStore.showAlert('Audit retrieval failure.', 'danger') }
 }
 
+const fetchAndOpenQuickView = async (id, role) => {
+  try {
+
+    const endpoint = role === 'trek_staff' 
+      ? `${BACKEND_URL}/api/admin/staff/${id}` 
+      : `${BACKEND_URL}/api/admin/trekker/${id}`
+
+    const res = await secureFetch(endpoint, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${authStore.token}`, 
+        'Content-Type': 'application/json' 
+      }
+    })
+
+    if (res.ok) {
+      const fullData = await res.json()
+ 
+      quickViewProfile.value = fullData
+      quickViewRole.value = role
+      
+      showProfileModal.value = true
+    } else {
+      alertStore.showAlert(`Could not read detailed ${role} parameters.`, 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert('Network error while fetching profile details.', 'danger')
+  }
+}
+
 onMounted(() => { fetchGlobalBookingsDataset() })
 </script>
 
@@ -174,6 +279,14 @@ onMounted(() => { fetchGlobalBookingsDataset() })
 .lifecycle-tag.ongoing { background: rgba(25, 135, 84, 0.18); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.3); }
 .lifecycle-tag.completed { background: rgba(0, 123, 255, 0.15); color: #7cd1ff; border: 1px solid rgba(0, 123, 255, 0.25); }
 .lifecycle-tag.cancelled { background: rgba(220, 53, 69, 0.15); color: #ff8787; border: 1px solid rgba(220, 53, 69, 0.25); }
+
+.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.341); backdrop-filter: blur(10px); z-index: 999; }
+.glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
+.max-vh-90 { max-height: 90vh; }
+
+.btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
+.btn-close-modal:hover { color: white; }
+
 
 .text-warning-tint { color: #ffe066; } .italic { font-style: italic; } .tracking-tighter { letter-spacing: -1.2px; }
 .fs-2 { font-size: 2.2rem; } .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; }

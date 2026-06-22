@@ -30,12 +30,12 @@
         <!-- Price Range Filter Slider -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Budget: <span class="text-success fw-bold">₹{{ filters.price }}</span></label>
-          <input v-model.number="filters.price" type="range" min="3000" max="25000" step="500" class="form-range custom-slider">
+          <input v-model.number="filters.price" type="range" :min="filterExtremes.min_price" :max="filterExtremes.max_price" step="250" class="form-range custom-slider">
         </div>
         <!-- Altitude Cap Filter -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Altitude: <span class="text-success fw-bold">{{ filters.altitude }}m</span></label>
-          <input v-model.number="filters.altitude" type="range" min="2500" max="6000" step="200" class="form-range custom-slider">
+          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="200" class="form-range custom-slider">
         </div>
       </div>
     </div>
@@ -104,7 +104,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const selectedTrek = ref(null)
 const activeImageIndex = ref(0)
 const tracksList = ref([])
-
+const filterExtremes = ref({ max_altitude: 6000 , max_price: 50000 , min_altitude: 0, min_price: 0})
 
 // Filtering state metrics
 const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
@@ -134,7 +134,6 @@ async function fetchDiscoverableTreks() {
         'Content-Type': 'application/json'
       }
     })
-    console.log(res)
 
     if (res.ok) {
       tracksList.value = await res.json()
@@ -144,6 +143,18 @@ async function fetchDiscoverableTreks() {
     }
   } catch (err) {
     alertStore.showAlert(`Network tracking drop: ${err.message}`, 'danger')
+  }
+}
+
+async function syncMinMax() {
+  try {
+    const headers = { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
+    const res = await secureFetch(`${BACKEND_URL}/api/utils/trek-extremes?status=Open`, { method: 'GET', headers })
+    if (res.ok) {
+      filterExtremes.value = await res.json()
+    }
+  } catch (err) {
+    alertStore.showAlert(`Telemetry Sync Drop: ${err.message}`, 'danger')
   }
 }
 
@@ -170,6 +181,7 @@ function routeToDeepInsights(id) {
 }
 
 onMounted(() => {
+  syncMinMax()
   fetchDiscoverableTreks()
 })
 

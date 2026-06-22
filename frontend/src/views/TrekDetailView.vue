@@ -27,7 +27,9 @@
     </div>
     <PaymentModal 
       :active="terminalActive" 
+      :payload="paymentPayload"
       @payment-success="finalizeBookingTransaction" 
+      @payment-failed="failedBooking"
     />
 
     <Transition name="modal-fade">
@@ -141,6 +143,14 @@
                     <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
                   </select>
                 </div>
+                <Transition name="fade">
+                  <div v-if="editForm.status === 'Cancelled'" class="form-group-capsule mt-2 border-start border-danger border-4 ps-3 bg-danger bg-opacity-10 p-2 rounded">
+                    <label class="modal-input-label text-danger-tint fw-bold m-0 mb-1">Mandatory Abort Synopsis (Reason)</label>
+                    <div class="modal-input-wrapper py-1">
+                      <textarea v-model="editForm.cancellation_reason" required rows="2" class="modal-clean-field text-area-fix text-white" placeholder="Detail weather conditions, trail blockages, or safety hazards..."></textarea>
+                    </div>
+                  </div>
+                </Transition>
               </div>
               <div class="col-12">
                 <label class="modal-input-label">Change Assigned Guide Staff</label>
@@ -215,6 +225,15 @@
                 </div>
               </div>
 
+              <Transition name="fade">
+                <div v-if="staffEditForm.status === 'Cancelled'" class="form-group-capsule mt-2 border-start border-danger border-4 ps-3 bg-danger bg-opacity-10 p-2 rounded">
+                  <label class="modal-input-label text-danger-tint fw-bold m-0 mb-1">Mandatory Abort Synopsis (Reason)</label>
+                  <div class="modal-input-wrapper py-1">
+                    <textarea v-model="staffEditForm.cancellation_reason" required rows="2" class="modal-clean-field text-area-fix text-white" placeholder="Detail weather conditions, trail blockages, or safety hazards..."></textarea>
+                  </div>
+                </div>
+              </Transition>
+
               <!-- Staff Controlled: Live Slots Configuration -->
               <div class="col-12">
                 <label class="modal-input-label">Adjust Available Slots</label>
@@ -275,11 +294,13 @@ const updateGalleryFiles = ref([])
 const fileNameDisplay = ref('No file chosen')
 const editForm = ref({})
 const staffModifyModalActive = ref(false)
+const paymentPayload = ref({})
 
 const staffEditForm = ref({
   status: '',
   available_slots: 0,
-  description: ''
+  description: '',
+  cancellation_reason : ''
 })
 
 const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
@@ -309,37 +330,32 @@ async function fetchLiveTrekDetails() {
   }
 }
 
-async function submitBookingRequest() {
-  // Hide the checkout form
+function submitBookingRequest() {
+  // Capture the exact snapshot of the data
+  paymentPayload.value = {
+    trek_id: trekData.value.trek_id,
+    adults: form.value.adults,
+    children: form.value.children,
+    seniors: form.value.seniors,
+    medical_instructions: form.value.medical_instructions,
+    payment_method: form.value.payment_method
+  }
+  
+  // Close checkout, open terminal
   checkoutActive.value = false
-  // Show the Cyber-Terminal
   terminalActive.value = true
 }
 
 async function finalizeBookingTransaction() {
-  terminalActive.value = false 
-  
-  try {
-    alertStore.showAlert('Executing final ledger commits...', 'info')
-    
-    // Now make the actual backend request to save the booking!
-    const res = await secureFetch(`${BACKEND_URL}/api/trekker/bookings`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trek_id: trekData.value.trek_id, ...form.value })
-    })
-    const data = await res.json()
-    if (res.ok) {
-      alertStore.showAlert(data.message || 'Slot booked successfully!', 'success')
-      checkoutActive.value = false
-      terminalActive.value = true
-      router.push('/portal/trekker/bookings')
-    } else {
-      alertStore.showAlert(data.message || 'Booking transaction rejected.', 'danger')
-    }
-  } catch (err) {
-    alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
-  }
+  terminalActive.value = false
+  alertStore.showAlert('Transaction verified. Basecamp slots secured.', 'success')
+  await fetchLiveTrekDetails() // Refresh slots
+  router.push('/portal/trekker/bookings')
+}
+
+async function failedBooking() {
+  terminalActive.value = false
+  alertStore.showAlert('Transaction failed', 'danger')
 }
 
 function handleAdminDeletePurge() {
@@ -371,7 +387,8 @@ async function openModifyFormModal() {
     available_slots: trekData.value.available_slots, status: trekData.value.status || "Pending",
     start_date: trekData.value.start_date, end_date: trekData.value.end_date,
     max_altitude: trekData.value.max_altitude, price_per_person: trekData.value.price_per_person,
-    description: trekData.value.description, assigned_staff_id: trekData.value.staff.id  || null
+    description: trekData.value.description, assigned_staff_id: trekData.value.staff.id  || null,
+    cancellation_reason : trekData.value.cancellation_reason
   }
 
   updateGalleryFiles.value = []
@@ -380,9 +397,10 @@ async function openModifyFormModal() {
 
 function handleUpdateFiles(event) {
   const files = Array.from(event.target.files)
-  if (files.length > 4) {
-    alertStore.showAlert('Gallery limits capped at 4 items maximum.', 'danger')
-    event.target.value = ''
+  if (files.length !== 4) {
+    alertStore.showAlert('You must select exactly 4 images for the terrain gallery.', 'warning')
+    event.target.value = '' // Reset the input
+    form.value.trek_gallery = []
     return
   }
   const MAX_LIMIT = 500 * 1024
@@ -423,7 +441,8 @@ function openStaffModifyModal() {
   staffEditForm.value = {
     status: trekData.value.status,
     available_slots: trekData.value.available_slots,
-    description: trekData.value.description
+    description: trekData.value.description,
+    cancellation_reason : trekData.value.cancellation_reason
   }
   staffModifyModalActive.value = true
 }

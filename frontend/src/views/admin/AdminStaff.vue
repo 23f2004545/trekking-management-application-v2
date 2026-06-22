@@ -6,11 +6,11 @@
         <div class="mb-4">
             <h2 class="fw-bold tracking-tight m-0">Verified Guides Registry</h2>
             <p class="m-0 text-white-50 fs-8 mt-1">Audit active guide staff coordinates, modify account clearances or investigate blacklists.</p>
-          </div>
+        </div>
           <button @click="openCreateModal" class="btn btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm mb-2">
             <i class="bi bi-plus-lg me-2 fs-8"></i> Add Staff Member
           </button>
-      </div>
+    </div>
 
     <div class="glass-container p-3 rounded-4 mb-4 shadow-sm">
       <div class="row g-2 align-items-center">
@@ -77,6 +77,20 @@
                     <label class="modal-input-label">Staff Password</label>
                     <div class="modal-input-wrapper"><input v-model="form.password" type="password" required class="modal-clean-field"></div>
                 </div>
+                <div class="form-check d-flex align-items-center gap-2 mt-2 text-start">
+                  <input v-model="form.send_credentials" type="checkbox" id="sendCredsFlag" class="form-check-input bg-dark border-secondary cursor-pointer" style="width: 18px; height: 18px;">
+                  <label for="sendCredsFlag" class="form-check-label text-white-50 fs-9 cursor-pointer user-select-none">
+                    Transmit initial security keys to candidate via secure email
+                  </label>
+                </div>
+                <Transition name="fade">
+                  <div v-if="form.send_credentials" class="form-group-capsule mt-2">
+                    <label class="modal-input-label text-success-tint"><i class="bi bi-envelope-paper-fill me-1"></i> Candidate's Personal Email</label>
+                    <div class="modal-input-wrapper">
+                      <input v-model="form.personal_email" type="email" required class="modal-clean-field border-success border-opacity-25" placeholder="Where should we send the password?">
+                    </div>
+                  </div>
+                </Transition>
 
             <!-- Trigger Button Rows -->
             <div class="mt-4 d-flex align-items-center justify-content-end gap-3 border-top border-white border-opacity-10 pt-3">
@@ -98,7 +112,6 @@
           <UserProfile 
             :profile="auditTargetProfile" 
             profileRole="trek_staff" 
-            mode="audit" 
             @admin-toggle-blacklist="handleBlacklistAction"
             @admin-toggle-active="handleDeactivateAction"
           />
@@ -166,12 +179,12 @@ const filteredStaff = computed(() => {
 })
 
 const form = ref({
-  name: '', email: '', password: '' , contact: ''
+  name: '', email: '', send_credentials: true , personal_email: ''
 })
 
 function openCreateModal() {
   form.value = {
-    name: '', email: '', password: '' , contact: ''
+    name: '', email: '', send_credentials: true , personal_email: ''
   }
   createModalActive.value = true
 }

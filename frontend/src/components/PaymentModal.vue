@@ -29,34 +29,61 @@
 
 <script setup>
 import { ref } from 'vue'
+import { secureFetch } from '../utils/api.js' // Ensure you import your fetch wrapper
 
-const props = defineProps({ active: Boolean })
-const emit = defineEmits(['payment-success'])
+const props = defineProps({ 
+  active: Boolean,
+  payload: Object // Pass the booking data into the modal from the parent!
+})
+const emit = defineEmits(['payment-success', 'payment-failed'])
 
 const processing = ref(false)
 const logs = ref([])
 
-const terminalScripts = [
-  { text: "📡 Initializing client-side handshake node...", type: "text-info" },
-  { text: "🔑 Authenticating cryptographic ledger certificates...", type: "text-white-50" },
-  { text: "🔒 Establishing isolated 256-bit sandbox tunnel...", type: "text-warning" },
-  { text: "💸 Relaying clearing house collateral limits...", type: "text-white-50" },
-  { text: "✔ Escrow verification successful. Capital captured.", type: "text-success" }
-]
-
-function executeSimulationSequence() {
+async function executeSimulationSequence() {
   processing.value = true
-  logs.value = []
+  logs.value = [
+    { text: "📡 Initializing client-side handshake node...", type: "text-white-50" },
+    { text: "🔑 Authenticating cryptographic ledger certificates...", type: "text-white-50" }
+  ]
   
-  terminalScripts.forEach((step, index) => {
-    setTimeout(() => {
-      logs.value.push(step)
-      if (index === terminalScripts.length - 1) {
-        processing.value = false
-        setTimeout(() => emit('payment-success'), 800)
-      }
-    }, (index + 1) * 750)
-  })
+  // Simulate initial connection time
+  await new Promise(r => setTimeout(r, 1500))
+  logs.value.push({ text: "🔒 Establishing isolated 256-bit sandbox tunnel...", type: "text-warning" })
+  
+  // ==========================================
+  // REAL API CALL HAPPENS DURING SIMULATION!
+  // ==========================================
+  logs.value.push({ text: "💸 Relaying clearing house collateral limits...", type: "text-white-50" })
+  
+  try {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(props.payload)
+    })
+
+    console.log(props.payload)
+    
+    const data = await res.json()
+    
+    // Simulate processing delay for dramatic effect
+    await new Promise(r => setTimeout(r, 1500))
+    
+    if (res.ok) {
+      logs.value.push({ text: "✔ Escrow verification successful. Capital captured.", type: "text-success" })
+      logs.value.push({ text: "✔ Basecamp slots permanently secured.", type: "text-success" })
+      setTimeout(() => emit('payment-success'), 1500) // Close modal and route
+    } else {
+      // BACKEND FAILED (e.g. Overbooked, Not Open)
+      logs.value.push({ text: `❌ TRANSACTION DENIED: ${data.message}`, type: "text-danger fw-bold" })
+      logs.value.push({ text: "Connection terminated. No capital was captured.", type: "text-danger-tint" })
+      setTimeout(() => emit('payment-failed' , '`$(data.message)`'), 1500)
+    }
+  } catch (err) {
+    logs.value.push({ text: `❌ ${err.message}`, type: "text-danger fw-bold" })
+    processing.value = false
+  }
 }
 </script>
 

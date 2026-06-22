@@ -96,7 +96,7 @@ class MedicalRecord(db.Model):
     trekker_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     blood_group = db.Column(db.String(10), nullable=False) 
-    diagonisis = db.Column(db.Text, nullable=True , default=None)     # Chronic illnesses (e.g., Asthma, Diabetes)
+    diagonisis = db.Column(db.Text, nullable=True , default=None)     # change name diagnosis # Chronic illnesses (e.g., Asthma, Diabetes)
     allergies = db.Column(db.Text, nullable=True, default=None)       # Crucial emergency contact parameters (e.g., Peanuts, Penicillin)
     medications = db.Column(db.Text, nullable=True, default=None)     # Ongoing treatments required on-trail
     

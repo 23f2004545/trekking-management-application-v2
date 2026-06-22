@@ -293,3 +293,37 @@ def send_otp_email(user_email, user_name, otp_code):
     </div>
     """
     send_html_email(user_email, "Apex Security: Your Password Reset Code", html_body)
+    
+    
+     
+# ==========================================================
+# 5. ASYNC: SEND CREDENTIALS TO CANDIDATE
+# ==========================================================    
+@celery_app.task(name='tasks.send_staff_credentials_email')
+def send_staff_credentials_email(personal_email, staff_email, staff_password):
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        html_body = f"""
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #1e293b;">
+            <div style="background-color: #198754; padding: 25px; text-align: center;">
+                <h2 style="margin: 0; color: #ffffff; letter-spacing: 1px;">Apex Basecamp Authorization</h2>
+                <p style="margin: 5px 0 0 0; color: #e2e8f0; font-size: 14px;">Your tactical guide account has been deployed.</p>
+            </div>
+            
+            <div style="padding: 30px;">
+                <h3 style="margin-top: 0; color: #f8f9fa;">Welcome Commander,</h3>
+                <p style="color: #cbd5e1; line-height: 1.6;">Administration has provisioned your secure portal access. You are now authorized to manage expedition manifests, update live trail parameters, and clear explorer medical passports.</p>
+                
+                <div style="background-color: #1e293b; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 15px 0; color: #7bf1a8; border-bottom: 1px solid #334155; padding-bottom: 10px;">Initial Access Credentials</h4>
+                    <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 14px;"><strong>Portal Node:</strong> <span style="color: #fff;">http://localhost:5173/login</span></p>
+                    <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 14px;"><strong>Assigned Email:</strong> <span style="color: #fff;">{staff_email}</span></p>
+                    <p style="margin: 0; color: #94a3b8; font-size: 14px;"><strong>Temporary Key:</strong> <span style="color: #ffda6a; font-family: monospace; font-size: 16px;">{staff_password}</span></p>
+                </div>
+
+                <p style="color: #ff8787; font-size: 12px; margin-top: 20px;">⚠️ Mandatory Compliance: You are required to mutate your security key immediately upon your first terminal login.</p>
+            </div>
+        </div>
+        """
+        send_html_email(personal_email, "Apex Expeditions: Guide Account Credentials", html_body)

@@ -55,7 +55,7 @@
                 <span class="badge payment-badge" :class="explorer.payment_status.toLowerCase()">₹ {{ explorer.payment_status }}</span>
                 <div v-if="!explorer.medical_record_exists">
                     <span  class="badge bg-warning text-dark fw-bold rounded-pill border-0">
-                    <i class="bi bi-exclamation-triangle text-warning"></i> No Medical Profile Linked
+                    <i class="bi bi-exclamation-triangle text-danger"></i> No Medical Profile Linked
                     </span>
                 </div>
                 <div v-else>
@@ -72,7 +72,7 @@
                 <strong class="text-white">User Instructions / Medical Notes:</strong><br>
                 <span class="italic opacity-75">"{{ explorer.medical_notes }}"</span>
               </div>
-              <div v-if="(explorer.allergies !== 'None') && (explorer.medications !== 'None')" class="text-white-50 border-top border-white border-opacity-10 pt-2 mt-1">
+              <div v-if="(explorer.medical_record_exists) &&(explorer.allergies != 'None') && (explorer.medications != 'None')" class="text-white-50 border-top border-white border-opacity-10 pt-2 mt-1">
                 <strong class="text-white">Medical Record:</strong><br>
                 <span class="italic opacity-75">Allergies : "{{ explorer.allergies }}"</span><br>
                 <span class="italic opacity-75">Medications : "{{ explorer.medications }}"</span>
