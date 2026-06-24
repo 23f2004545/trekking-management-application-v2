@@ -193,3 +193,15 @@ class DispatchTicket(db.Model):
 #     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
 #     author = db.relationship('User', backref='tickets')
+
+
+class TrekGeoData(db.Model):
+    __tablename__ = 'trek_geo_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id', ondelete='CASCADE'), nullable=False, unique=True)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+
+    # Automatically attaches to the parent Trek object as "trek.geo_data"
+    trek = db.relationship('Trek', backref=db.backref('geo_data', uselist=False, cascade='all, delete-orphan'))

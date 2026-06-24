@@ -281,6 +281,8 @@ def create_trek():
     price = data.get('price_per_person', 0)
     description = data.get('description', '')
     assigned_staff_id = data.get('assigned_staff_id')
+    lat_str = data.get('latitude')
+    lng_str = data.get('longitude')
 
     if not all([name, location, difficulty, duration, available_slots, start_date_str, end_date_str]):
         return make_response(jsonify({"message": "Missing non-optional tracking fields."}), 400)
@@ -307,6 +309,28 @@ def create_trek():
         )
         db.session.add(new_trek)
         db.session.flush()  
+        
+        if lat_str and lng_str and lat_str != 'null' and lng_str != 'null':
+            try:
+                # =========================================================
+                # OPTION A: CURRENT DUMMY TABLE APPROACH
+                # =========================================================
+                new_geo = TrekGeoData(
+                    trek_id=new_trek.trek_id,
+                    latitude=float(lat_str),
+                    longitude=float(lng_str)
+                )
+                db.session.add(new_geo)
+
+                # =========================================================
+                # OPTION B: FUTURE MIGRATED APPROACH 
+                # (Uncomment below, delete Option A once you migrate Trek!)
+                # =========================================================
+                # new_trek.latitude = float(lat_str)
+                # new_trek.longitude = float(lng_str)
+
+            except ValueError:
+                pass # Failsafe if admin submitted corrupted characters
         
         # 📸 PROCESS MULTIPLE UPLOADS LOOP (Max 4 elements)
         if 'trek_gallery' in request.files:
@@ -544,6 +568,7 @@ def trek_details(trek_id):
     payload = {
         "trek_id": trek.trek_id,
         "trek_name": trek.trek_name,
+        "geo" : True if trek.geo_data else False , 
         "location": trek.location,
         "difficulty": trek.difficulty,
         "duration_days": trek.duration_days if hasattr(trek, 'duration_days') else getattr(trek, 'duration_days', 0),
@@ -559,6 +584,8 @@ def trek_details(trek_id):
         "images": gallery_images,
         "trek_rating_avg": trek_rating_avg ,
         "trek_reviews": trek_reviews_list,
+        "latitude" : trek.geo_data.latitude if trek.geo_data else 0,
+        "longitude" : trek.geo_data.longitude if trek.geo_data else 0,
         "staff": {
             "id" : staff_user.id if staff_user else "Unassigned",
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
@@ -947,6 +974,8 @@ def get_all_tickets():
         DispatchTicket.created_at.asc() 
     ).all()
     
+    # status = 
+    
     return make_response(jsonify([{
         "id": t.id, 
         "author": t.author.name, 
@@ -954,6 +983,9 @@ def get_all_tickets():
         "role": t.author.role.name,
         "subject": t.subject, 
         "message": t.message, 
+        #"show": True if t.status == 'Pending' else False ,
+        "show": False if t.status == 'Resolved' else True ,
+        "response" : t.admin_response if t.status == 'Resolved' else None , 
         # "priority": t.priority,
         "date": t.created_at.strftime("%b %d, %Y")
     } for t in tickets]), 200)

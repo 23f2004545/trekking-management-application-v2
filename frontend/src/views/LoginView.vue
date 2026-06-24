@@ -18,7 +18,7 @@
         <div class="input-group-container mb-3">
           <label class="input-label">Email Address</label>
           <div class="input-field-wrapper">
-            <span class="field-icon">✉️</span>
+            <span class="field-icon"><i class="bi bi-envelope-fill text-white"></i></span>
             <input 
               v-model.lazy="email"
               type="text" 
@@ -38,7 +38,7 @@
             <p @click="openForgotModal" class="helper-link">Forgot password?</p>
           </div>
           <div class="input-field-wrapper">
-            <span class="field-icon">🔒</span>
+            <span class="field-icon"><i class="bi bi-key-fill text-white"></i></span>
             <input 
               v-model="password"
               type="password" 

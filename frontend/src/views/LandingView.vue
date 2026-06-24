@@ -135,6 +135,7 @@
     </section>
 
 
+    
     <section class="architecture-section container my-5 py-5 text-center">
       <div class="row g-4">
         <div class="col-lg-4">
@@ -573,6 +574,14 @@ onUnmounted(() => {
 
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.78rem; }
+
+.transition-scroll { transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
+.translate-y-up { transform: translateY(60px); }
+.translate-y-0 { transform: translateY(0); }
+.step-glass-card { backdrop-filter: blur(12px); transition: transform 0.3s ease, border-color 0.3s ease; }
+.step-glass-card:hover { transform: translateX(8px); border-color: rgba(255, 193, 7, 0.5) !important; }
+.w-fit { width: fit-content; }
+
 </style>
 
 

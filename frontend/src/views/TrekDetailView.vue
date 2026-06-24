@@ -31,6 +31,12 @@
       @payment-success="finalizeBookingTransaction" 
       @payment-failed="failedBooking"
     />
+    <div v-if="!show" class="glass-container p-4 rounded-4 border border-white border-opacity-10 mb-4" style="height: 320px;">
+      <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-2">
+        <i class="bi bi-compass me-1"></i> Satellite Basecamp Telemetry
+      </h6>
+      <TrekMap :lat="absoluteLat" :lng="absoluteLng" :popupText="location" :interactive="false" />
+    </div>
 
     <Transition name="modal-fade">
       <div v-if="checkoutActive" @click.self="checkoutActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
@@ -273,6 +279,7 @@ import { useAlertStore } from '../stores/alert'
 import { useAuthStore } from '../stores/auth'
 import { useConfirmStore } from '../stores/confirm'
 import PaymentModal from '../components/PaymentModal.vue'
+import TrekMap from '../components/TrekMap.vue'
 import { secureFetch } from '@/utils/api.js'
 
 const route = useRoute()
@@ -296,12 +303,21 @@ const editForm = ref({})
 const staffModifyModalActive = ref(false)
 const paymentPayload = ref({})
 
+const show = ref(true)
+
 const staffEditForm = ref({
   status: '',
   available_slots: 0,
   description: '',
   cancellation_reason : ''
 })
+
+
+const absoluteLat = computed(() =>  trekData.value.latitude)
+const absoluteLng = computed(() =>  trekData.value.longitude)
+const location = computed(() => trekData.value.location)
+
+
 
 const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
 
@@ -320,6 +336,9 @@ async function fetchLiveTrekDetails() {
     })
     if (res.ok) {
       trekData.value = await res.json()
+      if (trekData.value.geo) {
+        show.value = false
+      }
     } else {
       alertStore.showAlert('Expedition mapping verification drop.', 'danger')
     }

@@ -210,6 +210,15 @@
                   <textarea v-model="form.description" rows="3" class="modal-field text-area-fix" placeholder="Describe terrain boundaries, environmental risk variables..."></textarea>
                 </div>
               </div>
+              <div class="col-12 mt-2">
+                <label class="modal-label text-success-tint d-flex justify-content-between">
+                  <span>Geographical Telemetry *</span>
+                  <span class="fs-10 font-monospace text-white-50">LAT: {{ form.latitude }} · LNG: {{ form.longitude }}</span>
+                </label>
+                <button type="button" @click="openMapLocator" class="btn btn-outline-success w-100 rounded-3 py-2 fs-9 fw-bold d-flex align-items-center justify-content-center gap-2 bg-success bg-opacity-10">
+                  <i class="bi bi-geo-alt-fill fs-8"></i> Open Tactical Map Picker
+                </button>
+              </div>
             </div>
 
             <!-- Trigger Button Rows -->
@@ -223,12 +232,45 @@
       </div>
     </Transition>
 
+    <Transition name="modal-fade">
+      <div v-if="mapPickerActive" @click.self="mapPickerActive = false" class="admin-modal-backdrop d-flex align-items-center justify-content-center p-3" style="z-index: 1060;">
+        <div class="glass-modal-card p-4 rounded-4 border border-success border-opacity-30 shadow-lg d-flex flex-column" style="max-width: 650px; width: 100%; height: 80vh; max-height: 550px;">
+          
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-white border-opacity-10 flex-shrink-0">
+            <div>
+              <h5 class="fw-bold text-white m-0 tracking-tight">Basecamp Grid Deployment</h5>
+              <span class="fs-10 text-white-50">Pan satellite feed and click target terrain to drop marker.</span>
+            </div>
+            <button @click="resetPinToCenter" class="btn btn-sm btn-outline-warning rounded-pill fs-10 px-3 py-1 fw-bold" title="Reset Pin">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Pin
+            </button>
+          </div>
+
+          <!-- The Leaflet Component -->
+          <div class="flex-grow-1 w-100 rounded-3 overflow-hidden border border-white border-opacity-10 mb-3 position-relative">
+            <TrekMap :lat="tacticalCoords.lat" :lng="tacticalCoords.lng" :interactive="true" @update:coords="handlePinMoved" />
+          </div>
+
+          <!-- Footer -->
+          <div class="d-flex gap-3 flex-shrink-0 mt-auto">
+            <button type="button" @click="mapPickerActive = false" class="btn btn-outline-light rounded-pill px-4 py-2 flex-grow-1 fs-8">Cancel</button>
+            <button type="button" @click="lockGridCoordinates" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-dark flex-grow-1 fs-8 shadow-sm">
+              ✔ Lock & Transmit Grid
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import TrekMap from '../../components/TrekMap.vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useConfirmStore } from '../../stores/confirm'
@@ -250,11 +292,15 @@ const filterExtremes = ref({ max_altitude: 6000 , max_price: 50000 , min_altitud
 // Filtering state metrics
 const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 5000 })
 
+const mapPickerActive = ref(false)
+const tacticalCoords = ref({ lat: 32.2396, lng: 77.1887 })
+
 // Model alignment fields mapping
 const form = ref({
   name: '', location: '', difficulty: 'Moderate', duration_days: 3,
   available_slots: 15, max_altitude: 3000, price_per_person: 5000,
-  start_date: '', end_date: '', description: '', assigned_staff_id: null
+  start_date: '', end_date: '', description: '', assigned_staff_id: null,
+  latitude: 32.2396, longitude: 77.1887
 })
 
 // DYNAMIC SEARCH & FILTER CALCULATOR ENGINE
@@ -344,6 +390,28 @@ function handleMultipleImagesSelection(event) {
     selectedGalleryFiles.value.push(file)
     fileNameDisplay.value = file.name
   }
+}
+
+function openMapLocator() {
+  tacticalCoords.value.lat = form.value.latitude || 32.2396
+  tacticalCoords.value.lng = form.value.longitude || 77.1887
+  mapPickerActive.value = true
+}
+
+function handlePinMoved(newCoords) {
+  tacticalCoords.value.lat = newCoords.lat
+  tacticalCoords.value.lng = newCoords.lng
+}
+
+function resetPinToCenter() {
+  tacticalCoords.value.lat = 32.2396
+  tacticalCoords.value.lng = 77.1887
+}
+
+function lockGridCoordinates() {
+  form.value.latitude = tacticalCoords.value.lat
+  form.value.longitude = tacticalCoords.value.lng
+  mapPickerActive.value = false
 }
 
 async function submitTrekForm() {

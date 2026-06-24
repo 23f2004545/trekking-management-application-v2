@@ -46,15 +46,23 @@
             <!-- <span class="badge rounded-pill" :class="getBadgeClass(activeModal.priority)">{{ activeModal.priority }}</span> -->
           </div>
 
+          <div> Query </div>
           <div class="bg-black bg-opacity-25 rounded-3 p-3 mb-4 msg-scroll border border-white border-opacity-5">
             <p class="text-white-50 fs-9 lh-base m-0 whitespace-pre-wrap">{{ activeModal.message }}</p>
           </div>
 
-          <div class="form-check mb-4 d-flex align-items-center gap-2">
+          <div v-if="activeModal.show" class="form-check mb-4 d-flex align-items-center gap-2">
             <input v-model="wantsToResolve" class="form-check-input bg-dark border-secondary m-0" type="checkbox" id="resolveCheck" style="cursor: pointer;">
             <label class="form-check-label fw-bold text-white fs-8 m-0" for="resolveCheck" style="cursor: pointer;">
               Draft Official Resolution
             </label>
+          </div>
+
+          <div v-if="activeModal.response"> 
+            Resolution 
+            <div class="bg-black bg-opacity-25 rounded-3 p-3 mb-4 msg-scroll border border-white border-opacity-5">
+              <p class="text-white-50 fs-9 lh-base m-0 whitespace-pre-wrap">{{ activeModal.response }}</p>
+            </div>
           </div>
 
           <div v-if="wantsToResolve" class="animate-fade-in">
@@ -69,7 +77,7 @@
           </div>
 
           <div v-else class="text-end border-top border-white border-opacity-10 pt-3">
-            <button @click="rejectTicket(activeModal.id)" class="btn btn-outline-danger rounded-pill px-4 py-2 fs-8">Reject & Purge Ticket</button>
+            <button @click="rejectTicket(activeModal.id)" class="btn btn-outline-danger rounded-pill px-4 py-2 fs-8">Reject / Purge Ticket</button>
           </div>
 
         </div>
