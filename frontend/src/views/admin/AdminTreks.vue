@@ -35,7 +35,7 @@
         </div>
         <!-- Price Range Filter Slider -->
         <div class="col-md-3">
-          <label class="d-block fs-9 text-white-50 mb-1">Max Budget: <span class="text-success fw-bold">₹{{ filters.price }}</span></label>
+          <label class="d-block fs-9 text-white-50 mb-1">Max Budget / <i class="bi bi-person"></i> : <span class="text-success fw-bold">₹{{ filters.price }}</span></label>
           <input v-model.number="filters.price" type="range" :min="filterExtremes.min_price" :max="filterExtremes.max_price" step="250" class="form-range custom-slider">
         </div>
         <!-- Altitude Cap Filter -->
@@ -57,41 +57,67 @@
 
     <div v-else class="row g-4">
       <div v-for="trek in filteredTreks" :key="trek.trek_id" class="col-xl-4 col-md-6">
-        <div class="trek-glass-card h-100 rounded-4 overflow-hidden border border-white border-opacity-10 shadow d-flex flex-column justify-content-between">
+        <div 
+          class="trek-premium-card position-relative rounded-4 shadow-sm d-flex flex-column text-start"
+          @click="routeToDeepInsights(trek.trek_id)"
+        >
           
-          <!-- Image Top Cap Area -->
-          <div class="card-img-frame position-relative">
-            <img :src="BACKEND_URL + trek.image_url" alt="Trek Layout Graphic" class="w-100 h-100 object-cover" />
-            <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; right: 1rem;">
-             ● {{  trek.status }}
+          <div class="card-bg-wrapper position-absolute top-0 start-0 w-100 h-100 z-0">
+            <img :src="BACKEND_URL + trek.image_url" alt="Trek Graphic" class="card-bg-img w-100 h-100 object-cover" />
+          </div>
+
+          <div class="card-gradient-overlay position-absolute top-0 start-0 w-100 h-100 z-1"></div>
+
+          <div class="position-relative z-2 d-flex flex-column h-100 p-4 w-100">
+
+            <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; left: 1rem;">
+              {{ trek.status }}
             </span>
-          </div>
+            <span class="badge position-absolute difficulty-pill" :class="trek.difficulty.toLowerCase()" style="top: 1rem; right: 1rem;">
+              <i class="bi bi-activity me-1.5 opacity-50"></i> {{ trek.difficulty }}
+            </span>
 
-          <!-- Body Technical Parameters Details -->
-          <div class="p-3 flex-grow-1 d-flex flex-column justify-content-between">
-            <div>
-              <div class="d-flex justify-content-between text-white-50 fs-9 mb-1.5 fw-medium">
-                <span class="text-info">{{ trek.difficulty }}</span>
-                <span><i class="bi bi-caret-up-fill text-success"></i> {{ trek.max_altitude }}m</span>
+            <div class="mt-auto w-100 pb-1">
+              
+              <div class="d-flex flex-column align-items-start gap-2 mb-2">
+                <div v-if="trek.trek_rating ">
+                  <span class="badge bg-white bg-opacity-10 text-white border border-warning border-opacity-20 rounded-pill px-2.5 py-1 fs-10 backdrop-blur fw-normal">
+                  Rating : {{ trek.trek_rating }} <i class="bi bi-star-fill text-warning"></i>
+                  </span>
+                </div>
+                <span class="fs-10 text-white fw-medium">
+                  <i class="bi bi-people-fill text-success opacity-75 me-1"></i> 
+                  <span :class="trek.available_slots < 5 ? 'text-warning' : ''">{{ trek.available_slots }} Slots Available</span>
+                </span>
               </div>
-              <h5 class="fw-bold tracking-tight text-white mb-1 text-truncate">{{ trek.trek_name }}</h5>
-              <p class="fs-9 text-white-50 m-0 mt-0.5 mb-2"><i class="bi bi-pin-map-fill"></i> Location: {{ trek.location }}</p>
-              <p class="fs-9 text-white-50 m-0 opacity-75"><i class="bi bi-person-fill "></i> Guide: <span class="text-warning fw-bold">{{ trek.assigned_staff.name }}</span></p>
+
+              <div class="d-flex justify-content-between align-items-end mb-1">
+                <h3 class="fw-bold text-white m-0 text-truncate pe-3 tracking-tight text-shadow-sm">{{ trek.trek_name }}</h3>
+                <h4 class="fw-bold text-success m-0 tracking-tight text-shadow-sm">₹{{ trek.price_per_person }} / <i class="bi bi-person"></i></h4>
+              </div>
+
+              <p class="fs-9 text-white-50 m-0 text-truncate fw-medium mb-2">
+                <i class="bi bi-geo-alt-fill opacity-50 me-1"></i>{{ trek.location }}
+              </p>
+
+              <hr class="border-white border-opacity-20 my-3" />
+
+              <div class="d-flex align-items-center justify-content-between fs-9 text-white-75 w-100 flex-nowrap">
+                <div class="d-flex align-items-center text-truncate pe-2">
+                  <i class="bi bi-clock-history me-1 opacity-50"></i> {{ trek.duration_days }} Day(s)
+                </div>
+
+                <div class="d-flex align-items-center border-start border-end border-white border-opacity-20 px-2 text-truncate justify-content-center flex-grow-1">
+                  {{ trek.start_date }}  : {{ trek.end_date }}
+                </div>
+                <div class="d-flex align-items-center text-truncate ps-2 justify-content-end">
+                  <i class="bi bi-caret-up-fill me-1 text-info"></i> {{ trek.max_altitude }}m
+                </div>
+              </div>
+
             </div>
-
-            <!-- Double Bottom Action Execution Nodes Row -->
-            <div class="pt-3 border-top border-white border-opacity-10 mt-3 d-flex align-items-center justify-content-between">
-              <div>
-                <span class="d-block extra-small text-white-50 opacity-50 fw-semibold">BASE UNIT COST</span>
-                <strong class="fs-7 text-success">₹{{ trek.price_per_person }}</strong>
-              </div>
-              <div class="d-flex gap-2">
-                <button @click="triggerRemoval(trek.trek_id)" class="btn btn-sm btn-outline-danger rounded-pill px-3 fs-9 border-opacity-25">Remove</button>
-                <button @click="routeToDeepInsights(trek.trek_id)" class="btn btn-sm btn-light rounded-pill px-3 fs-9 fw-bold text-dark">View Detail</button>
-              </div>
-            </div>
           </div>
-
+          
         </div>
       </div>
     </div>
@@ -405,6 +431,10 @@ onMounted(() => {
 .status-pill.completed { background: rgba(13, 110, 253, 0.8); }
 .status-pill.ongoing { background: rgba(255, 193, 7, 0.8); color: black; }
 
+.difficulty-pill { padding: 3px 9px; font-size: 0.7rem; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+.difficulty-pill.easy { background: rgba(25, 135, 84, 0.8); }
+.difficulty-pill.moderate { background: rgba(255, 193, 7, 0.8); color: black; }
+.difficulty-pill.hard { background: rgba(220, 53, 69, 0.8); }
 
 /* Modal overlay layouts */
 .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
@@ -450,4 +480,66 @@ onMounted(() => {
 .extra-small { font-size: 0.68rem; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
+
+
+.trek-premium-card {
+  min-height: 440px;       /* Taller to give landscape images room to breathe */
+  height: 100%;            /* Ensures flex children behave */
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.05); /* Extremely subtle border */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background-color: #0d0f12;
+  overflow: hidden;
+}
+
+/* Hover Selection Outline & Lift */
+.trek-premium-card:hover {
+  border-color: rgba(255, 255, 255, 0.4); 
+  transform: translateY(-5px);            
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+/* The Image Wrapper & Zoom Effect */
+.card-bg-wrapper {
+  overflow: hidden;
+  border-radius: inherit; /* Keeps the rounded corners clean */
+}
+
+.card-bg-img {
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.trek-premium-card:hover .card-bg-img {
+  transform: scale(1.06); /* The "Ken Burns" subtle zoom */
+}
+
+/* Gradient Overlay - Reversed to explicitly build from the bottom up */
+.card-gradient-overlay {
+  background: linear-gradient(
+    to top, 
+    rgba(8, 10, 12, 0.98) 0%,   /* Solid dark at the very bottom */
+    rgba(8, 10, 12, 0.85) 25%,  /* Heavy dark behind the text */
+    rgba(8, 10, 12, 0.4) 50%,   /* Fading out */
+    rgba(8, 10, 12, 0.1) 80%, 
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none; 
+}
+/* Extra small font size for meta tags */
+.fs-10 {
+  font-size: 0.72rem;
+}
+
+/* Utility Classes */
+.object-cover { object-fit: cover; }
+.backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.tracking-tight { letter-spacing: -0.03em; }
+.text-shadow-sm { text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+/* Button Hover State */
+.premium-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff;
+}
+
 </style>

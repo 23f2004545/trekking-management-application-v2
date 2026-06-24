@@ -459,30 +459,25 @@ def get_completed_history():
             user_review = Review.query.filter_by(user_id=user_id, trek_id=b.trek_id).first()
             reviews = Review.query.filter_by(trek_id=b.trek_id).all() 
             
-            trek_reviews_list = []
-            staff_reviews_list = []
             staff_rating_avg = None
             trek_rating_avg = None
             
             if hasattr(b.trek, 'reviews') and b.trek.reviews:
-                trek_reviews_list = [{
-                    "id": r.id, "trekker": r.author.name, "stars": r.trek_rating, "comment": r.trek_experience or 'No review provided'
-                } for r in b.trek.reviews]
                 trek_rating_avg = round(sum([r.trek_rating for r in b.trek.reviews]) / len(b.trek.reviews))
 
             if reviews :
-                staff_reviews_list = [{
-                    "id": r.id, "trekker": r.author.name, "stars": r.staff_rating, "comment": r.staff_experience or 'No review provided'
-                } for r in reviews]
                 staff_rating_avg = round(sum([r.staff_rating for r in reviews]) / len(reviews))
             
             gallery = [img.image_url for img in b.trek.images] if b.trek.images else []
             
-            staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg , "staff_reviews": staff_reviews_list}
+            price = b.total_amount / b.number_of_persons
+            
+            
+            staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg }
             if b.trek.assigned_staff_id and b.trek.assigned_staff:
                 staff_user = User.query.get(b.trek.assigned_staff.user_id)
                 if staff_user:
-                    staff_info = {"specialization": staff_user.specialization, "certification": staff_user.certification, "experience_years": staff_user.experience_years , "status" : staff_user.status}
+                    staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic ,"specialization": staff_user.staff_profile.specialization, "certification": staff_user.staff_profile.certification, "experience": staff_user.staff_profile.experience_years , "status" : staff_user.staff_profile.status , "staff_rating_avg" : staff_rating_avg}
 
             results.append({
                 "booking_id": b.booking_id,
@@ -501,21 +496,20 @@ def get_completed_history():
                 "duration_days": b.trek.duration_days,
                 "status": "Completed",
                 "max_altitude": getattr(b.trek, 'max_altitude', 0),
-                "price_per_person": b.trek.price_per_person,
-                "created_at": b.trek.created_at.strftime("%Y-%m-%d"),
-                "updated_at": b.trek.updated_at.strftime("%Y-%m-%d"),
+                "price_per_person":price,
                 "description": b.trek.description,
                 "images": gallery,
-                "trek_rating_avg": trek_rating_avg ,
-                "trek_reviews": trek_reviews_list,                
+                "trek_avg": trek_rating_avg ,             
                 "staff": staff_info,
+                "profile" : staff_user.profile_pic ,
+                "start_date" : b.trek.start_date.strftime("%Y-%m-%d"),
+                "end_date" : b.trek.end_date.strftime("%Y-%m-%d"),
                 
                 # Review Component Mapping
                 "review_submitted": True if user_review else False,
                 "existing_trek_review": {"stars": user_review.trek_rating, "comment": user_review.trek_experience} if user_review else None,
                 "existing_staff_review": {"stars": user_review.staff_rating, "comment": user_review.staff_experience} if user_review else None
             })
-            
     return make_response(jsonify(results), 200)
 
 # ==========================================================================

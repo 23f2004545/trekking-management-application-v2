@@ -43,30 +43,34 @@
           <div class="inner-spec-table p-4 rounded-3 border border-white border-opacity-5 bg-opacity-5 fs-8">
             <div class="row g-3">
               <div class="col-sm-6"><strong><i class="bi bi-clock-history"></i>  Duration :</strong> <span class="text-white-50">{{ trek.duration_days }} Days</span></div>
-              <div class="col-sm-6"><strong><i class="bi bi-graph-up"></i>  Max Altitude:</strong> <span class="text-white-50">{{ trek.max_altitude }}m</span></div>
-              <div class="col-sm-6"><strong><i class="bi bi-calendar-minus"></i> Start Date:</strong> <span class="text-white-50"> {{ trek.start_date }}</span></div>
-              <div class="col-sm-6"><strong><i class="bi bi-calendar-check"></i> End Date:</strong> <span class="text-white-50"> {{ trek.end_date }}</span></div>
-              <div class="col-sm-6"><strong><i class="bi bi-people"></i> Slots Left:</strong> <span class="text-success fw-bold">{{ trek.available_slots }} left</span></div>
-              <div class="col-sm-6"><strong><i class="bi bi-currency-rupee"></i> Price:</strong> <span class="text-success fw-bold">{{ trek.price_per_person }}</span></div>
+              <div class="col-sm-6"><strong><i class="bi bi-graph-up"></i>  Max Altitude :</strong> <span class="text-white-50">{{ trek.max_altitude }}m</span></div>
+              <div class="col-sm-6"><strong><i class="bi bi-calendar-minus"></i> Start Date :</strong> <span class="text-white-50"> {{ trek.start_date }}</span></div>
+              <div class="col-sm-6"><strong><i class="bi bi-calendar-check"></i> End Date :</strong> <span class="text-white-50"> {{ trek.end_date }}</span></div>
+              <div class="col-sm-6"><strong><i class="bi bi-people"></i> Slots Left :</strong> <span class="text-success fw-bold">{{ trek.available_slots }} </span></div>
+              <div class="col-sm-6"><strong><i class="bi bi-currency-rupee"></i> Price :</strong> <span class="text-success fw-bold">{{ trek.price_per_person }}</span></div>
             </div>
           </div>
+
+          <div v-if="trek.trek_avg" class="m-3"><strong>Trek Rating :</strong> <span class="text-warning-tint ">{{ '★'.repeat(trek.trek_avg) || 'No ratings yet' }}</span></div>
         </div>
 
-        <div class="glass-container p-4 rounded-4 shadow-sm">
-          <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1"><i class="bi bi-person-lines-fill"></i> Historic Route Reviews ({{ trek.trek_reviews?.length || 0 }})</h6>
-          <div class="mb-3"><strong>Trek Rating :</strong> <span class="text-warning-tint ">{{ '★'.repeat(trek.trek_rating_avg) || 'No ratings yet' }}</span></div>
-          <div class="d-flex flex-row flex-nowrap gap-3 overflow-x-auto pb-3 custom-scrollbar">
-              <div v-if="!trek.trek_reviews?.length" class="text-white-50 opacity-50 fs-9 py-2 italic text-center w-100">
-                No structural terrain evaluations logged for this sector yet.
-              </div>
-              
-              <div v-for="rev in trek.trek_reviews" :key="rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="fs-8 fw-semibold text-white">{{ rev.trekker }}</span>
-                  <span class="text-warning-tint small">{{ '★'.repeat(rev.stars) || 0 }}</span>
+        <div v-if="trek.created_at">
+          <div class="glass-container p-4 rounded-4 shadow-sm">
+            <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-1"><i class="bi bi-person-lines-fill"></i> Historic Route Reviews ({{ trek.trek_reviews?.length || 0 }})</h6>
+            <div class="mb-3"><strong>Trek Rating :</strong> <span class="text-warning-tint ">{{ '★'.repeat(trek.trek_rating_avg) || 'No ratings yet' }}</span></div>
+            <div class="d-flex flex-row flex-nowrap gap-3 overflow-x-auto pb-3 custom-scrollbar">
+                <div v-if="!trek.trek_reviews?.length" class="text-white-50 opacity-50 fs-9 py-2 italic text-center w-100">
+                  No structural terrain evaluations logged for this sector yet.
                 </div>
-                <p class="m-0 fs-9 text-white-50 lh-base review-text">"{{ rev.comment }}"</p>
-              </div>
+                
+                <div v-for="rev in trek.trek_reviews" :key="rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fs-8 fw-semibold text-white">{{ rev.trekker }}</span>
+                    <span class="text-warning-tint small">{{ '★'.repeat(rev.stars) || 0 }}</span>
+                  </div>
+                  <p class="m-0 fs-9 text-white-50 lh-base review-text">"{{ rev.comment }}"</p>
+                </div>
+            </div>
           </div>
         </div>
       </div>
@@ -77,16 +81,19 @@
             <div class="mb-3">
               <h3 class="fw-bold tracking-tight m-0 text-white fs-4">{{ trek.trek_name }}</h3>
               <p class="fs-8 text-warning fw-medium m-0 mt-1"> <i class="bi bi-geo-alt"></i> {{ trek.location }}</p>
-              
-              <span class="fs-8 text-light">Trek Registered : {{ trek.created_at }}</span><br />
-              <span class="fs-8 text-info">Last Update : {{ trek.updated_at }}</span>
+
+              <div v-if="trek.created_at">
+                <span class="fs-8 text-light">Trek Registered : {{ trek.created_at }}</span><br />
+                <span class="fs-8 text-info">Last Update : {{ trek.updated_at }}</span>
+              </div>
 
             </div>
             <hr class="border-white border-opacity-10 my-3" />
 
             <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3">Assigned Staff Profile</h6>
             <div class="d-flex align-items-center gap-3 mb-3">
-              <img :src="BACKEND_URL + (trek.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
+              <img v-if="!trek.profile" :src="BACKEND_URL + (trek.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
+              <img v-if="trek.profile" :src="BACKEND_URL + (trek.profile || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
               <div>
                 <h6 class="m-0 fw-bold text-white fs-8">{{ trek.staff.name }}</h6>
                 <p class="m-0 fs-9 text-white-50 opacity-75 mt-0.5">{{ trek.staff.experience || 'N/A' }} Years Experience</p>
@@ -100,20 +107,22 @@
               <div><strong>Guide Rating:</strong> <span class="text-warning-tint">{{ '★'.repeat(trek.staff.staff_rating_avg) || 'No ratings yet' }}</span></div>
             </div>
 
-            <div class="staff-comments-container mt-3">
-              <span class="d-block fs-9 text-white-50 opacity-40 fw-bold text-uppercase mb-2">Guide Performance Logs</span>
-              <div v-if="!trek.staff.staff_reviews?.length" class="text-white-50 opacity-40 extra-small py-1 italic">No guide feedback lines submitted.</div>
-              <div v-for="s_rev in trek.staff.staff_reviews" :key="s_rev.id" class="staff-comment-pod p-3 rounded-3 mb-2">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                  <span class="extra-small text-white-50">{{ s_rev.trekker }}</span>
-                  <span class="text-warning-tint extra-small">{{ '★'.repeat(s_rev.stars) }}</span>
+            <div v-if="trek.created_at">
+              <div class="staff-comments-container mt-3">
+                <span class="d-block fs-9 text-white-50 opacity-40 fw-bold text-uppercase mb-2">Guide Performance Logs</span>
+                <div v-if="!trek.staff.staff_reviews?.length" class="text-white-50 opacity-40 extra-small py-1 italic">No guide feedback lines submitted.</div>
+                <div v-for="s_rev in trek.staff.staff_reviews" :key="s_rev.id" class="staff-comment-pod p-3 rounded-3 mb-2">
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="extra-small text-white-50">{{ s_rev.trekker }}</span>
+                    <span class="text-warning-tint extra-small">{{ '★'.repeat(s_rev.stars) }}</span>
+                  </div>
+                  <p class="m-0 fs-9 text-white-50 opacity-80 lh-sm">"{{ s_rev.comment }}"</p>
                 </div>
-                <p class="m-0 fs-9 text-white-50 opacity-80 lh-sm">"{{ s_rev.comment }}"</p>
               </div>
             </div>
           </div>
 
-          <div class="pt-3 border-top border-white border-opacity-10 mt-4 text-center">
+          <div v-if="trek.created_at" class="pt-3 border-top border-white border-opacity-10 mt-4 text-center">
             
             <button v-if="(authStore.role === 'trekker') && showCheckoutButton" @click="$emit('request-checkout')" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-dark fs-8 shadow-sm">
               Book Your Trek Now

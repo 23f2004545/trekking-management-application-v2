@@ -206,7 +206,7 @@ def save_staff_profile():
     if len(emergency_contact) != 10 or not emergency_contact.isdigit():
         return make_response(jsonify({"message": "Emergency phone must contain exactly 10 digits."}), 400)
 
-    record = StaffProfile.query.filter_by(staff_id=user_id).first()
+    record = StaffProfile.query.filter_by(user_id=user_id).first()
     
     if not record:
         record = StaffProfile(
@@ -214,7 +214,6 @@ def save_staff_profile():
                     specialization=data.get('specialization', '').strip(),
                     experience_years=int(data.get('experience_years', 0)),
                     certification=data.get('certifications', '').strip(),
-                    status=data.get('status', '').strip(),
                     emergency_contact=emergency_contact,
                     bio=data.get('bio', '').strip()
                 )

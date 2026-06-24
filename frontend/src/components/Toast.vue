@@ -22,7 +22,7 @@ const icon = computed(() => {
     case 'success': return '✨'
     case 'danger': return '🚨'
     case 'warning': return '⚠️'
-    case 'info': return 'ℹ️'
+    case 'info': return '❕'
   }
 })
 </script>

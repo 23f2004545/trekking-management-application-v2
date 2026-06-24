@@ -111,6 +111,63 @@
       <div v-if="isMobileMenuOpen" class="mobile-drawer-backdrop" @click="isMobileMenuOpen = false"></div>
     </Transition>
 
+    <button v-if="authStore.role != 'admin'" @click="ticketModalActive = true" class="btn btn-warning rounded-circle position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; z-index: 1040;">
+      <i class="bi bi-headset fs-4"></i>
+    </button>
+
+    <Transition name="modal-fade">
+      <div v-if="ticketModalActive" @click.self="ticketModalActive = false" class="query-overlay-backdrop d-flex align-items-center justify-content-center p-3" style="z-index: 1050;">
+        <div class="glass-query-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start position-relative" style="max-width: 500px; width: 100%;">
+          
+          <button @click="ticketModalActive = false" class="btn-dismiss-circle-cross">✕</button>
+          
+          <h4 class="fw-bold text-white mb-1"><i class="bi bi-headset me-2 text-warning"></i> Command Dispatch</h4>
+          
+          <div v-if="activeTicket" class="mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill"><span class="spinner-grow spinner-grow-sm me-2" style="width: 0.5rem; height: 0.5rem;"></span>PENDING REVIEW</span>
+              <span class="fs-9 text-white-50">{{ activeTicket.date }}</span>
+            </div>
+            
+            <div class="bg-black bg-opacity-25 p-3 rounded-4 border border-white border-opacity-10 mb-4">
+              <h6 class="fw-bold text-white mb-2">{{ activeTicket.subject }}</h6>
+              <p class="fs-9 text-white-50 m-0 lh-base">{{ activeTicket.message }}</p>
+            </div>
+            
+            <p class="text-white-50 fs-9 text-center mb-4">You may only maintain one active dispatch at a time. Awaiting administrative clearance.</p>
+            
+            <button @click="withdrawTicket(activeTicket.id)" class="btn btn-outline-danger w-100 rounded-pill py-2.5 fw-bold fs-8">Withdraw / Cancel Dispatch</button>
+          </div>
+
+          <div v-else>
+            <p class="text-white-50 small mb-4">Request administrative override or ask operational queries.</p>
+            <form @submit.prevent="submitTicket" class="d-flex flex-column gap-3">
+              <div>
+                <label class="modal-input-label">Priority Level</label>
+                <!-- <div class="modal-input-wrapper">
+                  <select v-model="ticketForm.priority" class="modal-clean-field w-100 bg-transparent select-fix text-white">
+                    <option value="Routine" class="bg-dark">Routine Query</option>
+                    <option value="Urgent" class="bg-dark ">Urgent Modification</option>
+                    <option value="Hazard" class="bg-dark ">Field Hazard / SOS</option>
+                  </select>
+                </div> -->
+              </div>
+              <div>
+                <label class="modal-input-label">Subject Vector</label>
+                <div class="modal-input-wrapper"><input v-model="ticketForm.subject" type="text" required class="modal-clean-field w-100" placeholder="e.g. Trail Blockage / Roster Issue"></div>
+              </div>
+              <div>
+                <label class="modal-input-label">Operational Details</label>
+                <div class="modal-input-wrapper"><textarea v-model="ticketForm.message" required rows="4" class="modal-clean-field w-100 text-area-fix" placeholder="Describe the hazard or query..."></textarea></div>
+              </div>
+              <button type="submit" class="btn btn-warning w-100 rounded-pill py-2.5 fw-bold text-dark mt-2 shadow-sm">Transmit to Command</button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </Transition>
+
     <main class="workspace-area flex-grow-1 w-100 mx-auto px-md-5 pt-NAV_MARGIN mb-5">
       <router-view />
     </main>
@@ -203,6 +260,9 @@ const authStore = useAuthStore()
 const alertStore = useAlertStore()
 const confirmStore = useConfirmStore()
 const isMobileMenuOpen = ref(false)
+const activeTicket = ref(null)
+const ticketModalActive = ref(false)
+const ticketForm = ref({ subject: '', message: ''}) // priority: 'Routine' 
 
 // This variable will be used to offset the scrolling content below the fixed header
 // const NAV_MARGIN = '100px';
@@ -285,10 +345,47 @@ async function clearAllNotifications() {
   })
 }
 
+async function fetchActiveTicket() {
+  try {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/tickets`)
+    if (res.ok) activeTicket.value = await res.json()
+  } catch (err) { console.error(err) }
+}
+
+async function submitTicket() {
+  try {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/tickets`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ticketForm.value)
+    })
+    
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert(data.message, 'success')
+      await fetchActiveTicket()
+    } else {
+      alertStore.showAlert(data.message, 'danger')
+      ticketModalActive.value = false
+    }
+  } catch(err) { alertStore.showAlert('Transmission failed.', 'danger') } 
+}
+
+async function withdrawTicket(id) {
+  try {
+    const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/utils/tickets/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      alertStore.showAlert('Dispatch withdrawn successfully.', 'info')
+      activeTicket.value = null // Resets UI back to the form!
+      ticketForm.value = { subject: '', message: '' } //  priority: 'Routine'
+    }
+  } catch(err) { console.error(err) }
+}
+
 
 onMounted(() => {
   handleProfilePic()
   fetchNotifications()
+  fetchActiveTicket()
 })
 
 </script>
@@ -509,5 +606,35 @@ onMounted(() => {
 /* Smooth Fade & Slide Animation */
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.2s ease; }
 .fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
+
+.query-overlay-backdrop {
+  position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 5, 2, 0.583) !important;
+  backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 999 !important;
+}
+
+.glass-query-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(178, 183, 35, 0.922);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  border-radius: 240px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.btn-dismiss-circle-cross {
+  position: absolute; top: 1rem; right: 0.5rem;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255,255,255,0.6); width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+}
+.btn-dismiss-circle-cross:hover { background: rgba(255,255,255,0.2); color: #ffffff; transform: scale(1.05); }
+
+.modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
+.modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
+.modal-clean-field { border: none; background: transparent; color: #ffffff; width: 100%; font-size: 0.92rem; outline: none; }
 
 </style>

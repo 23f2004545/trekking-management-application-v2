@@ -80,7 +80,6 @@ async function fetchCompletedHistory() {
         if (trip.staff.profile_pic && !trip.staff.profile_pic.startsWith('http')) {
           trip.staff.profile_pic = `${BACKEND_URL}${trip.staff.profile_pic}`
         }
-        console.log('Resolved Trip Data:', trip) // Debug log to verify data structure
         return trip
       })
     }

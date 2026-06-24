@@ -36,34 +36,67 @@
 
     <div v-else class="row g-4 text-start">
       <div v-for="trek in filteredTreks" :key="trek.id" class="col-xl-4 col-md-6">
-        <div class="trek-glass-card h-100 p-3 rounded-4 d-flex flex-column justify-content-between shadow-sm">
+        <div 
+          class="trek-premium-card position-relative rounded-4 shadow-sm d-flex flex-column text-start"
+          @click="routeToDeepInsights(trek.trek_id)"
+        >
           
-          <div class="img-frame rounded-3 overflow-hidden mb-3 position-relative">
-            <img :src="getAbsoluteUrl(trek.image)" class="w-100 h-100 object-cover" alt="Trek Cover"/>
-            <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; right: 1rem;">
-             ● {{  trek.status }}
+          <div class="card-bg-wrapper position-absolute top-0 start-0 w-100 h-100 z-0">
+            <img :src="BACKEND_URL + trek.image_url" alt="Trek Graphic" class="card-bg-img w-100 h-100 object-cover" />
+          </div>
+
+          <div class="card-gradient-overlay position-absolute top-0 start-0 w-100 h-100 z-1"></div>
+
+          <div class="position-relative z-2 d-flex flex-column h-100 p-4 w-100">
+
+            <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; left: 1rem;">
+              {{ trek.status }}
             </span>
-          </div>
+            <span class="badge position-absolute difficulty-pill" :class="trek.difficulty.toLowerCase()" style="top: 1rem; right: 1rem;">
+              <i class="bi bi-activity me-1.5 opacity-50"></i> {{ trek.difficulty }}
+            </span>
 
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="fs-9 text-uppercase tracking-wider fw-bold text-white-50">{{ trek.difficulty }}</span>
-              <span class="fs-9 text-white-50"><i class="bi bi-clock"></i> {{ trek.duration }} Days</span>
+            <div class="mt-auto w-100 pb-1">
+              
+              <div class="d-flex flex-column align-items-start gap-2 mb-2">
+                <div v-if="trek.trek_rating ">
+                  <span class="badge bg-white bg-opacity-10 text-white border border-warning border-opacity-20 rounded-pill px-2.5 py-1 fs-10 backdrop-blur fw-normal">
+                  Rating : {{ trek.trek_rating }} <i class="bi bi-star-fill text-warning"></i>
+                  </span>
+                </div>
+                <span class="fs-10 text-white fw-medium">
+                  <i class="bi bi-people-fill text-success opacity-75 me-1"></i> 
+                  <span :class="trek.available_slots < 5 ? 'text-warning' : ''">{{ trek.available_slots }} Slots Available</span>
+                </span>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-end mb-1">
+                <h3 class="fw-bold text-white m-0 text-truncate pe-3 tracking-tight text-shadow-sm">{{ trek.trek_name }}</h3>
+                <h4 class="fw-bold text-success m-0 tracking-tight text-shadow-sm">₹{{ trek.price_per_person }} / <i class="bi bi-person"></i></h4>
+              </div>
+
+              <p class="fs-9 text-white-50 m-0 text-truncate fw-medium mb-2">
+                <i class="bi bi-geo-alt-fill opacity-50 me-1"></i>{{ trek.location }}
+              </p>
+
+              <hr class="border-white border-opacity-20 my-3" />
+
+              <div class="d-flex align-items-center justify-content-between fs-9 text-white-75 w-100 flex-nowrap">
+                <div class="d-flex align-items-center text-truncate pe-2">
+                  <i class="bi bi-clock-history me-1 opacity-50"></i> {{ trek.duration_days }} Day(s)
+                </div>
+
+                <div class="d-flex align-items-center border-start border-end border-white border-opacity-20 px-2 text-truncate justify-content-center flex-grow-1">
+                  {{ trek.start_date }}  : {{ trek.end_date }}
+                </div>
+                <div class="d-flex align-items-center text-truncate ps-2 justify-content-end">
+                  <i class="bi bi-caret-up-fill me-1 text-info"></i> {{ trek.max_altitude }}m
+                </div>
+              </div>
+
             </div>
-            <h5 class="fw-bold tracking-tight m-0 text-white">{{ trek.name }}</h5>
-            <p class="fs-9 text-white-50 m-0 mt-1"><i class="bi bi-geo-alt"></i> {{ trek.location }}</p>
           </div>
-
-          <div class="pt-3 border-top border-white border-opacity-10 mt-3 d-flex align-items-center justify-content-between">
-            <div>
-              <span class="d-block fs-9 text-white-50 opacity-60 fw-semibold">DEPARTURE</span>
-              <strong class="fs-7 text-white">{{ trek.start_date }}</strong>
-            </div>
-            <button @click="$router.push(`/portal/trek/view/${trek.id}`)" class="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-dark">
-              View Route Details
-            </button>
-          </div>
-
+          
         </div>
       </div>
     </div>
@@ -135,6 +168,59 @@ onMounted(() => { fetchMyTreks() })
 .status-pill.pending { background: rgba(198, 192, 101, 0.768); }
 .status-pill.completed { background: rgba(9, 105, 214, 0.78); }
 .status-pill.cancelled { background: rgba(220, 53, 69, 0.8); }
+
+.difficulty-pill { padding: 3px 9px; font-size: 0.7rem; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+.difficulty-pill.easy { background: rgba(25, 135, 84, 0.8); }
+.difficulty-pill.moderate { background: rgba(255, 193, 7, 0.8); color: black; }
+.difficulty-pill.hard { background: rgba(220, 53, 69, 0.8); }
+
+.trek-premium-card {
+  min-height: 440px;       /* Taller to give landscape images room to breathe */
+  height: 100%;            /* Ensures flex children behave */
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.05); /* Extremely subtle border */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background-color: #0d0f12;
+  overflow: hidden;
+}
+
+/* Hover Selection Outline & Lift */
+.trek-premium-card:hover {
+  border-color: rgba(255, 255, 255, 0.4); 
+  transform: translateY(-5px);            
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+/* The Image Wrapper & Zoom Effect */
+.card-bg-wrapper {
+  overflow: hidden;
+  border-radius: inherit; /* Keeps the rounded corners clean */
+}
+
+.card-bg-img {
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.trek-premium-card:hover .card-bg-img {
+  transform: scale(1.06); /* The "Ken Burns" subtle zoom */
+}
+
+/* Gradient Overlay - Reversed to explicitly build from the bottom up */
+.card-gradient-overlay {
+  background: linear-gradient(
+    to top, 
+    rgba(8, 10, 12, 0.98) 0%,   /* Solid dark at the very bottom */
+    rgba(8, 10, 12, 0.85) 25%,  /* Heavy dark behind the text */
+    rgba(8, 10, 12, 0.4) 50%,   /* Fading out */
+    rgba(8, 10, 12, 0.1) 80%, 
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none; 
+}
+/* Extra small font size for meta tags */
+.fs-10 {
+  font-size: 0.72rem;
+}
 
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; }
 </style>

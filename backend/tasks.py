@@ -327,3 +327,48 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password):
         </div>
         """
         send_html_email(personal_email, "Apex Expeditions: Guide Account Credentials", html_body)
+        
+
+# ==========================================================
+# 6. ASYNC : RAISED TICKET RESOLVED EMAIL TO USER
+# ==========================================================  
+@celery_app.task(name='tasks.dispatch_ticket_resolution')
+def dispatch_ticket_resolution(user_email, user_name, user_role, subject, original_message, admin_response):
+    from datetime import datetime
+    
+    # Adjust tone slightly based on role
+    salutation = "Field Commander" if user_role == 'trek_staff' else "Explorer"
+    role_color = "#ffda6a" if user_role == 'trek_staff' else "#7bf1a8"
+
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #050a08; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #198754;">
+        <div style="background-color: #198754; padding: 25px; text-align: center; border-bottom: 3px solid {role_color};">
+            <h2 style="margin: 0; color: #ffffff; letter-spacing: 2px; font-size: 18px; text-transform: uppercase;">Central Command Resolution</h2>
+            <p style="margin: 5px 0 0 0; color: #e2e8f0; font-size: 13px;">Official Dispatch Response</p>
+        </div>
+        
+        <div style="padding: 30px;">
+            <p style="color: #cbd5e1; font-size: 15px;">Greetings {salutation} {user_name},</p>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">Your recent operational query has been reviewed and resolved by Apex Administration. Please review the official directive below.</p>
+            
+            <div style="background-color: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid rgba(255,255,255,0.1);">
+                <span style="color: #64748b; font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Original Subject Vector</span>
+                <h4 style="margin: 5px 0 15px 0; color: #ffffff;">{subject}</h4>
+                
+                <span style="color: #64748b; font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Your Transmission</span>
+                <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 13px; font-style: italic; border-left: 2px solid #334155; padding-left: 10px;">"{original_message}"</p>
+            </div>
+            
+            <div style="background-color: rgba(25,135,84,0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #198754; margin: 25px 0;">
+                <span style="color: #7bf1a8; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;"><span style="font-size: 14px;">✓</span> Command Directive</span>
+                <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 15px; line-height: 1.6;">{admin_response}</p>
+            </div>
+            
+            <p style="color: #64748b; font-size: 13px; text-align: center; margin-top: 35px; border-top: 1px solid #1e293b; padding-top: 20px;">
+                Resolution Timestamp: {datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")}<br>
+                For further assistance, initiate a new dispatch via your secure terminal.
+            </p>
+        </div>
+    </div>
+    """
+    send_html_email(user_email, f"Resolved: {subject}", html_body)

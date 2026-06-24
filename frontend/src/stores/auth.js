@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', {
           { label: 'Trekkers', route: '/portal/admin/trekkers' },
           { label: 'Bookings', route: '/portal/admin/bookings' },
           { label: 'History', route: '/portal/admin/history' },
+          { label: 'Tickets', route: '/portal/admin/tickets' },
         ],
         trek_staff: [
           { label: 'Home', route: '/portal/trek_staff/dashboard' },

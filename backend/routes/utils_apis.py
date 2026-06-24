@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, make_response , request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from controller.models import Notification , Trek , User , Booking , Review , AuditLog
+from controller.models import Notification , Trek , User , Booking , Review , AuditLog , DispatchTicket
 from controller.extensions import db
 from sqlalchemy import func
 
@@ -147,13 +147,14 @@ def get_historical_treks():
     
     # Base query: Only Completed Treks
     query = Trek.query.filter_by(status='Completed')
-    
+    is_onboarded = True
     # RBAC Security Check
     if user.role.name == 'trek_staff':
         # Restrict to ONLY this guide's treks
         if not user.staff_profile:
             return make_response(jsonify({"message": "Staff profile missing."}), 403)
         query = query.filter_by(assigned_staff_id=user.id)
+        is_onboarded = user.staff_profile.specialization != "Pending"
     elif user.role.name != 'admin':
         return make_response(jsonify({"message": "Unauthorized role."}), 403)
         
@@ -192,6 +193,7 @@ def get_historical_treks():
             staff = User.query.get(int(trek.assigned_staff_id))
         
         results.append({
+            "is_onboarded": is_onboarded,
             "trek_id": trek.trek_id,
             "trek_info": {
                 "name": trek.trek_name,
@@ -228,3 +230,51 @@ def get_historical_treks():
         })
         
     return make_response(jsonify(results), 200)
+
+
+@utils_bp.route('/tickets', methods=['POST', 'GET'])
+@jwt_required()
+def handle_my_tickets():
+    user_id = get_jwt_identity()
+    
+    if request.method == 'POST':
+        # Prevent spam: Check if they already have a Pending ticket
+        existing = DispatchTicket.query.filter_by(author_id=user_id, status='Pending').first()
+        if existing:
+            return make_response(jsonify({"message": "You already have an active dispatch in queue."}), 400)
+
+        data = request.get_json()
+        new_ticket = DispatchTicket(
+            author_id=user_id,
+            subject=data.get('subject'),
+            message=data.get('message'),
+            # priority=data.get('priority', 'Routine')
+        )
+        db.session.add(new_ticket)
+        db.session.commit()
+        return make_response(jsonify({"message": "Dispatch ticket transmitted to Central Command."}), 201)
+        
+    if request.method == 'GET':
+        # Return only their active pending ticket (if any)
+        active_ticket = DispatchTicket.query.filter_by(author_id=user_id, status='Pending').first()
+        if not active_ticket:
+            return make_response(jsonify(None), 200)
+            
+        return make_response(jsonify({
+            "id": active_ticket.id, 
+            "subject": active_ticket.subject, 
+            "message": active_ticket.message, 
+            # "priority": active_ticket.priority,
+            "status": active_ticket.status, 
+            "date": active_ticket.created_at.strftime("%b %d, %H:%M")
+        }), 200)
+
+@utils_bp.route('/tickets/<int:ticket_id>', methods=['DELETE'])
+@jwt_required()
+def withdraw_ticket(ticket_id):
+    user_id = get_jwt_identity()
+    ticket = DispatchTicket.query.filter_by(id=ticket_id, author_id=user_id).first_or_404()
+    
+    db.session.delete(ticket)
+    db.session.commit()
+    return make_response(jsonify({"message": "Dispatch ticket successfully withdrawn."}), 200)

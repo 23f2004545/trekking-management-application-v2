@@ -1,30 +1,46 @@
 <template>
   <div class="history-canvas text-white text-start pb-5 animate-fade-in p-3">
 
-    <div v-if="!selectedTripForDetails" class="master-list-flow">
-      
-      <div class="mb-4 border-bottom border-white border-opacity-10 pb-4">
-        <h2 class="fw-bold tracking-tight m-0">Historical Route Analytics</h2>
-        <p class="m-0 text-white-50 fs-8 mt-1">Select an archived expedition to review operational yields and feedback.</p>
+    <div v-if="!historicalData.is_onboarded " class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 ">
+      <div class="d-flex align-items-center gap-3">
+        <span class="fs-2">🛠️</span>
+        <div>
+          <h5 class="m-0 fw-bold text-warning tracking-tight">Profile Onboarding Required</h5>
+          <p class="m-0 fs-8 text-white-50 mt-1">Your profile details are currently marked as default parameters. Please configure your operational field specifications.</p>
+        </div>
       </div>
+      <button @click="$router.push('/portal/trek_staff/profile')" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 py-2 fs-8 shadow-sm hover-grow">
+        Complete Profile Setup →
+      </button>
+    </div>
 
-      <div class="row g-3">
-        <div v-for="trek in historicalData" :key="trek.trek_id" class="col-md-6 col-xl-4">
-          <div  @click="selectedTripForDetails = trek" class="glass-summary-card p-4 rounded-4 border border-white border-opacity-10 cursor-pointer hover-lift">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <h5 class="fw-bold m-0 tracking-tight text-white line-clamp-1">{{ trek.trek_info.name }}</h5>
-              <span class="fs-9 text-success-tint border border-success border-opacity-25 bg-success bg-opacity-10 px-2 py-0.5 rounded-pill">Completed</span>
-            </div>
-            <p class="fs-9 text-white-50 mb-3"><i class="bi bi-geo-alt-fill"></i> {{ trek.trek_info.location }}</p>
-            
-            <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-10">
-              <span class="fs-9 text-white-50">{{ trek.trek_info.start_date }} - {{ trek.trek_info.end_date }}</span>
-              <span class="fs-8 fw-semibold text-white">→ View Data</span>
+
+  <div :class="{ 'onboarding-blurred-zone': !historicalData.is_onboarded }">
+      <div v-if="!selectedTripForDetails" class="master-list-flow">
+        <div class="mb-4 border-bottom border-white border-opacity-10 pb-4">
+          <h2 class="fw-bold tracking-tight m-0">Historical Route Analytics</h2>
+          <p class="m-0 text-white-50 fs-8 mt-1">Select an archived expedition to review operational yields and feedback.</p>
+        </div>
+        
+        <div class="row g-3">
+          <div v-for="trek in historicalData" :key="trek.trek_id" class="col-md-6 col-xl-4">
+            <div  @click="selectedTripForDetails = trek" class="glass-summary-card p-4 rounded-4 border border-white border-opacity-10 cursor-pointer hover-lift">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="fw-bold m-0 tracking-tight text-white line-clamp-1">{{ trek.trek_info.name }}</h5>
+                <span class="fs-9 text-success-tint border border-success border-opacity-25 bg-success bg-opacity-10 px-2 py-0.5 rounded-pill">Completed</span>
+              </div>
+              <p class="fs-9 text-white-50 mb-3"><i class="bi bi-geo-alt-fill"></i> {{ trek.trek_info.location }}</p>
+              
+              <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-10">
+                <span class="fs-9 text-white-50">{{ trek.trek_info.start_date }} - {{ trek.trek_info.end_date }}</span>
+                <span class="fs-8 fw-semibold text-white">→ View Data</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div> 
+    <!-- </div> -->
+
 
     <div v-else class="extended-history-details-flow animate-fade-in">
       
@@ -73,7 +89,7 @@
             </div>
           </div>
         </div>
-
+        
         <div class="col-lg-12">
           <div class="glass-container p-4 rounded-4 h-100 border border-white border-opacity-10">
             <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-2">Manifest Log ({{ selectedTripForDetails.roster.length }})</h6>
@@ -92,7 +108,7 @@
             </div>
           </div>
         </div>
-
+        
         <div class="col-12">
           <div class="glass-container p-4 rounded-4 border border-white border-opacity-10">
             <div class="row g-5">
@@ -110,7 +126,7 @@
                   </div>
                 </div>
               </div>
-
+              
               <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-end border-bottom border-white border-opacity-10 pb-2 mb-3">
                   <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase m-0">Your Feedback</h6>
@@ -124,14 +140,14 @@
                   </div>
                 </div>
               </div>
-
+              
             </div>
           </div>
         </div>
-
+        
       </div>
     </div>
-
+  </div>
   </div>
 </template>
 
@@ -170,6 +186,22 @@ onMounted(() => {
 .glass-summary-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); transition: transform 0.2s; }
 .hover-lift:hover { transform: translateY(-4px); border-color: rgba(25, 135, 84, 0.4) !important; }
 .glass-container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); }
+
+
+.onboarding-glass-banner {
+  background: rgba(255, 193, 7, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 193, 7, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.onboarding-blurred-zone {
+  filter: blur(4px);
+  pointer-events: none; /* Block user interactions entirely while locked */
+  user-select: none;
+  opacity: 0.5;
+  transition: filter 0.4s ease, opacity 0.4s ease;
+}
 
 /* Typography & Utility */
 .uppercase { text-transform: uppercase; }

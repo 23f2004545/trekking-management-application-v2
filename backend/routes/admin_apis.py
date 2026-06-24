@@ -231,9 +231,14 @@ def get_all_treks():
         # Resolve assigned guide properties safely
         staff_user = User.query.get(t.assigned_staff_id) if t.assigned_staff_id else None
         images = TrekImage.query.filter_by(trek_id=t.trek_id).all()
+        trek_rating_avg = None
+    
+        if hasattr(t, 'reviews') and t.reviews:
+            trek_rating_avg = round(sum([r.trek_rating for r in t.reviews]) / len(t.reviews))
 
         results.append({
             "trek_id": t.trek_id,
+            "trek_rating" : trek_rating_avg,
             "trek_name": t.trek_name,
             "location": t.location,
             "difficulty": t.difficulty,
@@ -561,7 +566,7 @@ def trek_details(trek_id):
             "status": staff_user.staff_profile.status if staff_user and staff_user.staff_profile else "Active",
             "specialization": staff_user.staff_profile.specialization if staff_user and staff_user.staff_profile else "General Mountaineering",
             "certification": staff_user.staff_profile.certification if staff_user and staff_user.staff_profile else "Basic Certified",
-            "profile_pic": staff_user.profile_pic if staff_user else '/static/Profile_pics/trek_staff.png',
+            "profile_pic": staff_user.profile_pic ,
             "staff_rating_avg": staff_rating_avg ,
             "staff_reviews": staff_reviews_list
         }
@@ -598,7 +603,7 @@ def add_trek_staff():
         name='Staff',
         email=email.strip().lower(),
         password=hashed_password,
-        contact='123456780',
+        contact='1234567890',
         profile_pic='/static/Profile_pics/trek_staff.png',
         role=staff_role
     )
@@ -925,3 +930,73 @@ def get_admin_booking_deep_details(booking_id):
         }
     }
     return make_response(jsonify(payload), 200)
+
+
+# ==========================================
+# 8. ASK ADMIN FUNCTIONALITY
+# ==========================================
+@admin_bp.route('/tickets', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_all_tickets():
+    
+    # Only fetch Pending ones to keep the inbox clean
+    tickets = DispatchTicket.query.order_by(
+        # Optional: Order by priority (Hazard first), then date
+        # filter_by(status='Pending').
+        DispatchTicket.created_at.asc() 
+    ).all()
+    
+    return make_response(jsonify([{
+        "id": t.id, 
+        "author": t.author.name, 
+        "email": t.author.email,
+        "role": t.author.role.name,
+        "subject": t.subject, 
+        "message": t.message, 
+        # "priority": t.priority,
+        "date": t.created_at.strftime("%b %d, %Y")
+    } for t in tickets]), 200)
+
+@admin_bp.route('/tickets/<int:ticket_id>/resolve', methods=['PATCH'])
+@jwt_required()
+@admin_required
+def resolve_ticket(ticket_id):
+    
+    from tasks import dispatch_ticket_resolution
+    
+    data = request.get_json()
+    ticket = DispatchTicket.query.get_or_404(ticket_id)
+    
+    response_text = data.get('response')
+    ticket.admin_response = response_text
+    ticket.status = 'Resolved'
+    
+    # Store data before commit so we can pass to Celery
+    author_email = ticket.author.email
+    author_name = ticket.author.name
+    author_role = ticket.author.role.name
+    subject = ticket.subject
+    original_message = ticket.message
+    resolved_date = db.func.current_timestamp()
+    
+    db.session.commit()
+    
+    # 1. Dispatch Email Task
+    dispatch_ticket_resolution.delay(
+        author_email, author_name, author_role, subject, original_message, response_text
+    )
+    
+    # 2. Fire App Notification
+    create_notification(ticket.author_id, f"Central Command has resolved your ticket: {subject}", "success")
+    
+    return make_response(jsonify({"message": "Resolution transmitted and logged."}), 200)
+
+@admin_bp.route('/tickets/<int:ticket_id>', methods=['DELETE'])
+@jwt_required()
+@admin_required
+def reject_ticket(ticket_id):
+    ticket = DispatchTicket.query.get_or_404(ticket_id)
+    db.session.delete(ticket)
+    db.session.commit()
+    return make_response(jsonify({"message": "Ticket purged from queue."}), 200)

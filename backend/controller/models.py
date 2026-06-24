@@ -52,6 +52,11 @@ class Trek(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     
+    #   -----------
+    # is_deleted =  db.Column(db.Boolean, default=False)
+    # longitude = db.Column(db.Float , nullable=True)
+    # latitude = db.Column(db.Float , nullable=True)
+
     # Relationships
     bookings = db.relationship('Booking', backref='trek', lazy=True, cascade='all, delete-orphan')
     assigned_staff = db.relationship('StaffProfile', backref='trek', foreign_keys=[assigned_staff_id])
@@ -69,6 +74,7 @@ class StaffProfile(db.Model):
     status = db.Column(db.String(20), default='Active', nullable=False)  # Active, Inactive, On Leave
     emergency_contact = db.Column(db.String(255))
     bio = db.Column(db.Text)
+    #   -----------
     # updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     
 
@@ -84,10 +90,20 @@ class Booking(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     cancellation_reason = db.Column(db.Text)
     cancelled_at = db.Column(db.DateTime)
+    
+    #   -----------
     # instructions = db.Column(db.Text , default=None)  # Special requests or instructions for the trek
+    
+    
     payment_method = db.Column(db.String(50))  # Credit Card, Bank Transfer, Cash, etc.
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    
+    #   -----------
+    # snapshot_start_date = db.Column(db.DateTime, nullable=False)
+    # snapshot_end_date = db.Column(db.DateTime, nullable=False)
+    # snapshot_duration_days = db.Column(db.Integer, nullable=False)
+    # snapshot_staff = db.Column(db.Integer, nullable=False)
     
     
 class MedicalRecord(db.Model):
@@ -153,3 +169,27 @@ class AuditLog(db.Model):
     details = db.Column(db.String(255), nullable=False)
     severity = db.Column(db.String(20), default='info') # info, warning, danger, success
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    
+class DispatchTicket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    subject = db.Column(db.String(150), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Pending') # Open, Resolved
+    admin_response = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+    author = db.relationship('User', backref='tickets')
+
+# class DispatchTicket(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+#     subject = db.Column(db.String(150), nullable=False)
+#     message = db.Column(db.Text, nullable=False)
+#     priority = db.Column(db.String(20), default='Routine') # Routine, Urgent, Hazard
+#     status = db.Column(db.String(20), default='Pending')   # Pending, Resolved
+#     admin_response = db.Column(db.Text, nullable=True)
+#     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
+#     author = db.relationship('User', backref='tickets')
