@@ -207,7 +207,7 @@ function executeBookingAction(id) {
 }
 
 function routeToDeepInsights(id) {
-  // Automatically routes down to your reusable nested component structure
+  // Automatically routes down to reusable nested component structure
   router.push(`/portal/trek/view/${id}`)
 }
 

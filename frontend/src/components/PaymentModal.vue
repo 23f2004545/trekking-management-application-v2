@@ -63,7 +63,6 @@ async function executeSimulationSequence() {
       body: JSON.stringify(props.payload)
     })
 
-    console.log(props.payload)
     
     const data = await res.json()
     
@@ -79,6 +78,7 @@ async function executeSimulationSequence() {
       logs.value.push({ text: `❌ TRANSACTION DENIED: ${data.message}`, type: "text-danger fw-bold" })
       logs.value.push({ text: "Connection terminated. No capital was captured.", type: "text-danger-tint" })
       setTimeout(() => emit('payment-failed' , '`$(data.message)`'), 1500)
+      console.log(data.message)
     }
   } catch (err) {
     logs.value.push({ text: `❌ ${err.message}`, type: "text-danger fw-bold" })

@@ -248,7 +248,7 @@ def handle_my_tickets():
             author_id=user_id,
             subject=data.get('subject'),
             message=data.get('message'),
-            # priority=data.get('priority', 'Routine')
+            priority=data.get('priority', 'Routine')
         )
         db.session.add(new_ticket)
         db.session.commit()
@@ -264,7 +264,7 @@ def handle_my_tickets():
             "id": active_ticket.id, 
             "subject": active_ticket.subject, 
             "message": active_ticket.message, 
-            # "priority": active_ticket.priority,
+            "priority": active_ticket.priority,
             "status": active_ticket.status, 
             "date": active_ticket.created_at.strftime("%b %d, %H:%M")
         }), 200)

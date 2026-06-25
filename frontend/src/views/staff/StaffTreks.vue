@@ -75,8 +75,8 @@
                 <h4 class="fw-bold text-success m-0 tracking-tight text-shadow-sm">₹{{ trek.price_per_person }} / <i class="bi bi-person"></i></h4>
               </div>
 
-              <p class="fs-9 text-white-50 m-0 text-truncate fw-medium mb-2">
-                <i class="bi bi-geo-alt-fill opacity-50 me-1"></i>{{ trek.location }}
+              <p class="fs-9 text-info m-0 text-truncate fw-medium mb-2 ">
+                <i class="bi bi-geo-alt-fill text-danger opacity-50 me-1"></i>{{ trek.location }}
               </p>
 
               <hr class="border-white border-opacity-20 my-3" />
@@ -108,9 +108,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useAlertStore } from '../../stores/alert'
+import { useRouter } from 'vue-router'
 import { secureFetch } from '@/utils/api'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const alertStore = useAlertStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -119,7 +121,7 @@ const filters = ref({ query: '', status: '' })
 
 const filteredTreks = computed(() => {
   return myTreks.value.filter(t => {
-    const matchName = t.name.toLowerCase().includes(filters.value.query.toLowerCase()) || 
+    const matchName = t.trek_name.toLowerCase().includes(filters.value.query.toLowerCase()) || 
                       t.location.toLowerCase().includes(filters.value.query.toLowerCase())
     const matchStatus = filters.value.status === '' || t.status === filters.value.status
     return matchName && matchStatus
@@ -139,6 +141,12 @@ async function fetchMyTreks() {
     if (res.ok) myTreks.value = await res.json()
   } catch (err) { alertStore.showAlert("Failed to sync routes.", "danger") }
 }
+
+function routeToDeepInsights(id) {
+  // Automatically routes down to your reusable nested component structure
+  router.push(`/portal/trek/view/${id}`)
+}
+
 
 onMounted(() => { fetchMyTreks() })
 </script>

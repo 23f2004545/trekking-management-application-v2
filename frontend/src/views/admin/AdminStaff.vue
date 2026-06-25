@@ -42,9 +42,12 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <button @click="openAssignmentWorkflow(member)" class="btn btn-sm btn-outline-success rounded-pill px-3 fs-9 border-opacity-35 text-white">
+          <button v-if="member.status == 'Active'" @click="openAssignmentWorkflow(member)" class="btn btn-sm btn-outline-success rounded-pill px-3 fs-9 border-opacity-35 text-white">
             Assign Route
           </button>
+          <span v-else class="badge status-tag text-uppercase fs-9" :class="member.status.toLowerCase()">
+             {{ member.status }}
+          </span>
 
           <button @click="confirmStore.ask('Are you sure to ' + (member.blacklisted ? 'whitelist' : 'blacklist') + ' ' + member.name + '?', () => toggleBlacklistState(member))" class="btn btn-sm btn-outline-warning rounded-pill px-3 fs-9 border-opacity-25" >
             {{ member.blacklisted ? 'Whitelist' : 'Blacklist' }}
@@ -214,7 +217,7 @@ async function submitStaffForm() {
     if (res.ok) {
       alertStore.showAlert(data.message || 'Staff added successfully!', 'success')
       createModalActive.value = false
-      router.push('/portal/admin/staff')
+      await syncStaffDataset()
     } else {
       alertStore.showAlert(data.message || 'Failed to add staff.', 'danger')
     }
@@ -352,6 +355,10 @@ onMounted(() => {
 
 .btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
+
+.status-tag { padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+.status-tag.onleave { background: rgba(255, 193, 7, 0.15); color: #ffe066; border: 1px solid rgba(255, 193, 7, 0.3); }
+.status-tag.inactive { background: rgba(220, 53, 69, 0.15); color: #ff8787; border: 1px solid rgba(220, 53, 69, 0.25); }
 
 .fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .extra-small { font-size: 0.68rem; }
 

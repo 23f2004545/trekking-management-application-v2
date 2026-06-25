@@ -92,7 +92,7 @@
             <div class="input-group-capsule">
               <div class="d-flex justify-content-between align-items-end mb-1">
                 <label class="modal-input-label m-0">Authorization Code</label>
-                <span class="fs-9 text-warning">Expires in 5:00</span>
+                <span class="fs-9 text-warning">Expires in {{ formattedTime }}</span>
               </div>
               <div class="modal-input-wrapper">
                 <input v-model="forgotOTP" type="text" required class="modal-clean-field w-100 fw-bold tracking-widest text-warning text-center fs-4" placeholder="000000" maxlength="6">
@@ -116,7 +116,7 @@
 </template>
 
 <script setup>
-  import {ref} from 'vue';
+  import {ref , onMounted , onUnmounted , computed , watch} from 'vue';
   import { useRouter } from 'vue-router';
   import { useAlertStore } from '@/stores/alert';
   import { useAuthStore } from '@/stores/auth';
@@ -136,6 +136,49 @@
   const forgotOTP = ref('')
   const isProcessing = ref(false)
 
+  // Timer state
+  const TIME_LIMIT = 300; // 5 minutes in seconds
+  const timeLeft = ref(TIME_LIMIT);
+  let timerInterval = null;
+
+  const formattedTime = computed(() => {
+  const minutes = Math.floor(timeLeft.value / 60);
+  const seconds = timeLeft.value % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  });
+
+  const isExpired = computed(() => timeLeft.value === 0);
+
+  const stopTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  };
+
+  // Timer function
+  const startTimer = () => {
+  stopTimer(); // Always clear any existing interval first to prevent double-counting
+  timeLeft.value = TIME_LIMIT; // Reset the clock to 5:00
+  
+  timerInterval = setInterval(() => {
+    if (timeLeft.value > 0) {
+      timeLeft.value--;
+      } else {
+        stopTimer(); // Stop counting at 0
+      }
+    }, 1000);
+  };  
+
+  watch([forgotModalActive, otpStep], ([isModalActive, currentStep]) => {
+  // Only start the timer if the modal is OPEN and they are on STEP 2
+  if (isModalActive && currentStep === 2) {
+    startTimer(); 
+  } else {
+    // If the modal closes OR they change steps, kill the timer
+    stopTimer();
+  }
+  });
 
   function validateEmail() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -147,7 +190,6 @@
         return true;
     }
   }
-
   
   async function handleLogin() {
     if (!validateEmail()) {
@@ -254,6 +296,10 @@
       isProcessing.value = false
     }
   }
+
+  onUnmounted(() => {
+  stopTimer();
+  });
 
 </script>
 

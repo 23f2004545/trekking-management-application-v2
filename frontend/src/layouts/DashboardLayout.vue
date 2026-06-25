@@ -125,7 +125,7 @@
           
           <div v-if="activeTicket" class="mt-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill"><span class="spinner-grow spinner-grow-sm me-2" style="width: 0.5rem; height: 0.5rem;"></span>PENDING REVIEW</span>
+              <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill"><span class="spinner-grow spinner-grow-sm me-2" style="width: 0.5rem; height: 0.5rem;"></span>PENDING REVIEW</span>
               <span class="fs-9 text-white-50">{{ activeTicket.date }}</span>
             </div>
             
@@ -144,13 +144,13 @@
             <form @submit.prevent="submitTicket" class="d-flex flex-column gap-3">
               <div>
                 <label class="modal-input-label">Priority Level</label>
-                <!-- <div class="modal-input-wrapper">
+                <div class="modal-input-wrapper">
                   <select v-model="ticketForm.priority" class="modal-clean-field w-100 bg-transparent select-fix text-white">
                     <option value="Routine" class="bg-dark">Routine Query</option>
                     <option value="Urgent" class="bg-dark ">Urgent Modification</option>
                     <option value="Hazard" class="bg-dark ">Field Hazard / SOS</option>
                   </select>
-                </div> -->
+                </div>
               </div>
               <div>
                 <label class="modal-input-label">Subject Vector</label>
@@ -262,7 +262,7 @@ const confirmStore = useConfirmStore()
 const isMobileMenuOpen = ref(false)
 const activeTicket = ref(null)
 const ticketModalActive = ref(false)
-const ticketForm = ref({ subject: '', message: ''}) // priority: 'Routine' 
+const ticketForm = ref({ subject: '', message: '', priority: 'Routine'}) 
 
 // This variable will be used to offset the scrolling content below the fixed header
 // const NAV_MARGIN = '100px';
@@ -376,7 +376,7 @@ async function withdrawTicket(id) {
     if (res.ok) {
       alertStore.showAlert('Dispatch withdrawn successfully.', 'info')
       activeTicket.value = null // Resets UI back to the form!
-      ticketForm.value = { subject: '', message: '' } //  priority: 'Routine'
+      ticketForm.value = { subject: '', message: '', priority: 'Routine' } 
     }
   } catch(err) { console.error(err) }
 }
@@ -385,7 +385,6 @@ async function withdrawTicket(id) {
 onMounted(() => {
   handleProfilePic()
   fetchNotifications()
-  fetchActiveTicket()
 })
 
 </script>

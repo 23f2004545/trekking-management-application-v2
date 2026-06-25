@@ -117,7 +117,7 @@
           <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4 flex-wrap gap-2">
             <h5 class="fw-bold tracking-tight m-0"><i class="bi bi-hospital mx-2" style="font-size:1rem;"></i> Staff Specific Details</h5>
             <div class="d-flex align-items-center gap-3 fs-9 text-white-50">
-              <!-- <span>Last Updated : {{ staffProfile.updated_at }}</span> -->
+              <span>Last Updated : {{ staffProfile.updated_at }}</span>
                <span>Status : {{ staffProfile.status }}</span>
               <button @click="openStaffModal" class="btn btn-outline-light btn-xs rounded-pill px-3 py-1 fs-9 border-opacity-25">
                 Modify Metrics
@@ -567,7 +567,7 @@ async function uploadAvatarImage(event) {
       authStore.updateLocalAvatar(data.user.profile_pic) 
       
       // Update parent fallback links if necessary
-      await fetchProfileAndMedicalData() 
+      await fetchProfileAndStaffData() 
     } else {
       alertStore.showAlert(data.message || 'Avatar update rejected by backend matrix.', 'danger')
     }

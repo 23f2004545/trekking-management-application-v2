@@ -1,5 +1,5 @@
 <template>
-  <div class="map-wrapper rounded-4 border border-white border-opacity-10 overflow-hidden shadow-sm position-relative w-100" style="height: 100%; min-height: 280px;">
+  <div class="map-wrapper rounded-4 border border-success border-opacity-50 overflow-hidden shadow-sm position-relative w-100" style="height: 100%; min-height: 20rem;">
     <div id="leaflet-map" class="w-100 h-100"></div>
     
     <!-- Crosshair indicator for picking mode -->
@@ -79,4 +79,7 @@ onUnmounted(() => { if (mapInstance) mapInstance.remove() })
 .z-index-hud { z-index: 1000; }
 /* Override Leaflet's blinding white background during tile loads */
 :deep(.leaflet-container) { background-color: #070d0a !important; font-family: inherit; }
+:deep(.leaflet-marker-icon) {
+    filter: hue-rotate(230deg); 
+}
 </style>

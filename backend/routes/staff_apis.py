@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import db,cache,bcrypt
-from controller.models import Trek, Booking, User , StaffProfile
+from controller.models import Trek, Booking, User , StaffProfile ,TrekImage 
 from controller.decorators import staff_required
 from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone
@@ -187,7 +187,8 @@ def get_staff_profile():
         "certifications": record.certification,
         "status": record.status,
         "emergency_contact": record.emergency_contact,
-        "bio": record.bio
+        "bio": record.bio,
+        "updated_at" : record.updated_at.strftime("%b %d, %Y %H:%M")
     }), 200)
 
 
@@ -265,17 +266,30 @@ def get_staff_assigned_treks():
 
     results = []
     for t in treks:
-        gallery = [img.image_url for img in t.images]
+        
+        staff_user = User.query.get(t.assigned_staff_id) if t.assigned_staff_id else None
+        images = TrekImage.query.filter_by(trek_id=t.trek_id).all()
+        
         results.append({
-            "id": t.trek_id,
-            "name": t.trek_name,
+            "trek_id": t.trek_id,
+            "trek_name": t.trek_name,
             "location": t.location,
             "difficulty": t.difficulty,
-            "duration": getattr(t, 'duration_days', 0),
-            "status": t.status,
+            "duration_days": t.duration_days ,
             "available_slots": t.available_slots,
-            "start_date": t.start_date.strftime("%Y-%m-%d"),
-            "image": gallery[0] if gallery else "/static/Treks/default_trek.jpeg"
+            "status": t.status,
+            "start_date": t.start_date.strftime("%Y-%m-%d") ,
+            "end_date": t.end_date.strftime("%Y-%m-%d") ,
+            "max_altitude": getattr(t, 'max_altitude', 0.0),
+            "price_per_person": getattr(t, 'price_per_person', 0.0),
+            "description": getattr(t, 'description', ""),
+            "created_at": t.created_at.strftime("%Y-%m-%d") ,
+            "updated_at": t.updated_at.strftime("%Y-%m-%d") ,
+            "image_url": images[0].image_url if images else "/static/Treks/default_trek.jpeg",
+            "assigned_staff": {
+                "id": staff_user.id if staff_user else None,
+                "name": staff_user.name if staff_user else "Unassigned Guide"
+            }
         })
         
     return make_response(jsonify(results), 200)
@@ -392,7 +406,7 @@ def get_trail_manifests():
             "name": b.user.name,
             "contact": b.user.contact,
             "headcount": b.number_of_persons,
-            "medical_notes": getattr(b, 'cancellation_reason', None) or "No special instructions logged.", # Reusing text field for payload demonstration
+            "medical_notes": getattr(b, 'instructions', None) or "No special instructions logged.", # Reusing text field for payload demonstration
             "payment_status": b.payment_status,
             "medical_record_exists": True if b.user.medical_record else False,
             "emergency_name": b.user.medical_record.emergency_name if b.user.medical_record else 'N/A' ,

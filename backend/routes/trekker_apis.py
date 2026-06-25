@@ -347,6 +347,11 @@ def book_trek_slot():
             number_of_persons=number_of_persons,
             payment_method=data.get('payment_method'),
             total_amount=trek.price_per_person * number_of_persons,
+            instructions=data.get('medical_instructions'),
+            snapshot_start_date = trek.start_date,
+            snapshot_end_date = trek.end_date,
+            snapshot_duration_days = trek.duration_days, 
+            snapshot_staff = trek.assigned_staff_id
         )
         
         db.session.add(new_booking)
@@ -474,8 +479,8 @@ def get_completed_history():
             
             
             staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg }
-            if b.trek.assigned_staff_id and b.trek.assigned_staff:
-                staff_user = User.query.get(b.trek.assigned_staff.user_id)
+            if b.snapshot_staff and b.trek.assigned_staff:
+                staff_user = User.query.get(b.snapshot_staff)
                 if staff_user:
                     staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic ,"specialization": staff_user.staff_profile.specialization, "certification": staff_user.staff_profile.certification, "experience": staff_user.staff_profile.experience_years , "status" : staff_user.staff_profile.status , "staff_rating_avg" : staff_rating_avg}
 
@@ -493,7 +498,7 @@ def get_completed_history():
                 "trek_name": b.trek.trek_name,
                 "location": b.trek.location,
                 "difficulty": b.trek.difficulty,
-                "duration_days": b.trek.duration_days,
+                "duration_days": b.snapshot_duration_days,
                 "status": "Completed",
                 "max_altitude": getattr(b.trek, 'max_altitude', 0),
                 "price_per_person":price,
@@ -502,8 +507,8 @@ def get_completed_history():
                 "trek_avg": trek_rating_avg ,             
                 "staff": staff_info,
                 "profile" : staff_user.profile_pic ,
-                "start_date" : b.trek.start_date.strftime("%Y-%m-%d"),
-                "end_date" : b.trek.end_date.strftime("%Y-%m-%d"),
+                "start_date" : b.snapshot_start_date.strftime("%Y-%m-%d"),
+                "end_date" : b.snapshot_end_date.strftime("%Y-%m-%d"),
                 
                 # Review Component Mapping
                 "review_submitted": True if user_review else False,

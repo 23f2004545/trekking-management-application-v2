@@ -134,7 +134,69 @@
       </div>
     </section>
 
+    <section ref="commandDeskRef" class="command-showcase-section container my-5 py-5 text-start transition-scroll" >
+      
+      <div class="glass-command-card p-4 p-lg-5 rounded-4 border border-white border-opacity-10 position-relative overflow-hidden shadow-lg" style="background: rgba(10, 15, 12, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+        
+        <div class="position-absolute top-0 end-0 bg-success bg-opacity-20 rounded-circle blur-orb" style="width: 400px; height: 400px; filter: blur(100px); pointer-events: none; transform: translate(20%, -20%);"></div>
 
+        <div class="row g-5 align-items-center position-relative z-1">
+          
+          <div class="col-lg-5 pe-lg-4">
+            <span class="badge border border-white border-opacity-20 rounded-pill px-3 py-1.5 fs-9 text-white-50 tracking-widest uppercase mb-3">
+              <i class="bi bi-shield-check me-1 text-success-tint"></i> THE OVERRIDE PROTOCOL
+            </span>
+            <h2 class="display-6 fw-bold text-white tracking-tight m-0 mb-3">
+              Direct Uplink to <br><span style="color: #7bf1a8;">Central Command.</span>
+            </h2>
+            <p class="text-white-50 fs-8 lh-base mb-4 italic">
+              True alpine safety requires human accountability. Whether facing a medical inquiry or requesting a guide itinerary override, our ABVIMAS-certified command operators intercept and resolve your transmission personally.
+            </p>
+            
+            <div class="d-flex align-items-center gap-3 bg-opacity-5 p-3 rounded-4 border border-white border-opacity-50 w-fit">
+              <div class="bg-success bg-opacity-20 text-success-tint rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                <i class="bi bi-envelope-paper-fill fs-6"></i>
+              </div>
+              <div>
+                <strong class="d-block text-white fs-9 tracking-wider uppercase">Sealed Directives</strong>
+                <span class="text-white-50 fs-9">Immutable audit trails for every query.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="d-flex flex-column gap-3">
+              
+              <div class="step-glass-card p-4 rounded-4 border border-white border-opacity-5 d-flex gap-3 align-items-start" style="background: rgba(255,255,255,0.02);">
+                <div class="step-num text-white-50 border border-white border-opacity-20 rounded-circle d-flex align-items-center justify-content-center fw-bold fs-9 flex-shrink-0" style="width: 32px; height: 32px;">01</div>
+                <div>
+                  <h6 class="fw-bold text-white mb-1 tracking-tight">Transmit Hazard or Inquiry</h6>
+                  <p class="text-white-50 fs-9 m-0 lh-base">Trigger a high-priority dispatch vector detailing operational roadblocks directly from your portal HUD.</p>
+                </div>
+              </div>
+
+              <div class="step-glass-card p-4 rounded-4 border border-success border-opacity-25 d-flex gap-3 align-items-start ms-lg-4 shadow-lg" style="background: rgba(123, 241, 168, 0.05);">
+                <div class="step-num bg-success bg-opacity-20 text-success-tint border border-success border-opacity-25 rounded-circle d-flex align-items-center justify-content-center fw-bold fs-9 flex-shrink-0 shadow" style="width: 32px; height: 32px;">02</div>
+                <div>
+                  <h6 class="fw-bold text-white mb-1 tracking-tight">Human Operator Triage</h6>
+                  <p class="text-white-50 fs-9 m-0 lh-base">Central Command triages transmissions instantly. Field hazard reports bypass routine inquiries for immediate executive review.</p>
+                </div>
+              </div>
+
+              <div class="step-glass-card p-4 rounded-4 border border-white border-opacity-5 d-flex gap-3 align-items-start ms-lg-5" style="background: rgba(255,255,255,0.02);">
+                <div class="step-num text-white-50 border border-white border-opacity-20 rounded-circle d-flex align-items-center justify-content-center fw-bold fs-9 flex-shrink-0" style="width: 32px; height: 32px;">03</div>
+                <div>
+                  <h6 class="fw-bold text-white mb-1 tracking-tight">Cryptographic Resolution</h6>
+                  <p class="text-white-50 fs-9 m-0 lh-base">An un-alterable command directive is transmitted to your registered email alongside a platform telemetry alert.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
     
     <section class="architecture-section container my-5 py-5 text-center">
       <div class="row g-4">
@@ -265,6 +327,8 @@ const fomoTreks = ref([])
 const fomoActive = ref(false)
 const fomoMessage = ref("")
 let fomoTimer = null
+const commandDeskRef = ref(null)
+const isVisible = ref(false)
 
 // Fallback dummy reviews to ensure the marquee is always full and beautiful
 const fallbackReviews = [
@@ -338,6 +402,18 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (fomoTimer) clearInterval(fomoTimer)
+  setTimeout(() => {
+    if (!commandDeskRef.value) return
+    
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        isVisible.value = true
+        observer.disconnect() // Stop watching once it appears
+      }
+    }, { threshold: 0.15 }) // Triggers when 15% of it is on screen
+
+    observer.observe(commandDeskRef.value)
+  }, 300)
 })
 </script>
 
@@ -575,12 +651,12 @@ onUnmounted(() => {
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.78rem; }
 
-.transition-scroll { transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); }
-.translate-y-up { transform: translateY(60px); }
+.transition-scroll { transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.translate-y-up { transform: translateY(40px); }
 .translate-y-0 { transform: translateY(0); }
-.step-glass-card { backdrop-filter: blur(12px); transition: transform 0.3s ease, border-color 0.3s ease; }
-.step-glass-card:hover { transform: translateX(8px); border-color: rgba(255, 193, 7, 0.5) !important; }
-.w-fit { width: fit-content; }
+.step-glass-card { transition: transform 0.3s ease, background 0.3s ease; }
+.step-glass-card:hover { transform: translateX(5px); background: rgba(255,255,255,0.04) !important; }
+.text-success-tint { color: #7bf1a8; }
 
 </style>
 

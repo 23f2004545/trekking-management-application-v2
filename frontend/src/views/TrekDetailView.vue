@@ -31,11 +31,15 @@
       @payment-success="finalizeBookingTransaction" 
       @payment-failed="failedBooking"
     />
-    <div v-if="!show" class="glass-container p-4 rounded-4 border border-white border-opacity-10 mb-4" style="height: 320px;">
+    <div v-if="!show" class="glass-container p-4 rounded-4 border border-white border-opacity-10 mb-4" style="height: 22rem;">
       <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-2">
         <i class="bi bi-compass me-1"></i> Satellite Basecamp Telemetry
       </h6>
       <TrekMap :lat="absoluteLat" :lng="absoluteLng" :popupText="location" :interactive="false" />
+    </div>
+    <div v-else class="border border-secondary border-opacity-25 rounded-3 p-4 text-center text-white-50">
+      <i class="bi bi-radar d-block fs-3 mb-1"></i>
+      <span class="font-monospace fs-9">TELEMETRY DATA PENDING FIELD RECONNAISSANCE</span>
     </div>
 
     <Transition name="modal-fade">
@@ -164,7 +168,7 @@
                   <select v-model="editForm.assigned_staff_id" class="modal-clean-field bg-transparent select-fix">
                     <option :value="null">Leave Unassigned</option>
                     <option 
-                      v-for="s in staffOptions" 
+                      v-for="s in availableStaff" 
                       :key="s.id" 
                       :value="s.id" 
                       :disabled="s.occupied"
@@ -317,8 +321,13 @@ const absoluteLat = computed(() =>  trekData.value.latitude)
 const absoluteLng = computed(() =>  trekData.value.longitude)
 const location = computed(() => trekData.value.location)
 
-
-
+const availableStaff = computed(() => {
+  // If staffOptions hasn't loaded yet, return an empty array
+  if (!staffOptions.value) return [];
+  
+  // Filter out anyone who isn't 'Active'
+  return staffOptions.value.filter(staff => staff.is_active === 'Active');
+})
 const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
 
 const totalPassengers = computed(() => form.value.adults + form.value.children + form.value.seniors)
@@ -406,13 +415,14 @@ async function openModifyFormModal() {
     available_slots: trekData.value.available_slots, status: trekData.value.status || "Pending",
     start_date: trekData.value.start_date, end_date: trekData.value.end_date,
     max_altitude: trekData.value.max_altitude, price_per_person: trekData.value.price_per_person,
-    description: trekData.value.description, assigned_staff_id: trekData.value.staff.id  || null,
+    description: trekData.value.description, assigned_staff_id: trekData.value.staff?.id  || null,
     cancellation_reason : trekData.value.cancellation_reason
   }
 
   updateGalleryFiles.value = []
   modifyModalActive.value = true
 }
+
 
 function handleUpdateFiles(event) {
   const files = Array.from(event.target.files)

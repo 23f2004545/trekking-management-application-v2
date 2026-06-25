@@ -96,8 +96,8 @@
                 <h4 class="fw-bold text-success m-0 tracking-tight text-shadow-sm">₹{{ trek.price_per_person }} / <i class="bi bi-person"></i></h4>
               </div>
 
-              <p class="fs-9 text-white-50 m-0 text-truncate fw-medium mb-2">
-                <i class="bi bi-geo-alt-fill opacity-50 me-1"></i>{{ trek.location }}
+              <p class="fs-9 text-info m-0 text-truncate fw-medium mb-2">
+                <i class="bi bi-geo-alt-fill text-danger opacity-50 me-1"></i>{{ trek.location }}
               </p>
 
               <hr class="border-white border-opacity-20 my-3" />
@@ -196,7 +196,7 @@
               <div class="col-12">
                 <label class="modal-label">Expedition Media Gallery (Select 4 images, Max 500KB each) *</label>
                 <div class="input-wrapper py-1.5">
-                  <input id='trek_image' type="file" accept="image/*" multiple @change="handleMultipleImagesSelection" class="hidden-file-input text-white-50" required>
+                  <input id='trek_image' type="file" accept="image/*" multiple @change="handleMultipleImagesSelection" class="hidden-file-input text-white-50" >
                   <label for="trek_image" class="file-custom-btn">Choose file</label>
                   <span class="file-name-label">{{ fileNameDisplay }}</span>
                 </div>
@@ -371,6 +371,12 @@ function handleMultipleImagesSelection(event) {
   const files = Array.from(event.target.files)
   selectedGalleryFiles.value = []
   
+  if (files.length === 0) {
+    alertStore.showAlert('Please select images for trek', 'danger')
+    form.value.trek_gallery = []
+    return
+  }
+
   // Strict 4-image rule
   if (files.length !== 4) {
     alertStore.showAlert('You must select exactly 4 images for the terrain gallery.', 'warning')
@@ -416,6 +422,17 @@ function lockGridCoordinates() {
 
 async function submitTrekForm() {
   // Multipart packaging data configuration layers
+
+  if (selectedGalleryFiles.value.length === 0) {
+    alertStore.showAlert('Please select images for trek', 'danger')
+    return // Stop the submission
+  }
+
+  if (!form.value.latitude || !form.value.longitude) {
+  alertStore.showAlert('Please pin the trek start coordinate.', 'warning')
+  return
+  }
+
   const formData = new FormData()
   Object.keys(form.value).forEach(key => {
     formData.append(key, form.value[key])
@@ -585,9 +602,9 @@ onMounted(() => {
 .card-gradient-overlay {
   background: linear-gradient(
     to top, 
-    rgba(8, 10, 12, 0.98) 0%,   /* Solid dark at the very bottom */
-    rgba(8, 10, 12, 0.85) 25%,  /* Heavy dark behind the text */
-    rgba(8, 10, 12, 0.4) 50%,   /* Fading out */
+    rgba(0, 8, 15, 0.98) 0%,   /* Solid dark at the very bottom */
+    rgb(0, 7, 14) 25%,  /* Heavy dark behind the text */
+    rgba(1, 8, 15, 0.21) 50%,   /* Fading out */
     rgba(8, 10, 12, 0.1) 80%, 
     rgba(0, 0, 0, 0) 100%
   );

@@ -13,19 +13,21 @@
     </div>
 
     <div v-else class="row g-4">
-      <div v-for="ticket in tickets" :key="ticket.id" class="col-md-6 col-xl-4 border-white border-opacity-10">
-        <div class="glass-ticket-card p-4 rounded-4 border position-relative" >
-          <!-- :class="ticket.priority === 'Hazard' ? 'border-danger border-opacity-50 bg-danger bg-opacity-5' : 'border-white border-opacity-10'" -->
+      <div v-for="ticket in tickets" :key="ticket.id" class="col-md-6 col-xl-4">
+        <div class="glass-ticket-card p-4 rounded-4 border position-relative" :class="ticket.priority === 'Hazard' ? 'border-danger border-opacity-50 bg-danger bg-opacity-10' : 'border-white border-opacity-10'" >
           
           <div class="d-flex justify-content-between align-items-start mb-3">
-            <!-- <span class="badge rounded-pill fs-10 uppercase tracking-widest px-2 py-1" :class="getBadgeClass(ticket.priority)">
+            <span v-if="ticket.response" class="badge rounded-pill fs-10 uppercase tracking-widest px-2 py-1 bg-success bg-opacity-50" >
+               Resolved
+            </span>
+            <span  v-else class="badge rounded-pill fs-10 uppercase tracking-widest px-2 py-1" :class="getBadgeClass(ticket.priority)">
               {{ ticket.priority }}
-            </span> -->
+            </span>
             <span class="fs-10 text-white-50">{{ ticket.date }}</span>
           </div>
           
           <h6 class="fw-bold text-white mb-1 line-clamp-1">{{ ticket.subject }}</h6>
-          <p class="fs-9 text-white-50 mb-4">From: <span class="text-white">{{ ticket.author }}</span> <span class="opacity-50">({{ ticket.role }})</span></p>
+          <p class="fs-9 text-white-50 mb-4">From: <span class="text-white">{{ ticket.author }}</span> <span class="text-info opacity-50">({{ ticket.role }})</span></p>
           
           <button @click="openResolutionModal(ticket)" class="btn btn-sm btn-outline-light w-100 rounded-pill fw-semibold">Review & Process</button>
         </div>
@@ -43,10 +45,10 @@
               <h5 class="fw-bold text-white m-0 tracking-tight">{{ activeModal.subject }}</h5>
               <span class="fs-9 text-white-50 mt-1 d-block">Origin: {{ activeModal.author }} | {{ activeModal.email }}</span>
             </div>
-            <!-- <span class="badge rounded-pill" :class="getBadgeClass(activeModal.priority)">{{ activeModal.priority }}</span> -->
+            <span class="badge rounded-pill" :class="getBadgeClass(activeModal.priority)">{{ activeModal.priority }}</span>
           </div>
 
-          <div> Query </div>
+          <div class="mb-2"> Query </div>
           <div class="bg-black bg-opacity-25 rounded-3 p-3 mb-4 msg-scroll border border-white border-opacity-5">
             <p class="text-white-50 fs-9 lh-base m-0 whitespace-pre-wrap">{{ activeModal.message }}</p>
           </div>
@@ -58,8 +60,8 @@
             </label>
           </div>
 
-          <div v-if="activeModal.response"> 
-            Resolution 
+          <div v-if="activeModal.response" > 
+            <div class="mb-2">Resolution </div>
             <div class="bg-black bg-opacity-25 rounded-3 p-3 mb-4 msg-scroll border border-white border-opacity-5">
               <p class="text-white-50 fs-9 lh-base m-0 whitespace-pre-wrap">{{ activeModal.response }}</p>
             </div>
@@ -100,11 +102,11 @@ const activeModal = ref(null)
 const wantsToResolve = ref(false)
 const resolutionText = ref('')
 
-// function getBadgeClass(priority) {
-//   if (priority === 'Hazard') return 'bg-danger text-white'
-//   if (priority === 'Urgent') return 'bg-warning text-dark'
-//   return 'bg-white bg-opacity-10 text-white-50 border border-white border-opacity-20'
-// }
+function getBadgeClass(priority) {
+  if (priority === 'Hazard') return 'bg-danger text-white'
+  if (priority === 'Urgent') return 'bg-warning text-dark'
+  return 'bg-white bg-opacity-10 text-white-50 border border-white border-opacity-20'
+}
 
 async function fetchTickets() {
   try {
