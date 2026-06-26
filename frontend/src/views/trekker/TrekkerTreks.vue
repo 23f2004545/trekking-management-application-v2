@@ -35,7 +35,7 @@
         <!-- Altitude Cap Filter -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Altitude: <span class="text-success fw-bold">{{ filters.altitude }}m</span></label>
-          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="200" class="form-range custom-slider">
+          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="100" class="form-range custom-slider">
         </div>
       </div>
     </div>
@@ -138,7 +138,7 @@ const tracksList = ref([])
 const filterExtremes = ref({ max_altitude: 6000 , max_price: 50000 , min_altitude: 0, min_price: 0})
 
 // Filtering state metrics
-const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 6000 })
+const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 10000 })
 
 // DYNAMIC SEARCH & FILTER CALCULATOR ENGINE
 const filteredTreks = computed(() => {

@@ -49,11 +49,11 @@
              {{ member.status }}
           </span>
 
-          <button @click="confirmStore.ask('Are you sure to ' + (member.blacklisted ? 'whitelist' : 'blacklist') + ' ' + member.name + '?', () => toggleBlacklistState(member))" class="btn btn-sm btn-outline-warning rounded-pill px-3 fs-9 border-opacity-25" >
+          <button @click="confirmStore.ask('Are you sure to ' + (member.blacklisted ? 'whitelist' : 'blacklist') + ' ' + member.name + '?', () => toggleBlacklistState(member))" class="btn btn-sm fw-bold rounded-pill px-3 fs-9 border-opacity-25" :class="member.blacklisted === false ? 'btn-warning' : 'btn-success' " >
             {{ member.blacklisted ? 'Whitelist' : 'Blacklist' }}
           </button>
           
-          <button @click="launchAuditView(member.id)" class="btn btn-sm btn-success rounded-pill px-3 fs-8 fw-bold text-dark shadow-sm">
+          <button @click="launchAuditView(member.id)" class="btn btn-sm btn-info rounded-pill px-3 fs-8 fw-bold text-dark shadow-sm">
             View Profile
           </button>
         </div>
@@ -108,7 +108,7 @@
 
     <Transition name="modal-fade">
       <div v-if="auditTargetProfile" @click.self="auditTargetProfile = null" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
-        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-90 overflow-y-auto position-relative">
+        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-65 overflow-y-auto position-relative">
           
           <button @click="auditTargetProfile = null" class="btn-close-modal">✕</button>
           
@@ -351,7 +351,7 @@ onMounted(() => {
 /* Modal layer specifications */
 .audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.341); backdrop-filter: blur(10px); z-index: 999; }
 .glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
-.max-vh-90 { max-height: 90vh; }
+.max-vh-65 { max-height: 65vh; }
 
 .btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }

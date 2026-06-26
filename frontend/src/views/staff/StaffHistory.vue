@@ -1,171 +1,223 @@
 <template>
-  <div class="history-canvas text-white text-start pb-5 animate-fade-in p-3">
+  <div class="history-canvas text-white text-start pb-5 animate-fade-in p-2 p-md-4">
 
-    <div v-if="!historicalData.is_onboarded " class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 ">
-      <div class="d-flex align-items-center gap-3">
-        <span class="fs-2">🛠️</span>
+    <!-- ===================================================================
+         VIEW 1: MASTER ARCHIVE LISTING
+         =================================================================== -->
+    <div v-if="!selectedTripForDetails" class="master-list-flow">
+      
+      <div class="mb-4 border-bottom border-white border-opacity-10 pb-4 d-flex justify-content-between align-items-end flex-wrap gap-2">
         <div>
-          <h5 class="m-0 fw-bold text-warning tracking-tight">Profile Onboarding Required</h5>
-          <p class="m-0 fs-8 text-white-50 mt-1">Your profile details are currently marked as default parameters. Please configure your operational field specifications.</p>
-        </div>
-      </div>
-      <button @click="$router.push('/portal/trek_staff/profile')" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 py-2 fs-8 shadow-sm hover-grow">
-        Complete Profile Setup →
-      </button>
-    </div>
-
-
-  <div :class="{ 'onboarding-blurred-zone': !historicalData.is_onboarded }">
-      <div v-if="!selectedTripForDetails" class="master-list-flow">
-        <div class="mb-4 border-bottom border-white border-opacity-10 pb-4">
+          <span class="badge border border-white border-opacity-20 rounded-pill px-3 py-1 fs-10 text-success-tint tracking-widest uppercase mb-2">IMMUTABLE ARCHIVES</span>
           <h2 class="fw-bold tracking-tight m-0">Historical Route Analytics</h2>
-          <p class="m-0 text-white-50 fs-8 mt-1">Select an archived expedition to review operational yields and feedback.</p>
+          <p class="m-0 text-white-50 fs-8 mt-1">Select a completed expedition cohort to inspect financial yields and trail feedback.</p>
         </div>
-        
-        <div class="row g-3">
-          <div v-for="trek in historicalData" :key="trek.trek_id" class="col-md-6 col-xl-4">
-            <div  @click="selectedTripForDetails = trek" class="glass-summary-card p-4 rounded-4 border border-white border-opacity-10 cursor-pointer hover-lift">
-              <div class="d-flex justify-content-between align-items-start mb-2">
+        <span class="fs-9 font-monospace text-white-50">{{ historicalData.length }} Deployments Logged</span>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="historicalData.length === 0" class="text-center py-5 my-5 glass-card-clean rounded-4 border border-white border-opacity-5">
+        <span class="fs-1 opacity-25 d-block mb-2">🏔️</span>
+        <h6 class="fw-bold text-white tracking-widest uppercase">No Archived Logs Found</h6>
+        <p class="text-white-50 fs-9 m-0">No completed expeditions match your current security clearance.</p>
+      </div>
+
+      <!-- Card Grid -->
+      <div v-else class="row g-3">
+        <div v-for="trek in historicalData" :key="trek.trek_id + trek.trek_info.start_date" class="col-md-6 col-xl-4">
+          <div @click="selectedTripForDetails = trek" class="glass-summary-card p-4 rounded-4 border border-white border-opacity-10 cursor-pointer hover-emerald position-relative overflow-hidden d-flex flex-column justify-content-between" style="min-height: 10rem;">
+            
+            <div>
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                 <h5 class="fw-bold m-0 tracking-tight text-white line-clamp-1">{{ trek.trek_info.name }}</h5>
-                <span class="fs-9 text-success-tint border border-success border-opacity-25 bg-success bg-opacity-10 px-2 py-0.5 rounded-pill">Completed</span>
+                <span class="badge bg-success bg-opacity-15 text-success-tint border border-success border-opacity-25 rounded-pill px-2 py-1 fs-10 flex-shrink-0">Completed</span>
               </div>
-              <p class="fs-9 text-white-50 mb-3"><i class="bi bi-geo-alt-fill"></i> {{ trek.trek_info.location }}</p>
-              
-              <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-10">
-                <span class="fs-9 text-white-50">{{ trek.trek_info.start_date }} - {{ trek.trek_info.end_date }}</span>
-                <span class="fs-8 fw-semibold text-white">→ View Data</span>
-              </div>
+              <p class="fs-9 text-white-50 m-0"><i class="bi bi-geo-alt-fill text-success-tint me-1"></i> {{ trek.trek_info.location }}</p>
             </div>
+
+            <div class="pt-2 mt-2 border-top border-white border-opacity-10 d-flex justify-content-between align-items-center">
+              <span class="fs-10 font-monospace text-white-50">{{ trek.trek_info.start_date }} ➔ {{ trek.trek_info.end_date }}</span>
+              <span class="fs-9 fw-bold text-success-tint d-flex align-items-center gap-1">Inspect <i class="bi bi-arrow-right"></i></span>
+            </div>
+
           </div>
         </div>
-      </div> 
-    <!-- </div> -->
+      </div>
+    </div>
 
-
+    <!-- ===================================================================
+         VIEW 2: DETAILED CASCADING TELEMETRY
+         =================================================================== -->
     <div v-else class="extended-history-details-flow animate-fade-in">
       
+      <!-- Top Navigation Bar -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom border-white border-opacity-10 gap-3">
-        <button @click="selectedTripForDetails = null" class="btn btn-outline-light rounded-pill px-4 py-2 fs-8 border-opacity-25">
+        <button @click="selectedTripForDetails = null" class="btn btn-sm btn-outline-light rounded-pill px-2 py-1 fs-9 border-opacity-25 hover-white">
           ← Return to Archives
         </button>
-        <button class="btn btn-success rounded-pill px-4 py-2 fs-8 fw-bold text-dark shadow-sm">
-          <i class="bi bi-cloud-arrow-down-fill me-1"></i> Export Telemetry Data
+        <button @click="triggerExport" :disabled="isExporting" class="btn btn-sm btn-success rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm d-flex align-items-center gap-2 transition-all">
+          <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status"></span>
+          <i v-else class="bi bi-cloud-arrow-down-fill fs-8"></i> 
+          {{ isExporting ? 'Transmitting...' : 'Export Telemetry Data' }}
         </button>
       </div>
 
       <div class="row g-4">
         
+        <!-- Trek Meta Card -->
         <div class="col-lg-7">
-          <div class="glass-container p-4 rounded-4 h-100 border border-white border-opacity-10">
-            <span class="badge bg-white bg-opacity-10 border border-white border-opacity-25 rounded-pill mb-2">ROUTE ARCHIVE</span>
-            <h3 class="fw-bold text-white tracking-tight mb-4">{{ selectedTripForDetails.trek_info.name }}</h3>
+          <div class="glass-card-clean p-4 p-md-5 rounded-4 h-100 border border-white border-opacity-10 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-white bg-opacity-10 border border-white border-opacity-20 rounded-pill px-3 py-1 fs-10 tracking-widest text-white-50">SECTOR ARCHIVE</span>
+                <span class="fs-8 fw-bold text-warning">{{ selectedTripForDetails.trek_info.difficulty }}</span>
+              </div>
+              <h2 class="fw-bold text-white tracking-tight mb-1">{{ selectedTripForDetails.trek_info.name }}</h2>
+              <p class="fs-9 text-white-50 mb-2"><i class="bi bi-geo-alt-fill text-success-tint me-1"></i> {{ selectedTripForDetails.trek_info.location }}</p>
+              <p class="text-white-50 fs-9 lh-base mb-4 pe-lg-4">{{ selectedTripForDetails.trek_info.description }}</p>
+            </div>
             
-            <div class="row g-4 border-top border-white border-opacity-10 pt-3">
-              <div class="col-6 col-sm-4"><span class="d-block fs-10 text-white-50 uppercase tracking-widest">DURATION</span><strong class="fs-8">{{ selectedTripForDetails.trek_info.duration }} Days</strong></div>
-              <div class="col-6 col-sm-4"><span class="d-block fs-10 text-white-50 uppercase tracking-widest">ALTITUDE</span><strong class="fs-8">{{ selectedTripForDetails.trek_info.altitude }}m</strong></div>
-              <div class="col-6 col-sm-4"><span class="d-block fs-10 text-white-50 uppercase tracking-widest">PRICE RATE</span><strong class="fs-8">₹{{ selectedTripForDetails.trek_info.price }}</strong></div>
-              <div class="col-6 col-sm-6"><span class="d-block fs-10 text-white-50 uppercase tracking-widest">DEPARTURE</span><strong class="fs-8">{{ selectedTripForDetails.trek_info.start_date }}</strong></div>
-              <div class="col-6 col-sm-6"><span class="d-block fs-10 text-white-50 uppercase tracking-widest">CONCLUSION</span><strong class="fs-8">{{ selectedTripForDetails.trek_info.end_date }}</strong></div>
+            <div class="row g-3 border-top border-white border-opacity-10 pt-4 font-monospace">
+              <div class="col-6 col-sm-4"><span class="d-block fs-10 text-white-50 tracking-widest">DURATION</span><strong class="fs-8 text-white">{{ selectedTripForDetails.trek_info.duration }} Days</strong></div>
+              <div class="col-6 col-sm-4"><span class="d-block fs-10 text-white-50 tracking-widest">ALTITUDE</span><strong class="fs-8 text-white">{{ selectedTripForDetails.trek_info.altitude }}m</strong></div>
+              <div class="col-12 col-sm-4"><span class="d-block fs-10 text-white-50 tracking-widest">YIELD RATE</span><strong class="fs-8 text-success-tint">₹{{ selectedTripForDetails.trek_info.price }}/pax</strong></div>
+              <div class="col-6 col-sm-6"><span class="d-block fs-10 text-white-50 tracking-widest">DEPARTURE</span><strong class="fs-9 text-white-50">{{ selectedTripForDetails.trek_info.start_date }}</strong></div>
+              <div class="col-6 col-sm-6"><span class="d-block fs-10 text-white-50 tracking-widest">CONCLUSION</span><strong class="fs-9 text-white-50">{{ selectedTripForDetails.trek_info.end_date }}</strong></div>
             </div>
           </div>
         </div>
 
+        <!-- Operational Yield Card -->
         <div class="col-lg-5">
-          <div class="glass-container p-4 rounded-4 h-100 border border-success border-opacity-25 bg-success bg-opacity-5">
-            <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase mb-3 border-bottom border-success border-opacity-25 pb-2 text-success-tint">Operational Yield</h6>
-            <div class="d-flex flex-column gap-3">
-              <div class="d-flex justify-content-between align-items-center p-2 rounded bg-black bg-opacity-25 border border-white border-opacity-5">
-                <span class="fs-9 text-white-50">Total Revenue</span><strong class="fs-6">{{ selectedTripForDetails.analytics.total_revenue }}</strong>
+          <div class="glass-card-emerald p-4 rounded-4 h-100 border border-success border-opacity-25 d-flex flex-column justify-content-between">
+            <h6 class="fw-bold fs-10 tracking-widest text-success-tint text-uppercase mb-3 pb-2 border-bottom border-success border-opacity-20 d-flex align-items-center gap-2">
+              <i class="bi bi-graph-up-arrow fs-8"></i> Operational Yield
+            </h6>
+            <div class="d-flex flex-column gap-4 my-auto font-monospace">
+              <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded-3 border border-white border-opacity-5">
+                <span class="fs-9 text-white-50">Gross Revenue</span><strong class="fs-6 text-success-tint">₹{{ selectedTripForDetails.analytics.total_revenue.toLocaleString() }}</strong>
               </div>
-              <div class="d-flex justify-content-between align-items-center p-2 rounded bg-black bg-opacity-25 border border-white border-opacity-5">
-                <span class="fs-9 text-white-50">Distinct Accounts</span><strong class="fs-6">{{ selectedTripForDetails.analytics.accounts_booked }}</strong>
+              <div class="d-flex justify-content-between align-items-center p-2 rounded-3  border border-white border-opacity-5">
+                <span class="fs-9 text-white-50">Distinct Passports</span><strong class="fs-6 text-white">{{ selectedTripForDetails.analytics.accounts_booked }}</strong>
               </div>
-              <div class="d-flex justify-content-between align-items-center p-2 rounded bg-black bg-opacity-25 border border-white border-opacity-5">
-                <span class="fs-9 text-white-50">Explorers Cleared</span><strong class="fs-6">{{ selectedTripForDetails.analytics.completed_participants }}</strong>
+              <div class="d-flex justify-content-between align-items-center p-2 rounded-3 border border-white border-opacity-5">
+                <span class="fs-9 text-white-50">Pax Cleared</span><strong class="fs-6 text-white">{{ selectedTripForDetails.analytics.completed_participants }}</strong>
               </div>
-              <div class="d-flex justify-content-between align-items-center p-2 rounded bg-black bg-opacity-25 border border-danger border-opacity-25">
+              <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25">
                 <span class="fs-9 text-danger-tint">Cancelled Slots</span><strong class="fs-6 text-danger-tint">{{ selectedTripForDetails.analytics.cancelled_participants }}</strong>
               </div>
             </div>
+            <div class="text-end mt-2"><span class="fs-10 text-white-50 uppercase tracking-widest">Completion Rate: {{ selectedTripForDetails.analytics.completion_rate }}%</span></div>
           </div>
         </div>
-        
+
+        <!-- Manifest Log Card -->
         <div class="col-lg-12">
-          <div class="glass-container p-4 rounded-4 h-100 border border-white border-opacity-10">
-            <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase mb-3 border-bottom border-white border-opacity-10 pb-2">Manifest Log ({{ selectedTripForDetails.roster.length }})</h6>
-            <div class="roster-scroll pe-2">
-              <div v-for="(person, idx) in selectedTripForDetails.roster" :key="idx" class="p-3 mb-2 rounded-3 bg-black bg-opacity-25 border border-white border-opacity-5">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                  <div>
-                    <h6 class="m-0 fw-semibold fs-8">{{ person.name }} <span class="badge bg-white bg-opacity-10 text-white-50 ms-2 fw-normal">+{{ person.pax - 1 }} Pax</span></h6>
-                    <span class="fs-9 text-white-50">{{ person.email }} · {{ person.contact }}</span>
-                  </div>
+          <div class="glass-card-clean p-4 rounded-4 h-100 border border-white border-opacity-10 d-flex flex-column">
+            <h6 class="fw-bold fs-10 tracking-widest text-white-50 text-uppercase mb-3 pb-2 border-bottom border-white border-opacity-10 d-flex justify-content-between align-items-center">
+              <span>Manifest Log</span>
+              <span class="font-monospace text-success-tint">{{ selectedTripForDetails.roster.length }} Accounts Logged</span>
+            </h6>
+            
+            <div class="roster-scroll pe-2 flex-grow-1">
+              <div v-if="selectedTripForDetails.roster.length === 0" class="text-center py-5 text-white-50 fs-9 italic">No participant records snapshotted.</div>
+              <div v-for="(person, idx) in selectedTripForDetails.roster" :key="idx" class="p-3 mb-2 rounded-3 border border-white border-opacity-5 hover-border-subtle">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1.5">
+                  <h6 class="m-0 fw-bold fs-8 text-white d-flex align-items-center gap-2">
+                    {{ person.name }} 
+                    <span class="badge bg-white bg-opacity-10 text-white-50 fw-normal font-monospace fs-10 px-2 py-0.5">+{{ person.pax - 1 }} Pax</span>
+                  </h6>
+                  <span class="fs-10 font-monospace text-success-tint">{{ person.contact }}</span>
                 </div>
-                <!-- <div class="p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded text-warning-tint fs-9 italic">
-                  <i class="bi bi-heart-pulse me-1"></i> Medical Instructions : {{ person.medical }}
-                </div> -->
+                <span class="fs-10 text-white-50 d-block mb-2 font-monospace">{{ person.email }}</span>
+                <div class="p-2 bg-warning bg-opacity-10 border border-warning border-opacity-20 rounded text-warning fs-10 font-monospace">
+                  <i class="bi bi-heart-pulse me-1"></i> Medical: {{ person.medical }}
+                </div>
               </div>
             </div>
+
           </div>
         </div>
-        
+
+        <!-- Feedback & Reviews Section (Side-by-Side on Desktop) -->
         <div class="col-12">
-          <div class="glass-container p-4 rounded-4 border border-white border-opacity-10">
+          <div class="glass-card-clean p-4 p-md-5 rounded-4 border border-white border-opacity-10">
             <div class="row g-5">
               
-              <div class="col-lg-12">
-                <div class="d-flex justify-content-between align-items-end border-bottom border-white border-opacity-10 pb-2 mb-3">
-                  <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase m-0">Terrain Feedback</h6>
-                  <span class="text-warning fs-8 fw-bold"> Avg Rating : {{ selectedTripForDetails.reviews.trek_avg }} ★</span>
+              <!-- Terrain Feedback -->
+              <div class="col-lg-12 border-white border-opacity-10 pe-lg-4">
+                <div class="d-flex justify-content-between align-items-end border-bottom border-white border-opacity-10 pb-2 mb-4">
+                  <h6 class="fw-bold fs-10 tracking-widest text-white-50 text-uppercase m-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-chat-left-quote text-success-tint fs-8"></i> Terrain Evaluations
+                  </h6>
+                  <span class="text-warning font-monospace fs-8 fw-bold">{{ selectedTripForDetails.reviews.trek_avg }} ★</span>
                 </div>
+                
                 <div class="d-flex flex-row flex-nowrap gap-3 overflow-x-auto pb-3 custom-scrollbar">
-                  <div v-if="!selectedTripForDetails.reviews.trek_list.length" class="text-white-50 fs-9 py-3 italic w-100">No route logs available.</div>
-                  <div v-for="rev in selectedTripForDetails.reviews.trek_list" :key="'t'+rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column">
-                    <div class="d-flex justify-content-between mb-2"><span class="fs-9 fw-semibold text-white">{{ rev.author }}</span><span class="text-warning fs-9">{{ '★'.repeat(rev.stars) }}</span></div>
-                    <p class="m-0 fs-9 text-white-50 lh-base review-text">"{{ rev.comment }}"</p>
+                  <div v-if="!selectedTripForDetails.reviews.trek_list.length" class="text-white-50 fs-9 py-4 italic text-center w-100 rounded-3 border border-white border-opacity-5">No structural terrain logs recorded.</div>
+                  <div v-for="rev in selectedTripForDetails.reviews.trek_list" :key="'t'+rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-white border-opacity-5">
+                      <span class="fs-9 fw-bold text-white text-truncate pe-2">{{ rev.author }}</span>
+                      <span class="text-warning fs-10 flex-shrink-0">{{ '★'.repeat(rev.stars) }}</span>
+                    </div>
+                    <p class="m-0 fs-9 text-white-50 lh-base review-text italic pe-1">"{{ rev.comment }}"</p>
                   </div>
                 </div>
               </div>
-              
-              <div class="col-lg-12">
-                <div class="d-flex justify-content-between align-items-end border-bottom border-white border-opacity-10 pb-2 mb-3">
-                  <h6 class="fw-bold fs-9 tracking-wider opacity-75 text-uppercase m-0">Your Feedback</h6>
-                  <span class="text-warning fs-8 fw-bold">Avg Rating : {{ selectedTripForDetails.reviews.staff_avg }} ★</span>
+
+              <!-- Commander Feedback -->
+              <div class="col-lg-12 ps-lg-4">
+                <div class="d-flex justify-content-between align-items-end border-bottom border-white border-opacity-10 pb-2 mb-4">
+                  <h6 class="fw-bold fs-10 tracking-widest text-white-50 text-uppercase m-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-lines-fill text-success-tint fs-8"></i> Commander Evaluations
+                  </h6>
+                  <span class="text-warning font-monospace fs-8 fw-bold">{{ selectedTripForDetails.reviews.staff_avg }} ★</span>
                 </div>
+                
                 <div class="d-flex flex-row flex-nowrap gap-3 overflow-x-auto pb-3 custom-scrollbar">
-                  <div v-if="!selectedTripForDetails.reviews.staff_list.length" class="text-white-50 fs-9 py-3 italic w-100">No staff evaluations logged.</div>
-                  <div v-for="rev in selectedTripForDetails.reviews.staff_list" :key="'s'+rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column">
-                    <div class="d-flex justify-content-between mb-2"><span class="fs-9 fw-semibold text-white">{{ rev.author }}</span><span class="text-warning fs-9">{{ '★'.repeat(rev.stars) }}</span></div>
-                    <p class="m-0 fs-9 text-white-50 lh-base review-text">"{{ rev.comment }}"</p>
+                  <div v-if="!selectedTripForDetails.reviews.staff_list.length" class="text-white-50 fs-9 py-4 italic text-center w-100 rounded-3 border border-white border-opacity-5">No guide performance evaluations logged.</div>
+                  <div v-for="rev in selectedTripForDetails.reviews.staff_list" :key="'s'+rev.id" class="comment-bubble p-3 rounded-4 flex-shrink-0 d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-white border-opacity-5">
+                      <span class="fs-9 fw-bold text-white text-truncate pe-2">{{ rev.author }}</span>
+                      <span class="text-warning fs-10 flex-shrink-0">{{ '★'.repeat(rev.stars) }}</span>
+                    </div>
+                    <p class="m-0 fs-9 text-white-50 lh-base review-text italic pe-1">"{{ rev.comment }}"</p>
                   </div>
                 </div>
               </div>
-              
+
             </div>
           </div>
         </div>
-        
+
       </div>
     </div>
-  </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { secureFetch } from '../../utils/api.js'
+import { useAlertStore } from '../../stores/alert.js'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const historicalData = ref([])
+const alertStore = useAlertStore()
 const selectedTripForDetails = ref(null)
 const activeDetail = ref(null)
 const loading = ref(true)
+const onboarded = ref(false)
+const isExporting = ref(false)
 
 async function fetchHistory() {
   try {
     const res = await secureFetch(`${BACKEND_URL}/api/utils/history`)
     if (res.ok) {
-      historicalData.value = await res.json()
+      const data = await res.json()
+      historicalData.value = data.results
+      onboarded.value = data.is_onboarded
+
       // Automatically select the first item to populate the right column!
       if (historicalData.value.length > 0) activeDetail.value = historicalData.value[0]
     }
@@ -176,54 +228,73 @@ async function fetchHistory() {
   }
 }
 
+async function triggerExport() {
+  if (!selectedTripForDetails.value) return
+  
+  isExporting.value = true
+  try {
+    const res = await secureFetch(`${BACKEND_URL}/api/utils/export-history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selectedTripForDetails.value) // Pass the whole object!
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alertStore.showAlert(data.message, 'success')
+    } else {
+      alertStore.showAlert('Export pipeline failed.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert('Network drop during export.', 'danger')
+  } finally {
+    isExporting.value = false
+  }
+}
+
 onMounted(() => {
   fetchHistory()
 })
 </script>
 
 <style scoped>
-/* Core structural styles */
-.glass-summary-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); transition: transform 0.2s; }
-.hover-lift:hover { transform: translateY(-4px); border-color: rgba(25, 135, 84, 0.4) !important; }
-.glass-container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); }
+/* Glassmorphism Tiering */
+.glass-summary-card { background: rgba(12, 22, 17, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.hover-emerald:hover { transform: translateY(-5px); border-color: rgba(123, 241, 168, 0.45) !important; background: rgba(16, 30, 22, 0.75); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
 
+.glass-card-clean { background: rgba(10, 16, 13, 0.6); backdrop-filter: blur(20px); }
+.glass-card-obsidian { background: rgba(3, 16, 22, 0.85); backdrop-filter: blur(15px); }
+.glass-card-emerald { background: rgba(19, 43, 29, 0.35); backdrop-filter: blur(20px); }
+.rect-avatar-img { width: 4rem; height: 4rem; border-radius: 50%; object-fit: cover; }
 
-.onboarding-glass-banner {
-  background: rgba(255, 193, 7, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 193, 7, 0.25) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-}
-
-.onboarding-blurred-zone {
-  filter: blur(4px);
-  pointer-events: none; /* Block user interactions entirely while locked */
-  user-select: none;
-  opacity: 0.5;
-  transition: filter 0.4s ease, opacity 0.4s ease;
-}
-
-/* Typography & Utility */
-.uppercase { text-transform: uppercase; }
-.tracking-widest { letter-spacing: 1.5px; }
-.tracking-tight { letter-spacing: -0.5px; }
-.fs-10 { font-size: 0.65rem; }
+/* Typography & Colors */
 .text-success-tint { color: #7bf1a8; }
 .text-danger-tint { color: #ff8787; }
-.text-warning-tint { color: #ffda6a; }
+.tracking-widest { letter-spacing: 1.5px; }
+.tracking-tight { letter-spacing: -0.5px; }
+.fs-10 { font-size: 0.68rem; }
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Desktop Split Borders */
+@media (min-width: 992px) {
+  .border-end-lg { border-right: 1px solid rgba(255, 255, 255, 0.1); }
+}
 
 /* Scrollbars & Interactions */
-.roster-scroll { max-height: 250px; overflow-y: auto; }
+.roster-scroll { max-height: 280px; overflow-y: auto; }
 .roster-scroll::-webkit-scrollbar { width: 4px; }
-.roster-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.roster-scroll::-webkit-scrollbar-thumb { background: rgba(123, 241, 168, 0.2); border-radius: 4px; }
+
+.hover-border-subtle { transition: border-color 0.2s; }
+.hover-border-subtle:hover { border-color: rgba(255,255,255,0.15) !important; }
 
 /* Review Bubbles */
-.comment-bubble { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); min-width: 260px; max-width: 260px; height: 140px; }
-.review-text { overflow-y: auto; flex-grow: 1; padding-right: 6px; }
-.review-text::-webkit-scrollbar { width: 4px; }
-.review-text::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+.comment-bubble { background: rgba(5, 9, 7, 0.6); border: 1px solid rgba(255, 255, 255, 0.06); min-width: 280px; max-width: 280px; height: 150px; }
+.review-text { overflow-y: auto; flex-grow: 1; }
+.review-text::-webkit-scrollbar { width: 3px; }
+.review-text::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
 
-.custom-scrollbar::-webkit-scrollbar { height: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar { height: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 8px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(123, 241, 168, 0.4); }
 </style>

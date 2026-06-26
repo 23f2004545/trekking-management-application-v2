@@ -449,11 +449,8 @@ async function submitStaffForm() {
 function openStaffModal() {
 
   if (hasStaffData.value) {
-    // If they have real data, deep copy it into the form input proxies
     staffFormFields.value = { ...staffProfile.value }
   } else {
-    // If it's still 'Pending' (or completely missing), initialize empty values 
-    // instead of letting 'Pending' populate your text fields.
     staffFormFields.value = {
       specialization: '',
       experience_years: '', // Empty input allows placeholder to render cleanly

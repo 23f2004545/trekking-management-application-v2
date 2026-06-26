@@ -34,11 +34,8 @@
             </span>
           </div>
 
-          <!-- REFINED BUTTON ZONE: Exactly one single clean programmatic details viewer button -->
+          
           <div class="d-flex align-items-center">
-            <!-- <button @click="confirmStore.ask('Are you sure you want to cancel your booking?', cancelBooking)" class="btn btn-sm btn-danger rounded-pill px-2 py-1 fs-8 fw-bold text-dark shadow-sm m-2">
-              Cancel Booking
-            </button> -->
             <button @click="openDeepContextModal(book)" class="btn btn-sm btn-success rounded-pill px-2 py-1 fs-8 fw-bold text-dark shadow-sm">
               View Details
             </button>
@@ -62,13 +59,7 @@
           <p class="text-white-50 small mb-4">Complete logistical registry metrics and verified guide assignment info.</p>
 
           <div class="row g-3">
-            <!-- Left Grid Segment: Route thumbnail graphic -->
-            <!-- <div class="col-md-4">
-              <div class="modal-thumbnail-wrapper rounded-3 overflow-hidden border border-white border-opacity-10 h-100">
-                <img :src="modalTarget.trek_image" alt="Trek Layout Thumbnail" class="w-100 h-100 object-fit" />
-              </div>
-            </div> -->
-
+            
             <!-- Right Grid Segment: Multi-column meta specification rows -->
             <div class="col-md-12 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-white border-opacity-5">
               <div><strong>Booking ID:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>

@@ -41,7 +41,7 @@
         <!-- Altitude Cap Filter -->
         <div class="col-md-3">
           <label class="d-block fs-9 text-white-50 mb-1">Max Altitude: <span class="text-success fw-bold">{{ filters.altitude }}m</span></label>
-          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="200" class="form-range custom-slider">
+          <input v-model.number="filters.altitude" type="range" :min="filterExtremes.min_altitude" :max="filterExtremes.max_altitude" step="100" class="form-range custom-slider">
         </div>
       </div>
     </div>
@@ -127,7 +127,7 @@
          =================================================================== -->
     <Transition name="modal-fade">
       <div v-if="createModalActive" @click.self="createModalActive = false" class="admin-modal-backdrop d-flex align-items-center justify-content-center p-3">
-        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start">
+        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-70 text-start">
           
           <h4 class="fw-bold tracking-tight text-white m-0">Deploy New Trekking Map</h4>
           <p class="text-white-50 small m-0 mt-0.5 mb-4">Input structural location parameters, assign guides, and declare pricing coordinates.</p>
@@ -170,28 +170,55 @@
               </div>
               <div class="col-md-6">
                 <label class="modal-label">Start Date Coordinates *</label>
-                <div class="input-wrapper"><input v-model="form.start_date" type="date" required class="modal-field"></div>
+                <input v-model="form.start_date" type="date" required class="modal-field">
               </div>
               <div class="col-md-6">
                 <label class="modal-label">End Date Coordinates *</label>
-                <div class="input-wrapper"><input v-model="form.end_date" type="date" required class="modal-field"></div>
+                <input v-model="form.end_date" type="date" required class="modal-field">
               </div>
-              <div class="col-12">
-                <label class="modal-label">Assign Trek Staff Guide</label>
-                <div class="input-wrapper">
-                  <select v-model="form.assigned_staff_id" class="modal-field bg-transparent select-fix">
-                    <option :value="null">Leave Unassigned</option>
-                    <option 
-                      v-for="s in staffDropdown" 
-                      :key="s.id" 
-                      :value="s.id" 
-                      :disabled="s.occupied"
-                      :class="{ 'text-danger': s.occupied }"
-                    >
-                      👨‍✈️ {{ s.name }} (ID: {{ s.id }})
-                    </option>
-                  </select>
+              <div class="col-12 position-relative">
+                <label class="modal-label">Assign Commander (Select date first)</label>
+                
+                <div class="input-wrapper position-relative" @click="staffDropdownOpen = true">
+                  <input 
+                    v-model="staffSearchQuery" 
+                    type="text" 
+                    class="modal-field w-100 pe-5" 
+                    placeholder="Search active guides by name or email..."
+                    @focus="staffDropdownOpen = true"
+                  >
+                  <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-white-50"></i>
                 </div>
+
+                <Transition name="fade">
+                  <div v-if="staffDropdownOpen" class="position-absolute w-100 mt-1 rounded-3 border border-white border-opacity-10 overflow-hidden shadow-lg z-index-top" style="background: rgba(10, 16, 13, 0.95); backdrop-filter: blur(20px); max-height: 220px; overflow-y: auto;">
+                    
+                    <div @click="clearStaffSelection" class="p-3 border-bottom border-white border-opacity-10 cursor-pointer hover-bg-glass text-white-50 fs-9">
+                      <i class="bi bi-x-circle me-2"></i> Leave Unassigned
+                    </div>
+
+                    <div v-if="availableStaff.length === 0" class="p-3 text-center text-white-50 fs-9 italic">
+                      No active guides match your search.
+                    </div>
+                    
+                    <div 
+                      v-for="s in availableStaff" 
+                      :key="s.id"
+                      @click="selectStaff(s)"
+                      class="p-3 border-bottom border-white border-opacity-5 cursor-pointer transition-all d-flex justify-content-between align-items-center"
+                      :class="{ 'opacity-50': s.occupied, 'hover-bg-glass': !s.occupied }"
+                    >
+                      <div>
+                        <span class="d-block fw-bold text-white fs-8">👨‍✈️ {{ s.name }}</span>
+                        <span class="fs-10 text-success-tint font-monospace">{{ s.email }}</span>
+                      </div>
+                      
+                      <span v-if="s.occupied" class="badge bg-danger bg-opacity-20 text-danger-tint border border-danger border-opacity-25 rounded-pill fs-10">Occupied</span>
+                      <span v-else-if="form.assigned_staff_id === s.id" class="badge bg-success text-dark rounded-pill fs-10"><i class="bi bi-check-lg"></i> Selected</span>
+                    </div>
+
+                  </div>
+                </Transition>
               </div>
               <div class="col-12">
                 <label class="modal-label">Expedition Media Gallery (Select 4 images, Max 500KB each) *</label>
@@ -284,13 +311,16 @@ const confirmStore = useConfirmStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const adminTreks = ref([])
 const staffDropdown = ref([])
+// -----
+const staffSearchQuery = ref('')
+const staffDropdownOpen = ref(false)
 const createModalActive = ref(false)
 const selectedGalleryFiles = ref([])
 const fileNameDisplay = ref('No file chosen')
 const filterExtremes = ref({ max_altitude: 6000 , max_price: 50000 , min_altitude: 0, min_price: 0})
 
 // Filtering state metrics
-const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 5000 })
+const filters = ref({ query: '', difficulty: '', price: 25000, altitude: 10000 })
 
 const mapPickerActive = ref(false)
 const tacticalCoords = ref({ lat: 32.2396, lng: 77.1887 })
@@ -357,6 +387,39 @@ watch(
     }
   }
 )
+
+// Computed property to filter out inactive staff AND apply the search query
+const availableStaff = computed(() => {
+  if (!staffDropdown.value) return []
+  
+  return staffDropdown.value.filter(s => {
+    // 1. Must be active (adjust checking logic based on your exact backend payload boolean/string)
+    const isActive = s.is_active === true || s.is_active === 'Active'
+    if (!isActive) return false
+    
+    // 2. Must match search query (if any)
+    const matchesSearch = s.name.toLowerCase().includes(staffSearchQuery.value.toLowerCase()) || 
+                          s.email.toLowerCase().includes(staffSearchQuery.value.toLowerCase())
+                          
+    return matchesSearch
+  })
+})
+
+// Function to handle selection
+function selectStaff(staff) {
+  if (staff.occupied) return // Prevent clicking occupied staff
+  
+  form.value.assigned_staff_id = staff.id
+  staffSearchQuery.value = staff.name // Update the input to show the selected name
+  staffDropdownOpen.value = false
+}
+
+// Function to clear selection
+function clearStaffSelection() {
+  form.value.assigned_staff_id = null
+  staffSearchQuery.value = ''
+  staffDropdownOpen.value = false
+}
 
 function openCreateModal() {
   form.value = {
@@ -495,6 +558,30 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+/* Style the input field itself */
+input[type="date"] {
+  background-color: rgba(62, 66, 57, 0.314);
+  color: white;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Hide or modify the calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1); /* Makes the black icon white for dark themes */
+}
+
+/* Style the text parts inside the input (day, month, year text) */
+input[type="date"]::-webkit-datetime-edit { padding: 2px; }
+input[type="date"]::-webkit-datetime-edit-fields-wrapper { background: transparent; }
+input[type="date"]::-webkit-datetime-edit-text { color: #888; padding: 0 0.3em; }
+input[type="date"]::-webkit-datetime-edit-month-field { color: #fff; }
+input[type="date"]::-webkit-datetime-edit-day-field { color: #fff; }
+input[type="date"]::-webkit-datetime-edit-year-field { color: #fff; }
+
 .glass-container { background: rgba(255, 255, 255, 0.05) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12) !important; padding: 0.5rem; }
 .trek-glass-card { background: rgba(255, 255, 255, 0.04) !important; backdrop-filter: blur(20px); transition: transform 0.2s; }
 .trek-glass-card:hover { transform: translateY(-3px); }
@@ -524,7 +611,7 @@ onMounted(() => {
 /* Modal overlay layouts */
 .admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
 .glass-modal-card { background: rgba(2, 7, 4, 0.422) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
-.max-vh-90 { max-height: 90vh; }
+.max-vh-70 { max-height: 70vh; }
 
 .modal-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 3px; display: block; }
 .input-wrapper { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 12px; }
@@ -626,5 +713,7 @@ onMounted(() => {
   background-color: rgba(255, 255, 255, 0.2) !important;
   color: #fff;
 }
+
+.z-index-top { z-index: 1050; } .hover-bg-glass:hover { background: rgba(255,255,255,0.05); }
 
 </style>

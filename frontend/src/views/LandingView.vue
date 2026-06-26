@@ -14,7 +14,7 @@
       </div>
     </header>
 
-    <main class="hero-center-container mt-2 pt-5">
+    <main class="hero-center-container mt-1 pt-5">
       <div class="badge-wrapper animate-fade-up" style="animation-delay: 0.1s;">
         <span class="glass-badge">🏔️ The Global Alpine Network</span>
       </div>
@@ -63,7 +63,7 @@
       </div>
     </section>
 
-    <section class="reviews-section container-fluid px-0 my-5 py-4">
+    <section class="reviews-section container-fluid px-0 my-3 py-4">
       <div class="container mb-5 text-center">
         <span class="badge border border-white border-opacity-20 rounded-pill px-3 py-2 fs-9 text-white-50 mb-3">WHAT EXPLORERS SAY</span>
         <h2 class="fw-bold tracking-tight text-white display-6">Don't take our word for it.</h2>
@@ -97,7 +97,7 @@
       </div>
     </section>
 
-    <section class="story-section container-fluid px-0 my-5 py-4">
+    <section class="story-section container-fluid px-0 my-3 py-4">
       <div class="container mb-4 text-start">
         <span class="badge border border-white border-opacity-20 rounded-pill px-3 py-1.5 fs-9 text-white-50 mb-3">THE APEX DOCTRINE</span>
         <h2 class="fw-bold tracking-tight text-white display-6 max-w-lg">Engineered for those who seek the silence above the tree line.</h2>
@@ -134,7 +134,7 @@
       </div>
     </section>
 
-    <section ref="commandDeskRef" class="command-showcase-section container my-5 py-5 text-start transition-scroll" >
+    <section ref="commandDeskRef" class="command-showcase-section container my-3 py-5 text-start transition-scroll" >
       
       <div class="glass-command-card p-4 p-lg-5 rounded-4 border border-white border-opacity-10 position-relative overflow-hidden shadow-lg" style="background: rgba(10, 15, 12, 0.6); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
         
@@ -198,7 +198,7 @@
       </div>
     </section>
     
-    <section class="architecture-section container my-5 py-5 text-center">
+    <section class="architecture-section container my-3 py-5 text-center">
       <div class="row g-4">
         <div class="col-lg-4">
           <div class="pillar-card p-4 p-md-5 rounded-4 h-100">

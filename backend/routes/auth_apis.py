@@ -18,6 +18,9 @@ def login():
         
         if not user.is_active:
            return make_response(jsonify({"message": "Account Deactivated"}), 403)
+       
+        if user.role.name == 'trek_staff' and user.blacklisted:
+            return make_response(jsonify({"message": "Account Restricted by Administration"}), 403)
     
         # Create the token using the user's ID as the "subject" (sub)
         access_token = create_access_token(identity=str(user.id))
@@ -82,19 +85,15 @@ def register():
     pattern = r'^[\w\.-]+@[\w\.-]+\.[\w]{2,}$'
     if re.match(pattern, email) is  None:
         return make_response(jsonify({"message": "Invalid email format"}), 400)
-        return redirect(url_for('auth_bp.register'))
     
     if not name.replace(" ", "").isalpha():
         return make_response(jsonify({"message": "Name must contain only alphabetic characters and spaces"}), 400)
-        return redirect(url_for('auth_bp.register'))
     
     if not(contact.isdigit() and len(contact) == 10):
         return make_response(jsonify({"message": "Contact number must be exactly 10 digits"}), 400)
-        return redirect(url_for('auth_bp.register'))
     
     if len(password) < 8:
         return make_response(jsonify({"message": "Password must be at least 8 characters long"}), 400)
-        return redirect(url_for('auth_bp.register'))
     
     # Check if user with the same email already exists
     if User.query.filter_by(email=email).first():

@@ -134,7 +134,7 @@
             </div>
             <div class="col-md-9">
               <span class="d-block text-white-50 small mb-1">CHRONIC DIAGNOSTICS</span>
-              <p class="m-0 fw-medium text-white">{{ medicalProfile.diagonisis || 'None declared.' }}</p>
+              <p class="m-0 fw-medium text-white">{{ medicalProfile.diagnosis || 'None declared.' }}</p>
             </div>
             <div class="col-md-6">
               <span class="d-block text-white-50 small mb-1">ALLERGIES & MEDICAL RESTRICTIONS</span>
@@ -173,7 +173,7 @@
                 <div class="profile-input-group">
                   <label class="input-label-tag">Chronic Diagnosis</label>
                   <div class="interactive-input-wrapper py-2">
-                    <textarea v-model="medicalFormFields.diagonisis" rows="2" class="clean-profile-field w-100 style-textarea" placeholder="Asthma, Diabetes, or None..."></textarea>
+                    <textarea v-model="medicalFormFields.diagnosis" rows="2" class="clean-profile-field w-100 style-textarea" placeholder="Asthma, Diabetes, or None..."></textarea>
                   </div>
                 </div>
               </div>
@@ -313,7 +313,7 @@ const userProfile = ref({
 
 const medicalProfile = ref({
   blood_group: '',
-  diagonisis: '',
+  diagnosis: '',
   allergies: '',
   medications: '',
   emergency_name: '',
@@ -324,7 +324,7 @@ const medicalProfile = ref({
 
 const medicalFormFields = ref({
   blood_group: '',
-  diagonisis: '',
+  diagnosis: '',
   allergies: '',
   medications: '',
   emergency_name: '',
@@ -449,7 +449,7 @@ async function submitMedicalForm() {
 function openMedicalModal() {
   // Deep copy the active values into input proxies so cancel operations keep historical metrics safe
   medicalFormFields.value = hasMedicalData.value ? { ...medicalProfile.value } : {
-    blood_group: '', diagonisis: '', allergies: '', medications: '', emergency_name: '', emergency_phone: '', emergency_relation: ''
+    blood_group: '', diagnosis: '', allergies: '', medications: '', emergency_name: '', emergency_phone: '', emergency_relation: ''
   }
   medicalModalVisible.value = true
 }

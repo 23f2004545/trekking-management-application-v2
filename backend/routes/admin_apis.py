@@ -279,7 +279,7 @@ def create_trek():
     end_date_str = data.get('end_date')
     max_altitude = data.get('max_altitude', 0)
     price = data.get('price_per_person', 0)
-    description = data.get('description', '')
+    description = data.get('description', 'An immersive high-altitude wilderness expedition traversing ancient alpine meadows, pristine glacial networks, and dramatic mountain corridors. Engineered for low-impact environmental exploration and clean mountain air.')
     assigned_staff_id = data.get('assigned_staff_id')
     lat_str = data.get('latitude')
     lng_str = data.get('longitude')
@@ -408,6 +408,8 @@ def manage_trek_by_id(trek_id):
         # All currently active bookings for this specific trek
             active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
             if new_status == 'Cancelled':
+                trek.available_slots = 25
+                db.session.commit()
                 log_system_audit("CANCEL", f"Trek #{trek_id} halted by Admin.", "danger")
             
             for booking in active_bookings:
@@ -427,10 +429,15 @@ def manage_trek_by_id(trek_id):
         
         staff_id = data.get('assigned_staff_id')
         change = False
-        if (staff_id and staff_id != 'null' and int(staff_id) != trek.assigned_staff_id) :
+        exist = False
+        if (staff_id and staff_id != 'null' and staff_id != trek.assigned_staff_id) :
             change = True
+            
         trek.assigned_staff_id = int(staff_id) if staff_id and staff_id != 'null' else None
-        staff = User.query.get(int(trek.assigned_staff_id))
+        
+        if (trek.assigned_staff_id != None) :
+            staff = User.query.get(int(trek.assigned_staff_id))
+            exist = True
         
         if data.get('start_date'):
             trek.start_date = datetime.strptime(data.get('start_date'), "%Y-%m-%d").date()
@@ -458,9 +465,9 @@ def manage_trek_by_id(trek_id):
                     db.session.add(new_image)
 
         db.session.commit()
-        if change:
+        if change and exist :
             create_notification(staff.id, f"Your have been assigned to lead TREK : {trek.trek_name}", "info")
-        else : 
+        elif change : 
             create_notification(staff.id, f"Trek {trek.trek_name} has been modified by Admin", "warning")
         cache.clear()
         return make_response(jsonify({"message": "Trekking route updated successfully"}), 200)
@@ -583,9 +590,9 @@ def trek_details(trek_id):
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
             "experience": staff_user.staff_profile.experience_years if staff_user and staff_user.staff_profile else None,
             "status": staff_user.staff_profile.status if staff_user and staff_user.staff_profile else "Active",
-            "specialization": staff_user.staff_profile.specialization if staff_user and staff_user.staff_profile else "General Mountaineering",
-            "certification": staff_user.staff_profile.certification if staff_user and staff_user.staff_profile else "Basic Certified",
-            "profile_pic": staff_user.profile_pic ,
+            "specialization": staff_user.staff_profile.specialization if staff_user and staff_user.staff_profile else "None",
+            "certification": staff_user.staff_profile.certification if staff_user and staff_user.staff_profile else "None",
+            "profile_pic": staff_user.profile_pic if staff_user else "/static/Profile_pics/trek_staff.png",
             "staff_rating_avg": staff_rating_avg ,
             "staff_reviews": staff_reviews_list
         }

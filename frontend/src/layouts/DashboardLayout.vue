@@ -111,7 +111,7 @@
       <div v-if="isMobileMenuOpen" class="mobile-drawer-backdrop" @click="isMobileMenuOpen = false"></div>
     </Transition>
 
-    <button v-if="authStore.role != 'admin'" @click="ticketModalActive = true" class="btn btn-warning rounded-circle position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; z-index: 1040;">
+    <button v-if="authStore.role != 'admin'" @click="ticketModalActive = true" class="btn btn-warning rounded-circle position-fixed bottom-0 end-0 m-4 shadow-lg d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; z-index: 998;">
       <i class="bi bi-headset fs-4"></i>
     </button>
 

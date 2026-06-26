@@ -372,3 +372,76 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
     </div>
     """
     send_html_email(user_email, f"Resolved: {subject}", html_body)
+    
+    
+# ==========================================================
+# 7. ASYNC : EXPORT TREK SPECIFIC INSIGHTS AFTER COMPLETION
+# ==========================================================  
+@celery_app.task(name='tasks.export_history_telemetry')
+def export_history_telemetry(admin_email, admin_name, payload):
+    trek_meta = payload.get('trek_info', {})
+    analytics = payload.get('analytics', {})
+    staff = payload.get('staff_info', {})
+    
+    html_body = f"""
+    <div style="font-family: 'Consolas', 'Courier New', monospace; max-width: 650px; margin: 0 auto; background-color: #050a08; color: #cbd5e1; border-radius: 8px; border: 1px solid #198754; overflow: hidden;">
+        
+        <div style="background-color: #0b1f15; padding: 20px; border-bottom: 2px solid #7bf1a8; text-align: left;">
+            <h2 style="margin: 0; color: #ffffff; letter-spacing: 2px; text-transform: uppercase;">APEX OPERATIONS</h2>
+            <p style="margin: 5px 0 0 0; color: #7bf1a8; font-size: 12px;">Archived Telemetry Export // CONFIDENTIAL</p>
+        </div>
+        
+        <div style="padding: 30px;">
+            <p style="color: #ffffff;">Authorized Requestor: <strong>{admin_name}</strong></p>
+            <p style="font-size: 13px; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 15px;">The following data packet contains the operational yield and manifest overview for the requested historical deployment.</p>
+            
+            <h3 style="color: #ffffff; margin-top: 25px; border-left: 3px solid #7bf1a8; padding-left: 10px;">SECTOR: {trek_meta.get('name')}</h3>
+            <table style="width: 100%; font-size: 13px; margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 10px;">
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">DURATION:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('duration')} Days</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">ALTITUDE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('altitude')}m</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; color: #64748b;">TIMELINE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('start_date')} to {trek_meta.get('end_date')}</td>
+                </tr>
+            </table>
+
+            <h3 style="color: #ffffff; margin-top: 25px; border-left: 3px solid #198754; padding-left: 10px;">ASSIGNED COMMANDER</h3>
+            <p style="margin: 5px 0; font-size: 14px; color: #7bf1a8;">{staff.get('name')}</p>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">ID: {staff.get('email')} | Clearance: {staff.get('certification')}</p>
+
+            <h3 style="color: #ffffff; margin-top: 35px; border-bottom: 1px solid #1e293b; padding-bottom: 5px;">OPERATIONAL YIELD</h3>
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <div style="width: 48%; background: #0b1f15; padding: 15px; border: 1px solid #198754; border-radius: 4px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px;">GROSS REVENUE</span>
+                    <strong style="font-size: 20px; color: #ffffff;">INR {analytics.get('total_revenue')}</strong>
+                </div>
+                <div style="width: 48%; background: #1e1b15; padding: 15px; border: 1px solid #9a3412; border-radius: 4px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #fdba74; letter-spacing: 1px;">DROPS / CANCELLATIONS</span>
+                    <strong style="font-size: 20px; color: #ffffff;">{analytics.get('cancelled_participants')} Pax</strong>
+                </div>
+            </div>
+            
+            <table style="width: 100%; font-size: 13px; margin-top: 20px;">
+                <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Explorers Cleared:</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('completed_participants')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Distinct Passports:</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('accounts_booked')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Completion Rate:</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #7bf1a8;">{analytics.get('completion_rate')}%</td>
+                </tr>
+            </table>
+
+            <p style="font-size: 11px; color: #475569; text-align: center; margin-top: 40px;">End of Transmission.<br>Generated automatically by Apex System Architecture.</p>
+        </div>
+    </div>
+    """
+    send_html_email(admin_email, f"Archived Telemetry: {trek_meta.get('name')}", html_body)

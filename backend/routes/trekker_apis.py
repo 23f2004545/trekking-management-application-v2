@@ -192,7 +192,7 @@ def get_medical_record():
     return make_response(jsonify({
         "has_data": True,
         "blood_group": record.blood_group,
-        "diagonisis": record.diagonisis,
+        "diagnosis": record.diagnosis,
         "allergies": record.allergies,
         "medications": record.medications,
         "emergency_name": record.emergency_name,
@@ -224,7 +224,7 @@ def save_medical_record():
         record = MedicalRecord(
                     trekker_id=user_id,
                     blood_group=data.get('blood_group', '').strip().upper(),
-                    diagonisis=data.get('diagonisis', '').strip(),
+                    diagnosis=data.get('diagnosis', '').strip(),
                     allergies=data.get('allergies', '').strip(),
                     medications=data.get('medications', '').strip(),
                     emergency_name=emergency_name.title(),
@@ -234,7 +234,7 @@ def save_medical_record():
         db.session.add(record)
         
     record.blood_group = data.get('blood_group', '').strip().upper()
-    record.diagonisis = data.get('diagonisis', '').strip()
+    record.diagnosis = data.get('diagnosis', '').strip()
     record.allergies = data.get('allergies', '').strip()
     record.medications = data.get('medications', '').strip()
     record.emergency_name = emergency_name.title()

@@ -130,11 +130,11 @@
               </div>
               <div class="col-md-6">
                 <label class="modal-input-label">Start Date Coordinates</label>
-                <div class="modal-input-wrapper"><input v-model="editForm.start_date" type="date" class="modal-clean-field"></div>
+                <input v-model="editForm.start_date" type="date" class="modal-clean-field">
               </div>
               <div class="col-md-6">
                 <label class="modal-input-label">End Date Coordinates</label>
-                <div class="modal-input-wrapper"><input v-model="editForm.end_date" type="date" class="modal-clean-field"></div>
+                <input v-model="editForm.end_date" type="date" class="modal-clean-field">
               </div>
               <div class="col-md-6">
                 <label class="modal-input-label">Peak Altitude (mt)</label>
@@ -148,7 +148,7 @@
                 <label class="modal-input-label">Status Lifecycle State</label>
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.status" class="modal-clean-field bg-transparent select-fix">
-                    <option :value="Pending" disabled selected>Select Status</option>
+                    <option value="Pending" disabled selected>Select Status</option>
                     <option value="Open">Open</option> <option value="Ongoing">On going</option> <option value="Closed">Closed</option> 
                     <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
                   </select>
@@ -162,13 +162,13 @@
                   </div>
                 </Transition>
               </div>
-              <div class="col-12">
+              <!-- <div class="col-12">
                 <label class="modal-input-label">Change Assigned Guide Staff</label>
                 <div class="modal-input-wrapper">
                   <select v-model="editForm.assigned_staff_id" class="modal-clean-field bg-transparent select-fix">
                     <option :value="null">Leave Unassigned</option>
                     <option 
-                      v-for="s in availableStaff" 
+                      v-for="s in staffOptions" 
                       :key="s.id" 
                       :value="s.id" 
                       :disabled="s.occupied"
@@ -178,6 +178,50 @@
                     </option>
                   </select>
                 </div>
+              </div> -->
+              <div class="col-12 position-relative">
+                <label class="modal-label">Assign Commander (Select date first)</label>
+                
+                <div class="input-wrapper position-relative" @click="staffDropdownOpen = true">
+                  <input 
+                    v-model="staffSearchQuery" 
+                    type="text" 
+                    class="modal-field w-100 pe-5" 
+                    placeholder="Search active guides by name or email..."
+                    @focus="staffDropdownOpen = true"
+                  >
+                  <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-white-50"></i>
+                </div>
+
+                <Transition name="fade">
+                  <div v-if="staffDropdownOpen" class="position-absolute w-100 mt-1 rounded-3 border border-white border-opacity-10 overflow-hidden shadow-lg z-index-top" style="background: rgba(10, 16, 13, 0.95); backdrop-filter: blur(20px); max-height: 220px; overflow-y: auto;">
+                    
+                    <div @click="clearStaffSelection" class="p-3 border-bottom border-white border-opacity-10 cursor-pointer hover-bg-glass text-white-50 fs-9">
+                      <i class="bi bi-x-circle me-2"></i> Leave Unassigned
+                    </div>
+
+                    <div v-if="availableStaff.length === 0" class="p-3 text-center text-white-50 fs-9 italic">
+                      No active guides match your search.
+                    </div>
+                    
+                    <div 
+                      v-for="s in availableStaff" 
+                      :key="s.id"
+                      @click="selectStaff(s)"
+                      class="p-3 border-bottom border-white border-opacity-5 cursor-pointer transition-all d-flex justify-content-between align-items-center"
+                      :class="{ 'opacity-50': s.occupied, 'hover-bg-glass': !s.occupied }"
+                    >
+                      <div>
+                        <span class="d-block fw-bold text-white fs-8">👨‍✈️ {{ s.name }}</span>
+                        <span class="fs-10 text-success-tint font-monospace">{{ s.email }}</span>
+                      </div>
+                      
+                      <span v-if="s.occupied" class="badge bg-danger bg-opacity-20 text-danger-tint border border-danger border-opacity-25 rounded-pill fs-10">Occupied</span>
+                      <span v-else-if="editForm.assigned_staff_id === s.id" class="badge bg-success text-dark rounded-pill fs-10"><i class="bi bi-check-lg"></i> Selected</span>
+                    </div>
+
+                  </div>
+                </Transition>
               </div>
 
               <div class="col-12">
@@ -307,6 +351,9 @@ const editForm = ref({})
 const staffModifyModalActive = ref(false)
 const paymentPayload = ref({})
 
+const staffSearchQuery = ref('')
+const staffDropdownOpen = ref(false)
+
 const show = ref(true)
 
 const staffEditForm = ref({
@@ -321,14 +368,6 @@ const absoluteLat = computed(() =>  trekData.value.latitude)
 const absoluteLng = computed(() =>  trekData.value.longitude)
 const location = computed(() => trekData.value.location)
 
-const availableStaff = computed(() => {
-  // If staffOptions hasn't loaded yet, return an empty array
-  if (!staffOptions.value) return [];
-  
-  // Filter out anyone who isn't 'Active'
-  return staffOptions.value.filter(staff => staff.is_active === 'Active');
-})
-const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
 
 const totalPassengers = computed(() => form.value.adults + form.value.children + form.value.seniors)
 const computedTotalPrice = computed(() => {
@@ -519,12 +558,70 @@ watch(
   }
 )
 
+// Computed property to filter out inactive staff AND apply the search query
+const availableStaff = computed(() => {
+  if (!staffOptions.value) return []
+  
+  return staffOptions.value.filter(s => {
+    // 1. Must be active (adjust checking logic based on your exact backend payload boolean/string)
+    const isActive = s.is_active === true || s.is_active === 'Active'
+    if (!isActive) return false
+    
+    // 2. Must match search query (if any)
+    const matchesSearch = s.name.toLowerCase().includes(staffSearchQuery.value.toLowerCase()) || 
+                          s.email.toLowerCase().includes(staffSearchQuery.value.toLowerCase())
+                          
+    return matchesSearch
+  })
+})
+
+// Function to handle selection
+function selectStaff(staff) {
+  if (staff.occupied) return // Prevent clicking occupied staff
+  
+  editForm.value.assigned_staff_id = staff.id
+  staffSearchQuery.value = staff.name // Update the input to show the selected name
+  staffDropdownOpen.value = false
+}
+
+// Function to clear selection
+function clearStaffSelection() {
+  editForm.value.assigned_staff_id = null
+  staffSearchQuery.value = ''
+  staffDropdownOpen.value = false
+}
+
 onMounted(() => {
   fetchLiveTrekDetails()
 })
 </script>
 
 <style scoped>
+
+/* Style the input field itself */
+input[type="date"] {
+  background-color: rgba(62, 66, 57, 0.314);
+  color: white;
+  border: 1px solid #333;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Hide or modify the calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1); /* Makes the black icon white for dark themes */
+}
+
+/* Style the text parts inside the input (day, month, year text) */
+input[type="date"]::-webkit-datetime-edit { padding: 2px; }
+input[type="date"]::-webkit-datetime-edit-fields-wrapper { background: transparent; }
+input[type="date"]::-webkit-datetime-edit-text { color: #888; padding: 0 0.3em; }
+input[type="date"]::-webkit-datetime-edit-month-field { color: #fff; }
+input[type="date"]::-webkit-datetime-edit-day-field { color: #fff; }
+input[type="date"]::-webkit-datetime-edit-year-field { color: #fff; }
+
+
 .checkout-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.456) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(20px) !important; z-index: 999 !important; }
 .glass-checkout-card { background: rgba(6, 27, 11, 0.452) !important; backdrop-filter: blur(9px); width: 100%; max-width: 440px; }
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
@@ -536,7 +633,11 @@ onMounted(() => {
 .btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.1rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
 .alert-senior-msg { background: rgba(255, 193, 7, 0.08); }
-.fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .gap-3 { gap: 12px; }
+.fs-8 { font-size: 0.88rem; } .fs-9 { font-size: 0.76rem; } .gap-3 { gap: 12px; } .fs-10 { font-size: 0.72rem; }
+.modal-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 3px; display: block; }
+.input-wrapper { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 12px; }
+.modal-field { border: none; background: transparent; color: #fff; outline: none; width: 100%; font-size: 0.9rem; }
+.z-index-top { z-index: 1050; } .hover-bg-glass:hover { background: rgba(255,255,255,0.05); }
 
 .file-custom-btn {
   background: rgba(255, 255, 255, 0.15);

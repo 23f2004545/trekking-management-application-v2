@@ -145,91 +145,142 @@ def get_historical_treks():
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
     
-    # Base query: Only Completed Treks
-    query = Trek.query.filter_by(status='Completed')
     is_onboarded = True
-    # RBAC Security Check
     if user.role.name == 'trek_staff':
-        # Restrict to ONLY this guide's treks
         if not user.staff_profile:
             return make_response(jsonify({"message": "Staff profile missing."}), 403)
-        query = query.filter_by(assigned_staff_id=user.id)
-        is_onboarded = user.staff_profile.specialization != "Pending"
+        is_onboarded = user.staff_profile.emergency_contact != "1234567890"
+
+    # 1. Fetch all archived bookings (Completed or Cancelled)
+    past_bookings_query = Booking.query.filter(Booking.status.in_(['Completed', 'Cancelled']))
+    
+    if user.role.name == 'trek_staff':
+        past_bookings_query = past_bookings_query.join(Trek).filter(Trek.assigned_staff_id == user.id)
     elif user.role.name != 'admin':
-        return make_response(jsonify({"message": "Unauthorized role."}), 403)
+        return make_response(jsonify({"message": "Unauthorized role clearance."}), 403)
         
-    completed_treks = query.order_by(Trek.end_date.desc()).all()
+    all_past_bookings = past_bookings_query.all()
+
+    # 2. GROUPING ENGINE: Map bookings into unique Departure Cohorts
+    # Key format: "trekId_YYYY-MM-DD"
+    cohorts = {}
+
+    for b in all_past_bookings:
+        t = b.trek
+        # Pull from your new snapshots, fallback to Trek table if testing older un-migrated rows
+        s_start = getattr(b, 'snapshot_start_date', None) or t.start_date
+        s_end = getattr(b, 'snapshot_end_date', None) or t.end_date
+        s_price = getattr(b, 'snapshot_price', None) or t.price_per_person
+        
+        start_str = s_start.strftime("%Y-%m-%d") if hasattr(s_start, 'strftime') else str(s_start)
+        cohort_key = f"{t.trek_id}_{start_str}"
+
+        if cohort_key not in cohorts:
+            cohorts[cohort_key] = {
+                "trek": t,
+                "start_date": s_start,
+                "end_date": s_end,
+                "price": s_price,
+                "completed": [],
+                "cancelled": []
+            }
+            
+        if b.status == 'Completed': cohorts[cohort_key]["completed"].append(b)
+        elif b.status == 'Cancelled': cohorts[cohort_key]["cancelled"].append(b)
+
+    # 3. Secondary Failsafe: Catch completed treks that had 0 bookings
+    empty_treks = Trek.query.filter_by(status='Completed').all()
+    if user.role.name == 'trek_staff':
+        empty_treks = [t for t in empty_treks if t.assigned_staff_id == user.id]
+
+    for t in empty_treks:
+        start_str = t.start_date.strftime("%Y-%m-%d") if hasattr(t.start_date, 'strftime') else str(t.start_date)
+        key = f"{t.trek_id}_{start_str}"
+        if key not in cohorts:
+            cohorts[key] = {"trek": t, "start_date": t.start_date, "end_date": t.end_date, "price": t.price_per_person, "completed": [], "cancelled": []}
+
+    # 4. Compile final payload matching your exact UI dictionary
     results = []
     
-    # Use the aggregation logic we mapped out earlier
-    for trek in completed_treks:
-        completed_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Completed').all()
-        cancelled_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Cancelled').all()
-        
-        comp_pax = sum(b.number_of_persons for b in completed_bookings)
-        canc_pax = sum(b.number_of_persons for b in cancelled_bookings)
-        revenue = sum(b.total_amount for b in completed_bookings if b.payment_status == 'Paid')
-        
-        reviews = Review.query.filter_by(trek_id=trek.trek_id).all()
-        avg_trek = sum(r.trek_rating for r in reviews) / len(reviews) if reviews else 0
-        
-        # Unique accounts that booked
-        unique_accounts = {b.user.id for b in completed_bookings}
-        
-        # Roster details
-        roster = []
-        for b in completed_bookings:
-            roster.append({
-                "name": b.user.name,
-                "email": b.user.email,
-                "contact": b.user.contact,
-                "pax": b.number_of_persons,
-                # "medical" : b.instructions 
-            })
+    for key, data in cohorts.items():
+        t = data["trek"]
+        comp_b = data["completed"]
+        canc_b = data["cancelled"]
 
+        comp_pax = sum(b.number_of_persons for b in comp_b)
+        canc_pax = sum(b.number_of_persons for b in canc_b)
+        
+        revenue = sum(
+            (getattr(b, 'snapshot_price', data["price"]) * b.number_of_persons) 
+            for b in comp_b if getattr(b, 'payment_status', 'Paid') == 'Paid'
+        )
+        
+        unique_accounts = {b.user.id for b in comp_b if b.user}
+        
+        roster = [{
+            "name": b.user.name, "email": b.user.email, "contact": b.user.contact,
+            "pax": b.number_of_persons, 
+            "medical": getattr(b, 'medical_instructions', getattr(b, 'instructions', 'Clear. No conditions flagged.'))
+        } for b in comp_b if b.user]
+
+        reviews = Review.query.filter_by(trek_id=t.trek_id).all()
+        avg_trek = sum(r.trek_rating for r in reviews) / len(reviews) if reviews else 0
         avg_staff = sum(r.staff_rating for r in reviews if r.staff_rating) / len([r for r in reviews if r.staff_rating]) if reviews else 0
         
-        if trek.assigned_staff_id:
-            staff = User.query.get(int(trek.assigned_staff_id))
-        
+        staff_id_val = getattr(t, 'assigned_staff_id', None)
+        staff = User.query.get(int(staff_id_val)) if (staff_id_val and str(staff_id_val).isdigit()) else None
+
+        fmt_s = data["start_date"].strftime("%b %d, %Y") if hasattr(data["start_date"], 'strftime') else str(data["start_date"])
+        fmt_e = data["end_date"].strftime("%b %d, %Y") if hasattr(data["end_date"], 'strftime') else str(data["end_date"])
+
         results.append({
-            "is_onboarded": is_onboarded,
-            "trek_id": trek.trek_id,
+            "trek_id": t.trek_id,
             "trek_info": {
-                "name": trek.trek_name,
-                "duration": trek.duration_days,
-                "difficulty": trek.difficulty,
-                "description": trek.description,
-                "location": trek.location,
-                "start_date": trek.start_date.strftime("%b %d, %Y"),
-                "end_date": trek.end_date.strftime("%b %d, %Y"),
-                "altitude": trek.max_altitude,
-                "price": trek.price_per_person
+                "name": t.trek_name, "duration": t.duration_days, "difficulty": t.difficulty,
+                "description": t.description or "An immersive high-altitude wilderness expedition traversing ancient alpine meadows and glacial networks.",
+                "location": t.location, "start_date": fmt_s, "end_date": fmt_e,
+                "altitude": t.max_altitude, "price": data["price"]
             },
             "staff_info": {
                 "name": staff.name if staff else "Unassigned",
                 "contact": staff.contact if staff else "N/A",
-                "email" : staff.email if staff else None,
-                "experience": getattr(staff.staff_profile, 'experience_years', "Verified Guide") if staff else "N/A",
-                "certification": getattr(staff.staff_profile, 'certification', "ABVIMAS Certified") if staff else "N/A"
+                "email": staff.email if staff else "None",
+                "experience": getattr(staff.staff_profile, 'experience_years', "Verified") if (staff and hasattr(staff, 'staff_profile')) else "N/A",
+                "certification": getattr(staff.staff_profile, 'certification', "ABVIMAS Cleared") if (staff and hasattr(staff, 'staff_profile')) else "N/A",
+                "profile_pic" : staff.profile_pic if staff else "/static/Profile_pics/trek_staff.png"
             },
             "analytics": {
-                "total_revenue": revenue,
-                "accounts_booked": len(unique_accounts),
-                "completed_participants": comp_pax,
-                "cancelled_participants": canc_pax,
-                "completion_rate": int((comp_pax / (comp_pax + canc_pax) * 100)) if (comp_pax + canc_pax) > 0 else 0
+                "total_revenue": revenue, "accounts_booked": len(unique_accounts),
+                "completed_participants": comp_pax, "cancelled_participants": canc_pax,
+                "completion_rate": int((comp_pax / (comp_pax + canc_pax) * 100)) if (comp_pax + canc_pax) > 0 else 100
             },
             "roster": roster,
             "reviews": {
-                "trek_avg": round(avg_trek, 1),
-                "staff_avg": round(avg_staff, 1),
+                "trek_avg": round(avg_trek, 1), "staff_avg": round(avg_staff, 1),
                 "trek_list": [{"id": r.id, "author": r.author.name, "stars": r.trek_rating, "comment": r.trek_experience} for r in reviews if r.trek_rating],
                 "staff_list": [{"id": r.id, "author": r.author.name, "stars": r.staff_rating, "comment": r.staff_experience} for r in reviews if r.staff_rating]
             }
         })
+
+    # Sort most recently completed trip first
+    results.sort(key=lambda x: x["trek_info"]["end_date"], reverse=True)
         
-    return make_response(jsonify(results), 200)
+    return make_response(jsonify({"is_onboarded": is_onboarded, "results": results}), 200)
+
+
+@utils_bp.route('/export-history', methods=['POST'])
+@jwt_required()
+def export_historical_data():
+    from tasks import export_history_telemetry
+    
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(user_id)
+    payload = request.get_json()
+    
+    # Fire the Celery worker asynchronously
+    export_history_telemetry.delay(user.email, user.name, payload)
+    
+    return jsonify({"message": "Telemetry export initialized. Check your encrypted inbox."}), 200
 
 
 @utils_bp.route('/tickets', methods=['POST', 'GET'])

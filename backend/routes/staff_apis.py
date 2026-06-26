@@ -26,7 +26,7 @@ def get_staff_dashboard_stats():
     if not staff:
         return make_response(jsonify({"message": "Staff profile constraints not found."}), 403)
     
-    is_onboarded = staff.specialization != "Pending"
+    is_onboarded = staff.emergency_contact != "1234567890"
 
     current_date = datetime.now(timezone.utc).date()
     
@@ -340,6 +340,8 @@ def update_trek_field_data(trek_id):
         # All currently active bookings for this specific trek
         active_bookings = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').all()
         if new_status == 'Cancelled':
+                trek.available_slots = 25
+                db.session.commit()
                 log_system_audit("CANCEL", f"Trek #{trek_id} halted by Staff {user.email}.", "danger")
         for booking in active_bookings:
             if new_status == 'Completed':

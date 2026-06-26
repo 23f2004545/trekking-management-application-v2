@@ -151,11 +151,11 @@
 
             <div v-if="mode!='readonly'" class="mt-4 pt-2 border-top border-white border-opacity-5 d-flex align-items-center justify-content-between flex-wrap gap-3">
               <div class="d-flex justify-content-end gap-2 w-100 pt-3">
-                <button type="button" @click="$emit('admin-toggle-blacklist', profile.id)" class="btn btn-sm btn-outline-warning rounded-pill px-4 py-2 fs-9 fw-semibold">
+                <button type="button" @click="confirmStore.ask('Are you sure to ' + (profile.blacklisted ? 'whitelist' : 'blacklist') + ' ' + profile.name + '?', () => $emit('admin-toggle-blacklist', profile.id))" class="btn btn-sm rounded-pill px-4 py-2 fs-9 fw-semibold" :class="profile.blacklisted === false ? 'btn-outline-warning' : 'btn-outline-success' " >
                   {{ profile.blacklisted ? 'Whitelist' : 'Blacklist' }}
                 </button>
-                <button type="button" @click="$emit('admin-toggle-active', profile.id)" class="btn btn-sm btn-danger rounded-pill px-4 py-2 fs-9 fw-bold">
-                  {{ profile.is_active ? 'Deactivate' : 'Re-Activate' }}
+                <button type="button" @click="confirmStore.ask('Are you sure about ' + (profile.is_active ? 'deactivating' : 'reactivating') + ' ' + profile.name + '`s account ?', () => $emit('admin-toggle-active', profile.id))" class="btn btn-sm rounded-pill px-4 py-2 fs-9 fw-bold" :class="profile.is_active === true ? 'btn-danger' : 'btn-success' ">
+                  {{ profile.is_active ? 'Deactivate' : 'Reactivate' }}
                 </button>
               </div>
             </div>
@@ -171,7 +171,9 @@
 
 <script setup>
 import { readonly } from 'vue';
+import { useConfirmStore } from '@/stores/confirm.js'
 
+const confirmStore = useConfirmStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL 
 
 defineProps({
