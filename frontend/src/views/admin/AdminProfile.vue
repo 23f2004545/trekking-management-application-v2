@@ -48,6 +48,16 @@
                             <span class="badge bg-success bg-opacity-20 text-success-tint border border-success border-opacity-25 rounded-pill px-3 py-1">ONGOING</span>
                             </div>
 
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-end mb-2">
+                                    <span class="fs-10 text-white-50 uppercase tracking-widest">Day {{ op.day_current }} of {{ op.day_total }}</span>
+                                    <span class="fs-10 text-white-50">{{ op.start_date }} ➔ {{ op.end_date }}</span>
+                                </div>
+                                <div class="progress bg-black bg-opacity-40" style="height: 6px; border-radius: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" :style="{ width: op.progress + '%' }" :aria-valuenow="op.progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
                             <div class="bg-black bg-opacity-25 rounded-3 p-3 d-flex justify-content-between align-items-center border border-white border-opacity-5">
                                 <div>
                                     <span class="d-block fs-9 text-white-50 uppercase tracking-widest mb-1">FIELD GUIDE</span>
@@ -69,7 +79,7 @@
       <div class="col-lg-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold tracking-tight m-0">Immutable Audit Log</h5>
-          <span class="fs-9 text-white-50 italic">Latest 50 Events</span>
+          <button @click="clearLogs" class="btn btn-sm btn-outline-light rounded-pill fw-semibold">Clear logs</button>
         </div>
         
         <div class="audit-glass-container p-4 rounded-4 border border-white border-opacity-10 h-100">
@@ -108,6 +118,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { secureFetch } from '../../utils/api.js'
+import { useAlertStore } from '../../stores/alert.js'
+
+
+const alertStore = useAlertStore()
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -135,6 +149,23 @@ async function loadSystemCore() {
   } catch (err) {
     console.error("Core synchronization failed.", err)
   }
+}
+
+async function clearLogs() {
+  try {
+    if (auditLogs.value.length === 0){
+      alertStore.showAlert('No logs to clear.', 'warning')
+      return 
+    }
+    const res = await secureFetch(`${BACKEND_URL}/api/admin/profile/audit-logs`, { method: 'DELETE' })
+    if (res.ok) {
+      alertStore.showAlert('All Logs cleared from backend.', 'success')
+      await loadSystemCore()
+    }
+  } catch (err) { 
+    alertStore.showAlert('Action Failed', 'danger')
+   }
+  
 }
 
 onMounted(() => {
@@ -174,4 +205,6 @@ onMounted(() => {
 .fs-9 { font-size: 0.78rem; }
 .fs-10 { font-size: 0.65rem; }
 .lh-sm { line-height: 1.4; }
+
 </style>
+

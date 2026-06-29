@@ -27,6 +27,7 @@
     </div>
 
     <div class="d-flex flex-column gap-3">
+      
       <div v-for="member in filteredStaff" :key="member.id" class="staff-rect-card p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">

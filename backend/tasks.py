@@ -445,3 +445,67 @@ def export_history_telemetry(admin_email, admin_name, payload):
     </div>
     """
     send_html_email(admin_email, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
+    
+    
+# ==========================================================
+# 8. ASYNC : TREK COMPLETION/CANCELLATION MAIL
+# ==========================================================  
+@celery_app.task(name='tasks.dispatch_cancellation_email')
+def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reason, cancelled_by="Administration"):
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #7f1d1d;">
+        <div style="background-color: #7f1d1d; padding: 25px; text-align: center; border-bottom: 3px solid #ef4444;">
+            <h2 style="margin: 0; color: #ffffff; letter-spacing: 2px; font-size: 18px; text-transform: uppercase;">Expedition Aborted</h2>
+            <p style="margin: 5px 0 0 0; color: #fca5a5; font-size: 13px;">Official Cancellation Notice</p>
+        </div>
+        <div style="padding: 30px;">
+            <p style="color: #cbd5e1; font-size: 15px;">Explorer {user_name},</p>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">We deeply regret to inform you that your upcoming <strong>{duration}-Day</strong> expedition to <strong>{trek_name}</strong> has been officially halted by {cancelled_by}.</p>
+            
+            <div style="background-color: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444; margin: 25px 0;">
+                <span style="color: #fca5a5; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Declaration of Cancellation</span>
+                <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; line-height: 1.6;">"{reason}"</p>
+            </div>
+            
+            <p style="color: #94a3b8; font-size: 13px;">Your payment status has been shifted to the refund pipeline. We apologize for the operational disruption. True alpine environments require absolute safety compliance.</p>
+            
+            <div style="text-align: center; margin-top: 35px;">
+                <a href="http://localhost:5173/" style="background-color: #ffffff; color: #000000; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Explore Alternate Routes</a>
+            </div>
+        </div>
+    </div>
+    """
+    send_html_email(user_email, f"CRITICAL: {trek_name} Cancelled", html_body)
+
+@celery_app.task(name='tasks.dispatch_completion_email')
+def dispatch_completion_email(user_email, user_name, trek_name, duration, altitude):
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #050a08; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #198754;">
+        <div style="background-color: #198754; padding: 25px; text-align: center; border-bottom: 3px solid #7bf1a8;">
+            <h2 style="margin: 0; color: #ffffff; letter-spacing: 2px; font-size: 18px; text-transform: uppercase;">Expedition Concluded</h2>
+            <p style="margin: 5px 0 0 0; color: #e2e8f0; font-size: 13px;">Welcome back to Basecamp.</p>
+        </div>
+        <div style="padding: 30px;">
+            <p style="color: #cbd5e1; font-size: 15px;">Congratulations {user_name},</p>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">Your <strong>{duration}-Day</strong> deployment to <strong>{trek_name}</strong> has been officially marked as completed by your Field Commander.</p>
+            
+            <div style="display: flex; justify-content: space-between; margin: 25px 0;">
+                <div style="width: 48%; background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase;">Peak Altitude</span>
+                    <strong style="font-size: 20px; color: #ffffff;">{altitude}m</strong>
+                </div>
+                <div style="width: 48%; background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
+                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase;">Status</span>
+                    <strong style="font-size: 20px; color: #ffffff;">CLEARED</strong>
+                </div>
+            </div>
+            
+            <p style="color: #94a3b8; font-size: 13px; text-align: center;">Your telemetry data assists future explorers. We request you log an official terrain and commander evaluation.</p>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="http://localhost:5173/portal/trekker/history" style="background-color: #7bf1a8; color: #0b1f15; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Log Official Review</a>
+            </div>
+        </div>
+    </div>
+    """
+    send_html_email(user_email, f"Expedition Cleared: {trek_name}", html_body)

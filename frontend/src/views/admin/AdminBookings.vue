@@ -7,7 +7,7 @@
         <p class="m-0 text-white-50 fs-8 mt-1">Audit active reservations parameters and timeline flags.</p>
       </div>
       <select v-model="statusFilter" class="form-select bg-dark text-white border-white border-opacity-25 shadow-sm rounded-pill px-4 py-2 fs-8" style="width: auto; cursor: pointer;">
-        <option value="All">All Statuses</option>
+        <option value="All">All Status</option>
         <option value="Upcoming"> Upcoming</option>
         <option value="Ongoing"> Ongoing</option>
         <option value="Completed"> Completed</option>
@@ -16,7 +16,14 @@
     </div>
 
     <div v-if="!activeAuditDetail" class="d-flex flex-column gap-3">
-      <div v-for="item in filteredBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
+
+      <div v-if="filteredBookings.length == 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
+        <span class="fs-1"><i class="bi bi-journal-text"></i></span>
+        <h5 class="fw-bold mt-2">No Booking Records Found</h5>
+        <p class="text-white-50 small m-0">No booking records logged in the backend matching your filter.</p>
+      </div>
+
+      <div v-else v-for="item in filteredBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
           <img :src="BACKEND_URL + item.trekker.profile_pic" alt="Trekker" class="rect-profile-img shadow" />

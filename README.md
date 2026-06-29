@@ -77,21 +77,25 @@ Apex_Expeditions/
 ├── backend/                 # Python Flask API Core
 │   ├── app.py               # Application Factory & Config
 │   ├── tasks.py             # Celery Background Workers (Emails/Exports)
+│   ├── mail.py              # SMTP Setup & Mail Functioning (Mailpit)
+│   ├── config.py             # Configuration file
 │   ├── controller/
 │   │   ├── models.py        # Database Schema (User, Trek, Booking, Tickets, etc.)
+│   │   ├── decorators.py    # Decorators for different roles 
 │   │   └── extensions.py    # SQLAlchemy, JWT, Cache Initialization
 │   └── routes/              # Blueprint Modules
-│       ├── admin_bp.py      # Infrastructure, Staff Auth, Fleet Management
-│       ├── auth_bp.py       # Passwordless OTP & JWT Rotations
-│       ├── staff_bp.py      # Guide Manifests & Operations
-│       ├── trekker_bp.py    # Explorer Bookings & Payments
-│       └── utils_bp.py      # Shared History Aggregations & Support Desk
+│       ├── admin_apis.py      # Infrastructure, Staff Auth, Fleet Management
+│       ├── auth_apis.py       # Passwordless OTP & JWT Rotations
+│       ├── staff_apis.py      # Guide Manifests & Operations
+│       ├── trekker_apis.py    # Explorer Bookings & Payments
+│       └── utils_apis.py      # Shared History Aggregations & Support Desk
 │
 └── frontend/                # Vue.js 3 SPA
     ├── index.html           # PWA Entry Point
     ├── vite.config.js       # Vite & PWA Plugin Configurations
     ├── src/
     │   ├── main.js          # Vue App Initialization
+    │   ├── App.vue          
     │   ├── router/          # Route Guards & Navigation
     │   ├── stores/          # Pinia State (Auth, Alerts)
     │   ├── utils/           # JWT Interceptors & API Wrappers
@@ -136,9 +140,9 @@ npm run build
 npm run preview
 ```
 
---- 
-
 - Access the client portal at http://localhost:5173
+
+--- 
 
 ## 📜 Standardized API Architecture (Sample)
 The backend enforces strict separation of concerns via RESTful JSON blueprints.

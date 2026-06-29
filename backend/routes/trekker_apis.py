@@ -398,6 +398,7 @@ def get_bookings():
     treks = Trek.query.filter_by(status='Open').order_by(Trek.created_at.desc()).all()
     
     results = []
+    cancelled_date = None
     for b in user_bookings:
         # Lifecycle Tracking Logic
         if b.trek.status == 'Completed':
@@ -430,12 +431,20 @@ def get_bookings():
                     "email": staff_user.email, 
                     "contact": staff_user.contact
                 }
+        
+        if (b.trek.status == 'Cancelled'):
+            cancelled_date = b.trek.cancelled_at.strftime("%B %d, %Y")
+        elif (b.status == 'Cancelled'):
+            cancelled_date =  b.cancelled_at.strftime("%B %d, %Y")
+
 
         results.append({
             "booking_id": b.booking_id,
             "trek_name": b.trek.trek_name if b.trek else "Deleted Route",
             "booking_date": b.booking_date.strftime("%B %d, %Y"),
             "booking_status": calc_status,
+            "cancellation_date" : cancelled_date,
+            "cancellation_reason" : b.trek.cancellation_reason if b.trek.status == 'Cancelled' else None,
             "payment_status": b.payment_status,
             "duration_days": b.trek.duration_days if b.trek else 0,
             "total_people": b.number_of_persons,

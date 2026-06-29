@@ -23,7 +23,7 @@
         <div class="action-icon-cluster d-flex align-items-center gap-3">
           
           <div class="notification-wrapper position-relative">
-            <button class="icon-utility-btn d-none d-lg-flex position-relative" title="View Alerts" @click="toggleNotifications">
+            <button class="icon-utility-btn position-relative " title="View Alerts" @click="toggleNotifications">
               <i class="bi bi-bell text-white-50" style="font-size: 1.3rem;"></i>
               <span v-if="unreadCount > 0" class="translate-middle p-1 bg-danger border border-dark rounded-circle" style="width: 10px; height: 10px; position:absolute; top:17px; left:23px;"></span>
             </button>
@@ -31,7 +31,7 @@
             <div v-if="showNotifications" @click.self="showNotifications = false" class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040;"></div>
 
             <Transition name="fade-slide">
-              <div v-if="showNotifications" class="notif-dropdown-glass position-absolute end-0 mt-3 rounded-4 shadow-lg border border-white border-opacity-15 overflow-hidden">
+              <div v-if="showNotifications" class="notif-dropdown-glass position-absolute end-0 mt-3 rounded-4 shadow-lg border border-white border-opacity-15 overflow-hidden" >
                 
                 <div class="d-flex align-items-center justify-content-between p-3 border-bottom border-white border-opacity-10 bg-black bg-opacity-25">
                   <h6 class="m-0 fw-bold tracking-tight text-white">System Alerts</h6>
@@ -385,6 +385,7 @@ async function withdrawTicket(id) {
 onMounted(() => {
   handleProfilePic()
   fetchNotifications()
+  fetchActiveTicket()
 })
 
 </script>
@@ -578,6 +579,7 @@ onMounted(() => {
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(25px);
   top: 100%;
+  left: -12rem;
   right: 0;
   z-index: 9999 !important;
 }

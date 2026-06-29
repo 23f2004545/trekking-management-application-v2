@@ -5,9 +5,20 @@
       
     </div>
 
+     <div v-if="trek.status === 'Cancelled'" class="alert alert-danger p-4 rounded-4 border border-danger border-opacity-20 bg-danger bg-opacity-10 mb-4 animate-scale-up">
+        <h6 class="fw-bold m-0 text-white tracking-tight"><i class="bi bi-exclamation-triangle text-warning"></i> SECURITY DEACTIVATION STATEMENT LOG</h6>
+        <p class="m-0 fs-8 text-white-50 mt-2"><strong>Revocation Date:</strong> {{ trek.cancelled_date }}</p>
+        <p class="m-0 fs-8 text-white-50 mt-1"><strong>Reason Column:</strong> {{ trek.cancelled_reason }}</p>
+    </div>
+
     <div class="row g-4 align-items-start">
+
+      <div v-if="(authStore.role != 'trekker')" class="d-flex justify-content-center align-items-center mb-3">
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill"><span class="spinner-grow spinner-grow-sm me-2" style="width: 0.5rem; height: 0.5rem;"></span>{{ trek.active_bookings_count }} Active Explorers</span>
+      </div>
       
       <div class="col-lg-12">
+
         <div class="row g-3 mb-4">
           <div class="col-md-9">
             <div class="active-image-frame rounded-4 overflow-hidden border border-white border-opacity-10 shadow-sm">
@@ -33,8 +44,8 @@
 
         <div class="glass-container p-4 rounded-4 mb-4 shadow-sm">
           <div class="d-flex gap-2 mb-3">
-            <span class="badge glass-badge text-uppercase fs-9 border border-warning border-opacity-25 text-warning-tint"><i class="bi bi-activity"></i> {{ trek.difficulty }}</span>
-            <span class="badge glass-badge text-uppercase fs-9 border border-success border-opacity-25 text-success-tint"><i class="bi bi-circle-fill fs-9"></i> {{ trek.status }}</span>
+            <span class="badge glass-badge text-uppercase difficulty-pill" :class="trek.difficulty.toLowerCase()"><i class="bi bi-activity"></i> {{ trek.difficulty }}</span>
+            <span class="badge glass-badge text-uppercase status-pill" :class="trek.status.toLowerCase()"><i class="bi bi-circle-fill fs-9"></i> {{ trek.status }}</span>
           </div>
           <h5 class="fw-bold small tracking-wider opacity-40 text-uppercase mb-2">Trek Synopsis</h5>
           <p class="fs-8 text-white-50 lh-base text-justify mb-4">{{ trek.description }}</p>
@@ -124,7 +135,7 @@
 
           <div v-if="trek.created_at" class="pt-3 border-top border-white border-opacity-10 mt-4 text-center">
             
-            <button v-if="(authStore.role === 'trekker') && showCheckoutButton" @click="$emit('request-checkout')" class="btn btn-success w-100 rounded-pill py-2.5 fw-bold text-dark fs-8 shadow-sm">
+            <button v-if="(authStore.role === 'trekker') && showCheckoutButton" @click="$emit('request-checkout')" class="btn btn-success w-100 rounded-pill py-1 fw-bold text-dark fs-8 shadow-sm">
               Book Your Trek Now
             </button>
 
@@ -219,6 +230,22 @@ function resolveImageUrl(url) {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Status/Difficulty pill mappings */
+.status-pill { padding: 3px 9px; font-size: 0.7rem; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+.status-pill.open { background: rgba(25, 135, 84, 0.8); }
+.status-pill.pending { background: rgba(255, 193, 7, 0.8); color: black; }
+.status-pill.closed { background: rgba(220, 53, 69, 0.8); }
+.status-pill.cancelled { background: rgba(220, 53, 70, 0.531); }
+.status-pill.completed { background: rgba(13, 110, 253, 0.8); }
+.status-pill.ongoing { background: rgba(255, 193, 7, 0.8); color: black; }
+
+.difficulty-pill { padding: 3px 9px; font-size: 0.7rem; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+.difficulty-pill.easy { background: rgba(25, 135, 84, 0.8); }
+.difficulty-pill.moderate { background: rgba(255, 193, 7, 0.8); color: black; }
+.difficulty-pill.hard { background: rgba(182, 47, 60, 0.601); }
+
+
 .staff-comment-pod { background: rgba(255, 255, 255, 0.01); border-left: 2px solid #198754; }
 .staff-profile-thumb { width: 68px; height: 68px; border-radius: 12px; object-fit: cover; }
 .active-pulse-tag { background: rgba(25, 135, 84, 0.15); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.3); }

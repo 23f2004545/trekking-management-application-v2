@@ -6,8 +6,14 @@
       <p class="m-0 text-white-50 fs-8 mt-1">Audit active pass verifications, inspect transaction telemetry statuses, or submit route cancellations.</p>
     </div>
 
+    <div v-if="activeBookingsList.length == 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
+      <span class="fs-1"><i class="bi bi-journal-text"></i></span>
+      <h5 class="fw-bold mt-2">No Active Bookings Found</h5>
+      <p class="text-white-50 small m-0">Book for more treks to see your booking status.</p>
+    </div>
+
     <!-- MAIN DISPLAY ROW LIST (Keeps minimalist meta presentation layout) -->
-    <div class="row g-3">
+    <div v-else class="row g-3">
       <div v-for="book in activeBookingsList" :key="book.booking_id" class="col-12">
         <div class="booking-glass-row p-3 rounded-3 border border-white border-opacity-10 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-3">
           
@@ -58,26 +64,53 @@
           <h4 class="fw-bold tracking-tight text-white mb-1">Reservation Passport Context</h4>
           <p class="text-white-50 small mb-4">Complete logistical registry metrics and verified guide assignment info.</p>
 
+          <!-- Cancelled Booking -->
           <div class="row g-3">
-            
-            <!-- Right Grid Segment: Multi-column meta specification rows -->
-            <div class="col-md-12 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-white border-opacity-5">
-              <div><strong>Booking ID:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>
-              <div><strong>Trail Name:</strong> <span class="text-white fw-bold">{{ modalTarget.trek_name }}</span></div>
-              <div><strong>Trail Duration:</strong> <span class="text-white-50">{{ modalTarget.duration_days }} Days</span></div>
-              <div><strong>Reservation Date:</strong> <span class="text-white-50">{{ modalTarget.booking_date }}</span></div>
-              <div><strong>Group Headcount Size:</strong> <span class="text-white-50 text-success fw-bold">{{ modalTarget.total_people }} Explorers</span></div>
-              <div><strong>Financial Status:</strong> <span class="badge payment-badge" :class="modalTarget.payment_status.toLowerCase()">{{ modalTarget.payment_status }}</span></div>
-              <div><strong>Status:</strong> <span class="badge status-badge" :class="modalTarget.booking_status.toLowerCase()">● {{ modalTarget.booking_status }}</span></div>
-            </div>
+            <div v-if="modalTarget.booking_status == 'Cancelled'">
 
-            <!-- Full Width Verified Guide Contact Info Cluster Box -->
-            <div class="col-12 mt-2">
-              <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-2 border-bottom border-white border-opacity-5 pb-1">Assigned Guide Assignment Node</h6>
-              <div class="staff-contact-glass p-3 rounded-3 border border-white border-opacity-10 d-flex flex-column gap-1 fs-8">
-                <div><i class="bi bi-person"></i> <strong>Guide Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
-                <div><i class="bi bi-envelope"></i> <strong>Guide Email:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
-                <div><i class="bi bi-telephone"></i> <strong>Guide Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
+              <!-- Cancellation Record Box -->
+              <div class="col-12">
+                <h6 class="fw-bold small tracking-wider text-danger opacity-75 text-uppercase mb-2 border-bottom border-danger border-opacity-25 pb-1">Cancellation Record</h6>
+                <div class="bg-danger bg-opacity-10 border border-danger border-opacity-20 rounded-3 p-3 d-flex flex-column gap-2 fs-8">
+                  <div><i class="bi bi-calendar-x text-danger me-1"></i> <strong class="text-danger">Cancelled On:</strong> <span class="text-white">{{ modalTarget.cancellation_date }}</span></div>
+                  <div v-if="modalTarget.cancellation_reason"><i class="bi bi-exclamation-triangle text-danger me-1"></i> <strong class="text-danger">Reason:</strong> <span class="text-white-50">{{ modalTarget.cancellation_reason }}</span></div>
+                </div>
+              </div>
+
+              <div class="col-md-12 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-danger border-opacity-25 mt-4 ">
+                <h6 class="fw-bold small tracking-wider text-white-50 opacity-75 text-uppercase mb-2 border-bottom border-white border-opacity-25 pb-1">Booking Record</h6>
+                <div><strong>Booking ID:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>
+                <div><strong>Trail Name:</strong> <span class="text-success fw-bold">{{ modalTarget.trek_name }}</span></div>
+                <div><strong>Trail Duration:</strong> <span class="text-white-50">{{ modalTarget.duration_days }} Days</span></div>
+                <div><strong>Reservation Date:</strong> <span class="text-white-50 text-decoration-line-through">{{ modalTarget.booking_date }}</span></div>
+                <div><strong>Group Headcount Size:</strong> <span class="text-white-50">{{ modalTarget.total_people }} Explorers</span></div>
+                <div><strong>Financial Status:</strong> <span class="badge payment-badge" :class="modalTarget.payment_status.toLowerCase()">{{ modalTarget.payment_status }}</span></div>
+                <div><strong>Status:</strong> <span class="badge status-badge" :class="modalTarget.booking_status.toLowerCase()">● {{ modalTarget.booking_status }}</span></div>
+              </div>
+
+            </div>
+            
+            <!-- Other Bookings -->
+            <div v-else >
+            <!-- Right Grid Segment: Multi-column meta specification rows -->
+              <div class="col-md-12 fs-8 d-flex flex-column gap-2 bg-opacity-5 p-3 rounded-3 border border-white border-opacity-5">
+                <div><strong>Booking ID:</strong> <span class="text-white-50">#APX-B{{ modalTarget.booking_id }}</span></div>
+                <div><strong>Trail Name:</strong> <span class="text-success fw-bold">{{ modalTarget.trek_name }}</span></div>
+                <div><strong>Trail Duration:</strong> <span class="text-white-50">{{ modalTarget.duration_days }} Days</span></div>
+                <div><strong>Reservation Date:</strong> <span class="text-white-50">{{ modalTarget.booking_date }}</span></div>
+                <div><strong>Group Headcount Size:</strong> <span class="text-white-50 text-success fw-bold">{{ modalTarget.total_people }} Explorers</span></div>
+                <div><strong>Financial Status:</strong> <span class="badge payment-badge" :class="modalTarget.payment_status.toLowerCase()">{{ modalTarget.payment_status }}</span></div>
+                <div><strong>Status:</strong> <span class="badge status-badge" :class="modalTarget.booking_status.toLowerCase()">● {{ modalTarget.booking_status }}</span></div>
+              </div>
+
+              <!-- Full Width Verified Guide Contact Info Cluster Box -->
+              <div class="col-12 mt-2">
+                <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-2 border-bottom border-white border-opacity-5 pb-1">Assigned Guide Assignment Node</h6>
+                <div class="staff-contact-glass p-3 rounded-3 border border-white border-opacity-10 d-flex flex-column gap-1 fs-8">
+                  <div><i class="bi bi-person"></i> <strong>Guide Name:</strong> <span class="text-white fw-medium">{{ modalTarget.staff.name }}</span></div>
+                  <div><i class="bi bi-envelope"></i> <strong>Guide Email:</strong> <span class="text-success-tint">{{ modalTarget.staff.email }}</span></div>
+                  <div><i class="bi bi-telephone"></i> <strong>Guide Contact:</strong> <span class="text-success-tint">{{ modalTarget.staff.contact }}</span></div>
+                </div>
               </div>
             </div>
           </div>
@@ -181,7 +214,7 @@ onMounted(() => {
 /* Status Labels & Flags colors */
 .payment-badge { padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; font-weight: 600; }
 .payment-badge.paid { background: rgba(25, 135, 84, 0.15); color: #7bf1a8; border: 1px solid rgba(25, 135, 84, 0.25); }
-.payment-badge.refunded { background: rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.5); }
+.payment-badge.refunded { background: rgba(16, 46, 130, 0.774); color: rgba(255, 255, 255, 0.864); }
 
 .status-badge { padding: 4px 10px; font-size: 0.72rem; border-radius: 20px; font-weight: 600; }
 .status-badge.upcoming { background: rgba(192, 208, 68, 0.2); color: #d7e364; border: 1px solid rgba(179, 205, 49, 0.3); }

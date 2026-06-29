@@ -523,29 +523,6 @@ async function submitTrekForm() {
   }
 }
 
-function triggerRemoval(id) {
-  confirmStore.ask(
-    `Are you entirely sure you want to drop Expedition ID #${id} completely out of system indexes? This action is irreversible.`,
-    async () => {
-      try {
-        const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
-        })
-        if (res.ok) {
-          alertStore.showAlert('Expedition record purged from database successfully.', 'success')
-          await syncTrekDataset()
-        } else {
-          const data = await res.json()
-          alertStore.showAlert(data.message || 'Purge request rejected.', 'danger')
-        }
-      } catch (err) {
-        alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
-      }
-    }
-  )
-}
-
 function routeToDeepInsights(id) {
   // Automatically routes down to your reusable nested component structure
   router.push(`/portal/trek/view/${id}`)

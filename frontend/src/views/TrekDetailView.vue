@@ -20,7 +20,7 @@
         :trek="trekData" 
         :showCheckoutButton=true           
         @request-checkout="checkoutActive = true"
-        @admin-delete="handleAdminDeletePurge"
+        @admin-delete="triggerRemoval"
         @admin-modify="openModifyFormModal"
         @staff-toggle-status="openStaffModifyModal"
       />
@@ -150,7 +150,7 @@
                   <select v-model="editForm.status" class="modal-clean-field bg-transparent select-fix">
                     <option value="Pending" disabled selected>Select Status</option>
                     <option value="Open">Open</option> <option value="Ongoing">On going</option> <option value="Closed">Closed</option> 
-                    <option value="Completed">Completed</option> <option value="Cancelled">Cancelled</option>
+                    <option value="Completed">Completed</option> <option :disabled="trekData.active_bookings_count === 0" value="Cancelled">Cancelled {{ trekData.active_bookings_count === 0 ? '(Use Closed Instead)' : '' }}</option>
                   </select>
                 </div>
                 <Transition name="fade">
@@ -162,23 +162,6 @@
                   </div>
                 </Transition>
               </div>
-              <!-- <div class="col-12">
-                <label class="modal-input-label">Change Assigned Guide Staff</label>
-                <div class="modal-input-wrapper">
-                  <select v-model="editForm.assigned_staff_id" class="modal-clean-field bg-transparent select-fix">
-                    <option :value="null">Leave Unassigned</option>
-                    <option 
-                      v-for="s in staffOptions" 
-                      :key="s.id" 
-                      :value="s.id" 
-                      :disabled="s.occupied"
-                      :class="{ 'text-danger': s.occupied }"
-                    >
-                      👨‍✈️ {{ s.name }} 
-                    </option>
-                  </select>
-                </div>
-              </div> -->
               <div class="col-12 position-relative">
                 <label class="modal-label">Assign Commander (Select date first)</label>
                 
@@ -274,7 +257,7 @@
                     <option value="Ongoing">Ongoing</option>
                     <option value="Closed">Closed </option>
                     <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled </option>
+                    <option :disabled="trekData.active_bookings_count === 0" value="Cancelled">Cancelled {{ trekData.active_bookings_count === 0 ? '(Use Closed Instead)' : '' }}</option>
                   </select>
                 </div>
               </div>
@@ -363,6 +346,8 @@ const staffEditForm = ref({
   cancellation_reason : ''
 })
 
+const form = ref({ adults: 0, children: 0, seniors: 0, payment_method: 'UPI', medical_instructions: '' })
+
 
 const absoluteLat = computed(() =>  trekData.value.latitude)
 const absoluteLng = computed(() =>  trekData.value.longitude)
@@ -425,16 +410,27 @@ async function failedBooking() {
   alertStore.showAlert('Transaction failed', 'danger')
 }
 
-function handleAdminDeletePurge() {
-  confirmStore.ask('Purge this entire trek out of system tables?', async () => {
-    const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
-      method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` }
-    })
-    if (res.ok) {
-      alertStore.showAlert('Purged successfully.', 'success')
-      router.back()
+function triggerRemoval(id) {
+  confirmStore.ask(
+    `Are you entirely sure you want to drop Expedition ID #${id} completely out of system indexes? This action is irreversible.`,
+    async () => {
+      try {
+        const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
+        })
+        if (res.ok) {
+          alertStore.showAlert('Expedition record purged from database successfully.', 'success')
+          await syncTrekDataset()
+        } else {
+          const data = await res.json()
+          alertStore.showAlert(data.message || 'Purge request rejected.', 'danger')
+        }
+      } catch (err) {
+        alertStore.showAlert(`Network drop: ${err.message}`, 'danger')
+      }
     }
-  })
+  )
 }
 
 async function openModifyFormModal() {

@@ -299,7 +299,9 @@ def get_staff_assigned_treks():
 @jwt_required()
 @staff_required
 def update_trek_field_data(trek_id):
-
+    
+    from tasks import dispatch_cancellation_email , dispatch_completion_email
+    
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
     
@@ -347,13 +349,31 @@ def update_trek_field_data(trek_id):
             if new_status == 'Completed':
                 booking.status = 'Completed'
                 booking.updated_at = datetime.now(timezone.utc)
+                # Fire Completion Email
+                dispatch_completion_email.delay(
+                    booking.user.email, 
+                    booking.user.name, 
+                    trek.trek_name, 
+                    trek.duration_days, 
+                    trek.max_altitude
+                )
                 
             elif new_status == 'Cancelled':
                 booking.status = 'Cancelled'
                 booking.payment_status = 'Refunded' # Trigger refund pipeline state
-                booking.cancellation_reason = f"Guide Abort Override: {abort_reason}"
-                booking.cancelled_at = datetime.now(timezone.utc)
+                trek.cancellation_reason = f"Guide : {abort_reason}"
+                trek.cancelled_at = datetime.now(timezone.utc)
                 booking.updated_at = datetime.now(timezone.utc)
+                # Fire Cancellation Email
+                dispatch_cancellation_email.delay(
+                    booking.user.email, 
+                    booking.user.name, 
+                    trek.trek_name, 
+                    trek.duration_days, 
+                    abort_reason, 
+                    "Field Commander" 
+                )
+                create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Staff", "danger")
 
     try:
         db.session.commit()

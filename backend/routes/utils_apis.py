@@ -235,11 +235,14 @@ def get_historical_treks():
 
         results.append({
             "trek_id": t.trek_id,
+            "cancellation_date" : t.cancelled_at.strftime("%b %d, %Y") if t.status == 'Cancelled' else None,
+            "cancellation_reason" : t.cancellation_reason if t.status == 'Cancelled' else None,
             "trek_info": {
                 "name": t.trek_name, "duration": t.duration_days, "difficulty": t.difficulty,
                 "description": t.description or "An immersive high-altitude wilderness expedition traversing ancient alpine meadows and glacial networks.",
                 "location": t.location, "start_date": fmt_s, "end_date": fmt_e,
-                "altitude": t.max_altitude, "price": data["price"]
+                "altitude": t.max_altitude, "price": data["price"],
+                "status" : t.status 
             },
             "staff_info": {
                 "name": staff.name if staff else "Unassigned",
@@ -264,7 +267,6 @@ def get_historical_treks():
 
     # Sort most recently completed trip first
     results.sort(key=lambda x: x["trek_info"]["end_date"], reverse=True)
-        
     return make_response(jsonify({"is_onboarded": is_onboarded, "results": results}), 200)
 
 

@@ -181,6 +181,8 @@ def get_active_operations():
     ongoing_treks = Trek.query.filter_by(status='Ongoing').all()
     results = []
     
+    today = datetime.now(timezone.utc).replace(tzinfo=None)
+    
     for t in ongoing_treks:
         # Sum participants currently on this trail
         active_trekkers = db.session.query(db.func.sum(Booking.number_of_persons)).filter_by(trek_id=t.trek_id, status='Booked').scalar() or 0
@@ -191,21 +193,42 @@ def get_active_operations():
             if staff_user:
                 staff_data = {"name": staff_user.name, "contact": staff_user.contact}
                 
+        # --- PROGRESS MATH ---
+        total_days = (t.end_date - t.start_date).days
+        if total_days <= 0: total_days = 1 # Prevent division by zero
+        
+        days_elapsed = (today - t.start_date).days
+        
+        # Clamp progress between 0 and 100
+        raw_progress = int((days_elapsed / total_days) * 100)
+        progress_pct = max(0, min(100, raw_progress))
+                
         results.append({
             "trek_id": t.trek_id,
             "name": t.trek_name,
             "location": t.location,
             "staff": staff_data,
             "active_trekkers": int(active_trekkers),
-            "end_date": t.end_date.strftime("%b %d, %Y")
+            "start_date": t.start_date.strftime("%b %d"),
+            "end_date": t.end_date.strftime("%b %d"),
+            "progress": progress_pct,
+            "day_current": max(1, days_elapsed + 1),
+            "day_total": total_days + 1
         })
     return make_response(jsonify(results), 200)
 
-@admin_bp.route('/profile/audit-logs', methods=['GET'])
+@admin_bp.route('/profile/audit-logs', methods=['GET' , 'DELETE'])
 @jwt_required()
 @admin_required
 def get_audit_logs():
-    """Fetches the latest 50 system events."""
+
+    if request.method == 'DELETE':
+        logs = AuditLog.query.all()
+        for l in logs:
+            db.session.delete(l)
+        db.session.commit()
+        return make_response(jsonify({"message": "All logs cleared "}), 200)
+    
     logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(50).all()
     return make_response(jsonify([{
         "action": l.action,
@@ -360,6 +383,8 @@ def create_trek():
 @jwt_required()
 @admin_required
 def manage_trek_by_id(trek_id):
+    
+    from tasks import dispatch_completion_email , dispatch_cancellation_email
     trek = Trek.query.get_or_404(trek_id)
 
     if request.method == 'DELETE':
@@ -416,13 +441,30 @@ def manage_trek_by_id(trek_id):
                 if new_status == 'Completed':
                     booking.status = 'Completed'
                     booking.updated_at = datetime.now(timezone.utc)
+                    # Fire Completion Email
+                    dispatch_completion_email.delay(
+                        booking.user.email, 
+                        booking.user.name, 
+                        trek.trek_name, 
+                        trek.duration_days, 
+                        trek.max_altitude
+                    )
                     
                 elif new_status == 'Cancelled':
                     booking.status = 'Cancelled'
                     booking.payment_status = 'Refunded' # Trigger refund pipeline state
-                    booking.cancellation_reason = f"Admin Abort Override: {abort_reason}"
-                    booking.cancelled_at = datetime.now(timezone.utc)
+                    trek.cancellation_reason = f"Admin : {abort_reason}"
+                    trek.cancelled_at = datetime.now(timezone.utc)
                     booking.updated_at = datetime.now(timezone.utc)
+                    # Fire Cancellation Email
+                    dispatch_cancellation_email.delay(
+                        booking.user.email, 
+                        booking.user.name, 
+                        trek.trek_name, 
+                        trek.duration_days, 
+                        abort_reason, 
+                        "Central Administration" 
+                    )
                     create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Admin", "danger")
 
                     
@@ -445,7 +487,7 @@ def manage_trek_by_id(trek_id):
             trek.end_date = datetime.strptime(data.get('end_date'), "%Y-%m-%d").date()
             
         trek.updated_at = datetime.now(timezone.utc)
-
+        
         # DYNAMIC GALLERY REPLACEMENT LAYER
         if 'trek_gallery' in request.files:
             uploaded_files = request.files.getlist('trek_gallery')
@@ -485,12 +527,12 @@ def trek_details(trek_id):
     
     # Gather all gallery paths from our fresh child image table
     gallery_images = [img.image_url for img in trek.images]
-
-
+    
     # Extract Assigned Staff Guide Profile
     staff_user = User.query.get(trek.assigned_staff_id) if trek.assigned_staff_id else None
     reviews = Review.query.filter_by(trek_id=trek_id).all()
 
+    active_bookings_count = Booking.query.filter_by(trek_id=trek.trek_id, status='Booked').count()
     trek_reviews_list = [
         # {
         #     "id": 1, 
@@ -566,6 +608,7 @@ def trek_details(trek_id):
 
     payload = {
         "trek_id": trek.trek_id,
+        "active_bookings_count": active_bookings_count,
         "trek_name": trek.trek_name,
         "geo" : True if trek.latitude else False , 
         "location": trek.location,
@@ -575,7 +618,7 @@ def trek_details(trek_id):
         "status": trek.status,
         "start_date": trek.start_date.strftime("%Y-%m-%d") if trek.start_date else "",
         "end_date": trek.end_date.strftime("%Y-%m-%d") if trek.end_date else "",
-        "description": trek.description or "No baseline overview provided.",
+        "description": trek.description or "An immersive high-altitude wilderness expedition traversing ancient alpine meadows, pristine glacial networks, and dramatic mountain corridors. Engineered for low-impact environmental exploration and clean mountain air.",
         "max_altitude": getattr(trek, 'max_altitude', 0.0),
         "price_per_person": getattr(trek, 'price_per_person', 0.0),
         "created_at": trek.created_at.strftime("%B %d, %Y") if trek.created_at else "N/A",
@@ -585,6 +628,8 @@ def trek_details(trek_id):
         "trek_reviews": trek_reviews_list,
         "latitude" : trek.latitude if trek.latitude else None,
         "longitude" : trek.longitude if trek.longitude else None,
+        "cancelled_date" : trek.cancelled_at.strftime("%b %d, %Y") if trek.status == 'Cancelled' else None,
+        "cancelled_reason" : trek.cancellation_reason if trek.status == 'Cancelled' else None,
         "staff": {
             "id" : staff_user.id if staff_user else "Unassigned",
             "name": staff_user.name if staff_user else "Unassigned Guide Leader",
@@ -710,7 +755,7 @@ def get_all_staff():
             "specialization": getattr(s.staff_profile, 'specialization', "General Mountaineering"),
             "certification": getattr(s.staff_profile, 'certification', "Basic Certified"),
             "status" : getattr(s.staff_profile, 'status', "Active") ,
-            "experience": getattr(s.staff_profile, 'experience', "0"),
+            "experience": getattr(s.staff_profile, 'experience_years', "0"),
             "last_login_at": s.last_login_at.strftime("%b %d, %I:%M %p") if s.last_login_at else "Offline Logs",
             "profile_pic": s.profile_pic or "/static/Profile_pics/trek_staff.png"
         })
@@ -918,13 +963,19 @@ def get_admin_booking_deep_details(booking_id):
     
     # Query distinct reviewer lines matching this unique transaction node
     review = Review.query.filter_by(user_id=b.user_id, trek_id=b.trek_id).first()
+    
+    cancelled_date = None
+    if (b.trek.status == 'Cancelled'):
+        cancelled_date = b.trek.cancelled_at.strftime("%B %d, %Y")
+    elif (b.status == 'Cancelled'):
+        cancelled_date =  b.cancelled_at.strftime("%B %d, %Y")
 
     payload = {
         "booking_id": b.booking_id,
         "booking_date": b.booking_date.strftime("%B %d, %Y"),
         "booking_status": calculated_status,
-        "cancelled_date": "2026-05-28" if b.status == 'Cancelled' else None, # Example tracking placeholder
-        "cancelled_reason": b.cancellation_reason if b.status == 'Cancelled' else None,
+        "cancelled_date": cancelled_date,
+        "cancelled_reason": b.trek.cancellation_reason if b.trek.status == 'Cancelled' else None,
         "payment_status": b.payment_status,
         "payment_method": b.payment_method or "Unspecified",
         "number_of_persons": b.number_of_persons,

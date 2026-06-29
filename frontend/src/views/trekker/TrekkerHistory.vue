@@ -13,7 +13,13 @@
         </button>
       </div>
 
-      <div class="row g-3">
+      <div v-if="historicTrips.length == 0" class="empty-state p-5 text-center rounded-4 border border-white border-opacity-10 bg-opacity-5">
+        <span class="fs-1"><i class="bi bi-archive"></i></span>
+        <h5 class="fw-bold mt-2">No Archived Logs Found</h5>
+        <p class="text-white-50 small m-0">Not completed any trek so far.</p>
+      </div>
+
+      <div v-else class="row g-3">
         <div v-for="trip in historicTrips" :key="trip.booking_id" class="col-12">
           <div class="history-glass-row p-3 rounded-3 border border-white border-opacity-10 d-flex align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
@@ -120,6 +126,10 @@ async function handlePublishedReview(formData) {
 
 async function requestCSVExport() {
   try {
+    if (historicTrips.value.length === 0){
+      alertStore.showAlert('No data to export.', 'warning')
+      return 
+    }
     alertStore.showAlert('Initializing secure CSV data compilation via background workers...', 'info')
     const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/export-history`, {
       method: 'POST',

@@ -10,10 +10,7 @@ SENDER_EMAIL = 'operations@apex-expeditions.com'
 SENDER_NAME = 'Apex Expeditions'
 
 def send_html_email(to_email, subject, html_content, attachment_name=None, attachment_data=None):
-    """
-    Constructs a modern HTML email payload and routes it through the Mailpit SMTP socket.
-    Supports optional in-memory file attachments.
-    """
+    
     msg = MIMEMultipart('mixed')
     msg['Subject'] = subject
     msg['From'] = f"{SENDER_NAME} <{SENDER_EMAIL}>"

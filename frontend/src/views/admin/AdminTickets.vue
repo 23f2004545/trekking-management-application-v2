@@ -1,19 +1,27 @@
 <template>
   <div class="admin-tickets-canvas text-white text-start p-3 animate-fade-in">
     
-    <div class="mb-5 border-bottom border-white border-opacity-10 pb-4">
-      <h1 class="display-5 fw-bold tracking-tight m-0">Command Dispatch Inbox</h1>
-      <p class="m-0 text-white-50 fs-8 mt-2">Process pending operational queries and field hazard reports.</p>
+    <div class="mb-5 border-bottom border-white border-opacity-10 pb-4 d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="display-5 fw-bold tracking-tight m-0">Command Dispatch Inbox</h1>
+        <p class="m-0 text-white-50 fs-8 mt-2">Process pending operational queries and field hazard reports.</p>
+      </div>
+      <select v-model="priorityFilter" class="form-select bg-dark text-white border-white border-opacity-25 shadow-sm rounded-pill px-4 py-2 fs-8" style="width: auto; cursor: pointer;">
+        <option value="All">All</option>
+        <option value="Routine"> Routine</option>
+        <option value="Urgent"> Urgent</option>
+        <option value="Hazard"> Hazard</option>
+      </select>
     </div>
 
-    <div v-if="tickets.length === 0" class="empty-state-glass p-5 text-center rounded-4 border border-white border-opacity-10">
+    <div v-if="filteredTickets.length === 0" class="empty-state-glass p-5 text-center rounded-4 border border-white border-opacity-10">
       <i class="bi bi-inbox fs-1 text-white-50 opacity-50 d-block mb-3"></i>
       <h5 class="fw-bold text-white tracking-widest uppercase">Inbox Zero</h5>
       <p class="text-white-50 fs-9 m-0">No pending dispatches requiring command attention.</p>
     </div>
 
     <div v-else class="row g-4">
-      <div v-for="ticket in tickets" :key="ticket.id" class="col-md-6 col-xl-4">
+      <div v-for="ticket in filteredTickets" :key="ticket.id" class="col-md-6 col-xl-4">
         <div class="glass-ticket-card p-4 rounded-4 border position-relative" :class="ticket.priority === 'Hazard' ? 'border-danger border-opacity-50 bg-danger bg-opacity-10' : 'border-white border-opacity-10'" >
           
           <div class="d-flex justify-content-between align-items-start mb-3">
@@ -90,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { secureFetch } from '../../utils/api.js'
 import { useAlertStore } from '../../stores/alert.js'
 
@@ -101,6 +109,12 @@ const tickets = ref([])
 const activeModal = ref(null)
 const wantsToResolve = ref(false)
 const resolutionText = ref('')
+const priorityFilter = ref('All')
+
+const filteredTickets = computed(() => {
+  if (priorityFilter.value === 'All') return tickets.value
+  return tickets.value.filter(t => t.priority === priorityFilter.value)
+})
 
 function getBadgeClass(priority) {
   if (priority === 'Hazard') return 'bg-danger text-white'
