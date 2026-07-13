@@ -488,7 +488,7 @@ def get_completed_history():
             
             
             staff_info = {"name": "Unknown", "profile_pic": "" , "specialization" : "General Mountaineering" , "certification" : "Basic Certified" ,"experience_years": None, "status" : "Active" , "staff_rating_avg" : staff_rating_avg }
-            if b.snapshot_staff and b.trek.assigned_staff:
+            if b.snapshot_staff :
                 staff_user = User.query.get(b.snapshot_staff)
                 if staff_user:
                     staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic ,"specialization": staff_user.staff_profile.specialization, "certification": staff_user.staff_profile.certification, "experience": staff_user.staff_profile.experience_years , "status" : staff_user.staff_profile.status , "staff_rating_avg" : staff_rating_avg}
