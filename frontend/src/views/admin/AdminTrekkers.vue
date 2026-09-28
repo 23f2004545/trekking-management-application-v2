@@ -25,7 +25,7 @@
       <div v-for="trekker in filteredTrekkers" :key="trekker.id" class="trekker-rect-card p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + (trekker.profile_pic )" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
+          <img :src="resolveMediaUrl(trekker.profile_pic)" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
           <div>
             <div class="d-flex align-items-center gap-2">
               <h5 class="fw-bold m-0 text-white tracking-tight">{{ trekker.name }}</h5>
@@ -77,6 +77,7 @@ import { useAlertStore } from '../../stores/alert.js'
 import { useAuthStore } from '../../stores/auth.js'
 import { useConfirmStore } from '@/stores/confirm.js'
 import { secureFetch } from '@/utils/api.js'
+import { resolveMediaUrl } from '@/utils/media.js'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()

@@ -5,6 +5,8 @@ from controller.models import *
 from controller.decorators import trekker_required
 from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone 
+from services.cloudinary_service import upload_image
+from services.demo_service import is_demo_user, is_demo_target
 import os , random
 
 trekker_bp = Blueprint('trekker', __name__)
@@ -120,6 +122,12 @@ def update_profile():
     user = User.query.get_or_404(user_id)
     
     if request.method == 'DELETE':
+        if is_demo_user(user):
+            return make_response(jsonify({
+                "message": "[SIMULATED] Account deletion simulated. Demo profile remains active for evaluation.",
+                "simulated": True
+            }), 200)
+
         user.is_active = not user.is_active
         db.session.commit()
         log_system_audit("Deleted", f"User {user.email} deleted their account", "warning")
@@ -147,16 +155,9 @@ def update_profile():
     if 'profile_pic' in request.files:
         file = request.files['profile_pic']
         if file and file.filename != '':
-            # Secure file names safely to prevent path injection attacks
-            filename = f"user_{user.id}_{os.path.basename(file.filename)}"
-            save_path = os.path.join('static/' , 'Profile_pics', filename)
-            
-            # Ensure folder structure exists
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
-
-            # Store the serving endpoint static assets path inside the database column
-            user.profile_pic = f"/static/Profile_pics/{filename}"
+            new_url = upload_image(file, folder="apex/avatars", filename_prefix=f"trekker_{user.id}", local_subfolder="Profile_pics")
+            if new_url:
+                user.profile_pic = new_url
             
     try:
         db.session.commit()
@@ -334,6 +335,13 @@ def book_trek_slot():
     
     if number_of_persons > trek.available_slots:
         return make_response(jsonify({"message": "Booking denied: Not enough slots available."}), 400)
+
+    if is_demo_user(user) and not is_demo_target(trek):
+        return make_response(jsonify({
+            "message": f"[SIMULATED] Expedition booking simulated for '{trek.trek_name}'. Live inventory was preserved.",
+            "simulated": True,
+            "booking_id": 9999
+        }), 201)
         
     try:
         # Deduct slot reservation dynamically
@@ -372,6 +380,12 @@ def cancel_booking(id):
     user = User.query.get(user_id)
     
     booking = Booking.query.get_or_404(id)
+    if is_demo_user(user) and not is_demo_target(booking):
+        return make_response(jsonify({
+            "message": "[SIMULATED] Booking cancellation simulated. Live reservation was preserved.",
+            "simulated": True
+        }), 200)
+
     booking.status = 'Cancelled'
     booking.payment_status = 'Refunded'
     booking.cancelled_at = datetime.now(timezone.utc)
@@ -491,7 +505,16 @@ def get_completed_history():
             if b.snapshot_staff :
                 staff_user = User.query.get(b.snapshot_staff)
                 if staff_user:
-                    staff_info = {"name": staff_user.name, "profile_pic": staff_user.profile_pic ,"specialization": staff_user.staff_profile.specialization, "certification": staff_user.staff_profile.certification, "experience": staff_user.staff_profile.experience_years , "status" : staff_user.staff_profile.status , "staff_rating_avg" : staff_rating_avg}
+                    p = staff_user.staff_profile
+                    staff_info = {
+                        "name": staff_user.name, 
+                        "profile_pic": staff_user.profile_pic,
+                        "specialization": getattr(p, 'specialization', 'General Mountaineering'),
+                        "certification": getattr(p, 'certification', 'Basic Certified'),
+                        "experience": getattr(p, 'experience_years', None),
+                        "status": getattr(p, 'status', 'Active'),
+                        "staff_rating_avg": staff_rating_avg
+                    }
 
             results.append({
                 "booking_id": b.booking_id,
@@ -572,15 +595,19 @@ def trigger_csv_export():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
+    data = request.get_json(silent=True) or {}
+    demo_delivery_email = None
+    if is_demo_user(user):
+        demo_delivery_email = data.get('demo_delivery_email')
+
     # Use .delay() to send it to Redis/Celery without blocking Flask
-    export_history_csv.delay(user_id, user.email, user.name)
+    export_history_csv.delay(user_id, user.email, user.name, demo_delivery_email=demo_delivery_email)
     create_notification(user.id, "Your CSV data has been exported and emailed.", "info")
     
     return make_response(jsonify({
         "message": "Export initiated! Your CSV will be emailed to you shortly."
     }), 202)
     
-
 
 # ==========================================================================
 # 7. Password Reset via OTP Workflow
@@ -595,6 +622,11 @@ def request_password_otp():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
+    data = request.get_json(silent=True) or {}
+    demo_delivery_email = None
+    if is_demo_user(user):
+        demo_delivery_email = data.get('demo_delivery_email')
+
     # Generate 6 digit string
     otp_code = str(random.randint(100000, 999999))
     
@@ -602,7 +634,7 @@ def request_password_otp():
     cache.set(f"password_otp_{user_id}", otp_code, timeout=300)
     
     # Trigger Celery to send email asynchronously
-    send_otp_email.delay(user.email, user.name, otp_code)
+    send_otp_email.delay(user.email, user.name, otp_code, demo_delivery_email=demo_delivery_email)
     
     return make_response(jsonify({"message": "OTP generated and dispatched to your email."}), 200)
 

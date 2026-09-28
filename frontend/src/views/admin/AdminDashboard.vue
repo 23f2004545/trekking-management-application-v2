@@ -1,12 +1,9 @@
 <template>
   <div class="admin-dashboard-canvas text-white text-start pb-5 animate-fade-in px-3">
-    
+
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-4 py-4 border-bottom border-white border-opacity-10 mb-5">
       <div>
         <h1 class="display-5 fw-bold tracking-tight m-0 text-shadow-deep">System Command Center</h1>
-        <p class="opacity-75 m-0 mt-2 fs-8 max-w-lg lh-base">
-          Monitor ecosystem telemetry, evaluate guide performance, and audit global booking vectors.
-        </p>
       </div>
 
       <div class="d-flex gap-3">
@@ -283,6 +280,10 @@ onMounted(() => {
 .tracking-tighter { letter-spacing: -1.5px; }
 .tracking-wider { letter-spacing: 0.8px; }
 .italic { font-style: italic; }
+
+.extra-small {
+  font-size: 0.75rem;
+}
 
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }

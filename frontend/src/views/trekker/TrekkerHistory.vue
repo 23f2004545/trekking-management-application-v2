@@ -53,6 +53,16 @@
       <TrekHistory :booking="selectedTripForDetails" @commit-review="handlePublishedReview" />
     </div>
 
+    <!-- Interactive Demo Email Delivery Modal -->
+    <DemoEmailPromptModal 
+      :isOpen="showEmailModal"
+      title="Expedition History CSV Delivery"
+      description="Experience Celery background CSV compilation and real cloud SMTP delivery by receiving your expedition matrix directly in your personal inbox."
+      @close="showEmailModal = false"
+      @submit="handleLiveExportSubmit"
+      @simulate="handleSimulateExportSubmit"
+    />
+
   </div>
 </template>
 
@@ -60,6 +70,7 @@
 import { ref, onMounted } from 'vue'
 import TrekDetail from '../../components/TrekDetail.vue'
 import TrekHistory from '../../components/TrekHistory.vue'
+import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api.js'
@@ -124,20 +135,47 @@ async function handlePublishedReview(formData) {
   }
 }
 
-async function requestCSVExport() {
+const showEmailModal = ref(false)
+
+function requestCSVExport() {
+  if (historicTrips.value.length === 0) {
+    alertStore.showAlert('No data to export.', 'warning')
+    return 
+  }
+  if (authStore.isDemo) {
+    showEmailModal.value = true
+    return
+  }
+  dispatchExportRequest(null)
+}
+
+function handleLiveExportSubmit(email) {
+  showEmailModal.value = false
+  dispatchExportRequest(email)
+}
+
+function handleSimulateExportSubmit() {
+  showEmailModal.value = false
+  dispatchExportRequest(null)
+}
+
+async function dispatchExportRequest(demoDeliveryEmail = null) {
   try {
-    if (historicTrips.value.length === 0){
-      alertStore.showAlert('No data to export.', 'warning')
-      return 
-    }
     alertStore.showAlert('Initializing secure CSV data compilation via background workers...', 'info')
+    const payload = demoDeliveryEmail ? { demo_delivery_email: demoDeliveryEmail } : {}
     const res = await secureFetch(`${import.meta.env.VITE_BACKEND_URL}/api/trekker/export-history`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${authStore.token}` }
+      headers: { 
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     if (res.ok) {
       alertStore.showAlert(data.message, 'success')
+    } else {
+      alertStore.showAlert(data.message || 'Export failed.', 'danger')
     }
   } catch (err) {
     alertStore.showAlert(`Export drop: ${err.message}`, 'danger')

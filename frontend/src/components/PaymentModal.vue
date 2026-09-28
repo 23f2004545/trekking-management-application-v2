@@ -43,8 +43,8 @@
             </div>
             
             <div class="d-flex gap-3 mt-3">
-              <button type="button" @click="$emit('payment-failed')" class="btn btn-outline-light rounded-pill px-4 py-2 flex-grow-1 fs-9 border-opacity-25">Cancel</button>
-              <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-dark flex-grow-1 fs-9 shadow-sm">Authorize Payment</button>
+              <button type="button" @click="$emit('payment-failed')" class="btn btn-outline-light rounded-pill px-2 py-1 flex-grow-1 fs-9 border-opacity-25">Cancel</button>
+              <button type="submit" class="btn btn-success rounded-pill px-2 py-1 fw-bold text-dark flex-grow-1 fs-9 shadow-sm">Authorize Payment</button>
             </div>
           </form>
         </div>

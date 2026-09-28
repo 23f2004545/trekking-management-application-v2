@@ -1,6 +1,6 @@
 <template>
   <div class="staff-dashboard-canvas text-white text-start pb-5 animate-fade-in position-relative px-3">
-    
+
     <div v-if="!stats.is_onboarded && stats.is_loaded" class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 animate-slide-down">
       <div class="d-flex align-items-center gap-3">
         <span class="fs-2">🛠️</span>
@@ -25,11 +25,9 @@
             <i class="bi bi-globe"></i> ACTIVE FIELD COMMAND
           </span>
           <h1 class="display-5 fw-bold tracking-tight m-0">
-            Guide Operations, <span class="text-success-tint">{{ authStore.userName }}</span>
+            Guide Operations
           </h1>
-          <p class="lead opacity-75 m-0 mt-2 fs-8 max-w-xl">
-            Monitor your assigned trail networks, track incoming expedition rosters, and manage sector capacities in real-time.
-          </p>
+
         </div>
         
         <div class="col-lg-4 d-flex justify-content-lg-end">
@@ -190,6 +188,10 @@ onMounted(() => {
 @keyframes slideDown {
   from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+.extra-small {
+  font-size: 0.75rem;
 }
 
 /* Base style extensions remain consistent with previous design styles */

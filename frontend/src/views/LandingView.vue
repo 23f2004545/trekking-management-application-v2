@@ -1,6 +1,34 @@
 <template>
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-2 position-relative overflow-hidden">
     
+    <!-- FLOATING PERSISTENT SIGN-IN PILL (Docked when scrolling down) -->
+    <Transition name="slide-down-fade">
+      <div v-if="isScrolled" class="apex-floating-landing-pill position-fixed start-50 translate-middle-x d-flex align-items-center justify-content-between gap-3 px-3 py-2 rounded-pill shadow-lg border border-white border-opacity-15">
+        
+        <RouterLink to="/" class="d-flex align-items-center gap-2 text-decoration-none" title="Apex Mountain Network">
+          <img src="@/assets/logo.png" alt="Apex Logo" class="floating-landing-logo" />
+        </RouterLink>
+
+        <div class="d-none d-md-flex align-items-center gap-2">
+          <span class="badge border border-success border-opacity-30 bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 extra-small">
+            <i class="bi bi-shield-check me-1"></i>Verified Alpine Grid
+          </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button @click="scrollToTop" class="btn-floating-landing-circle" title="Scroll to Top">
+            <i class="bi bi-arrow-up-short fs-6"></i>
+          </button>
+          
+          <RouterLink to="/login" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold fs-9 text-dark shadow-sm d-flex align-items-center gap-1 text-decoration-none">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>Login</span>
+          </RouterLink>
+        </div>
+
+      </div>
+    </Transition>
+
     <header class="custom-header w-100 px-4 pt-2">
       <div class="nav-container">
         <div class="logo-zone">
@@ -18,8 +46,8 @@
       <div class="badge-wrapper animate-fade-up" style="animation-delay: 0.1s;">
         <span class="glass-badge">🏔️ The Global Alpine Network</span>
       </div>
-      <h1 class="display-headline animate-fade-up mt-4" style="animation-delay: 0.2s;">
-        Find Your Path In A <br>Constantly Connected World
+      <h1 class="display-headline animate-fade-up mt-4 " style="animation-delay: 0.2s;">
+        <i>Find Your Path In A <br>Constantly Connected World</i>
       </h1>
       <p class="descriptive-subtext animate-fade-up" style="animation-delay: 0.3s;">
         Mute the digital noise. Swap infinite feeds for open mountain horizons. Discover curated 
@@ -322,6 +350,15 @@ const metrics = ref({ highest_peak: 0, total_staff: 0, successful_participants: 
 const averageRating = ref(5.0)
 const finalReviews = ref([])
 const fomoTreks = ref([])
+const isScrolled = ref(false)
+
+function handleScroll() {
+  isScrolled.value = window.scrollY > 200
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // FOMO State
 const fomoActive = ref(false)
@@ -391,16 +428,17 @@ function triggerFomo() {
 
 onMounted(() => {
   loadLandingData()
+  window.addEventListener('scroll', handleScroll, { passive: true })
   
   // Fire the first FOMO popup 5 seconds after they land on the page
   setTimeout(triggerFomo, 5000)
   
   // Then fire it every 2 minutes (120,000 milliseconds)
   fomoTimer = setInterval(triggerFomo, 120000)
-
 })
 
 onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
   if (fomoTimer) clearInterval(fomoTimer)
   setTimeout(() => {
     if (!commandDeskRef.value) return
@@ -657,6 +695,57 @@ onUnmounted(() => {
 .step-glass-card { transition: transform 0.3s ease, background 0.3s ease; }
 .step-glass-card:hover { transform: translateX(5px); background: rgba(255,255,255,0.04) !important; }
 .text-success-tint { color: #7bf1a8; }
+
+/* ==========================================================================
+   FLOATING PERSISTENT SIGN-IN PILL
+   ========================================================================== */
+.apex-floating-landing-pill {
+  top: 1rem;
+  z-index: 1040 !important;
+  background: rgba(10, 18, 14, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  max-width: 92vw;
+}
+
+.floating-landing-logo {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.btn-floating-landing-circle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-floating-landing-circle:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: scale(1.05);
+}
+
+.extra-small {
+  font-size: 0.75rem;
+}
+
+.slide-down-fade-enter-active, .slide-down-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-down-fade-enter-from, .slide-down-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -15px) !important;
+}
 
 </style>
 

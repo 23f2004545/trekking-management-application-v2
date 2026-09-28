@@ -1,11 +1,11 @@
 <template>
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex align-items-center justify-content-center p-3">
     
-    <button @click="$router.push('/')" class="btn-back-home">
+    <button @click="$router.push('/')" class="btn-back-home ">
       ← Back to Main
     </button>
 
-    <div class="glass-login-card p-4 p-md-5 text-center">
+    <div class="glass-login-card p-4 p-md-5 mt-5 text-center">
       
       <div class="brand-header mb-4">
         <div class="logo-accent mx-auto mb-2">🍃</div>
@@ -53,6 +53,50 @@
         </button>
 
       </form>
+
+      <!-- INSTANT PORTFOLIO DEMO ACCESS SECTION -->
+      <div class="demo-access-cluster mb-4">
+        <div class="divider-zone mb-3">
+          <span class="divider-text">⚡ Instant Demo Access (Portfolio Preview)</span>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+          <!-- Admin Button -->
+          <button 
+            type="button" 
+            @click="handleDemoLogin('admin')" 
+            :disabled="isDemoLoading"
+            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill"
+          >
+            <i class="bi bi-shield-lock-fill text-reset"></i>
+            <span>{{ isDemoLoading && activeDemoRole === 'admin' ? 'Seeding...' : 'Admin' }}</span>
+          </button>
+
+          <!-- Staff Button -->
+          <button 
+            type="button" 
+            @click="handleDemoLogin('trek_staff')" 
+            :disabled="isDemoLoading"
+            class="btn btn-sm btn-outline-warning d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill"
+          >
+            <!-- text-dark ensures the staff icon stays visible if warning turns background bright yellow -->
+            <i class="bi bi-compass-fill text-reset"></i>
+            <span>{{ isDemoLoading && activeDemoRole === 'trek_staff' ? 'Seeding...' : 'Staff' }}</span>
+          </button>
+
+          <!-- Trekker Button -->
+          <button 
+            type="button" 
+            @click="handleDemoLogin('trekker')" 
+            :disabled="isDemoLoading"
+            class="btn btn-sm btn-outline-success d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill"
+          >
+            <i class="bi bi-person-fill-gear text-reset"></i>
+            <span>{{ isDemoLoading && activeDemoRole === 'trekker' ? 'Seeding...' : 'Trekker' }}</span>
+          </button>
+        </div>
+      </div>
+
 
       <div class="divider-zone mb-4">
         <span class="divider-text">Ready for new horizons?</span>
@@ -110,6 +154,16 @@
       </div>
     </Transition>
 
+    <!-- Interactive Demo Email Delivery Modal for OTP Login -->
+    <DemoEmailPromptModal 
+      :isOpen="showDemoOtpEmailModal"
+      title="Demo OTP Code Delivery"
+      description="Experience Celery background workers and real cloud SMTP delivery by receiving your 6-digit demo login token in your personal inbox."
+      @close="showDemoOtpEmailModal = false"
+      @submit="handleLiveOtpEmailSubmit"
+      @simulate="handleSimulateOtpEmailSubmit"
+    />
+
   </div>
 
   
@@ -120,6 +174,7 @@
   import { useRouter } from 'vue-router';
   import { useAlertStore } from '@/stores/alert';
   import { useAuthStore } from '@/stores/auth';
+  import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue';
 
   const router = useRouter();
   const alertStore = useAlertStore();
@@ -238,6 +293,45 @@
     }
   }
 
+  const isDemoLoading = ref(false)
+  const activeDemoRole = ref('')
+
+  async function handleDemoLogin(role) {
+    isDemoLoading.value = true
+    activeDemoRole.value = role
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000'
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        alertStore.showAlert(err.message || 'Demo access auto-reseed failed.', 'danger')
+        return
+      }
+
+      const data = await response.json()
+      authStore.loginUser(data)
+      alertStore.showAlert(data.message || `Demo access granted as ${role}!`, 'success')
+
+      if (data.role === 'admin') {
+        router.push('/portal/admin/dashboard')
+      } else if (data.role === 'trek_staff') {
+        router.push('/portal/trek_staff/dashboard')
+      } else {
+        router.push('/portal/trekker/dashboard')
+      }
+    } catch (error) {
+      alertStore.showAlert(`Demo server connection error: ${error.message}`, 'danger')
+    } finally {
+      isDemoLoading.value = false
+      activeDemoRole.value = ''
+    }
+  }
+
   function openForgotModal() {
   forgotEmail.value = ''
   forgotOTP.value = ''
@@ -249,12 +343,37 @@
     forgotModalActive.value = false
   }
 
-  async function requestLoginOTP() {
+  const showDemoOtpEmailModal = ref(false)
+
+  function requestLoginOTP() {
+    if (forgotEmail.value.toLowerCase().includes('demo')) {
+      showDemoOtpEmailModal.value = true
+      return
+    }
+    executeRequestLoginOTP(null)
+  }
+
+  function handleLiveOtpEmailSubmit(email) {
+    showDemoOtpEmailModal.value = false
+    executeRequestLoginOTP(email)
+  }
+
+  function handleSimulateOtpEmailSubmit() {
+    showDemoOtpEmailModal.value = false
+    executeRequestLoginOTP(null)
+  }
+
+  async function executeRequestLoginOTP(demoDeliveryEmail = null) {
     isProcessing.value = true
     try {
+      const payload = { email: forgotEmail.value }
+      if (demoDeliveryEmail) {
+        payload.demo_delivery_email = demoDeliveryEmail
+      }
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/request-login-otp`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail.value })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
       const data = await res.json()
       if (res.ok) {
@@ -495,4 +614,32 @@ p.helper-link {
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
 .modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
 .modal-clean-field { border: none; background: transparent; color: #ffffff; width: 100%; font-size: 0.92rem; outline: none; }
+
+/* Demo Access Cluster Styling */
+.demo-access-cluster {
+  text-align: left;
+}
+.btn-demo-access {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-demo-access:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+.btn-demo-admin:hover:not(:disabled) {
+  border-color: rgba(220, 53, 69, 0.6) !important;
+}
+.btn-demo-staff:hover:not(:disabled) {
+  border-color: rgba(255, 193, 7, 0.6) !important;
+}
+.btn-demo-trekker:hover:not(:disabled) {
+  border-color: rgba(25, 135, 84, 0.6) !important;
+}
+.demo-icon {
+  font-size: 1.25rem;
+}
 </style>

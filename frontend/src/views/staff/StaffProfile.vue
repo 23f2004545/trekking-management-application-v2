@@ -18,7 +18,7 @@
         <div class="glass-profile-panel text-center p-4 rounded-4 border border-white border-opacity-10 h-100 shadow-sm">
           
           <div class="avatar-edit-cluster position-relative d-inline-block mx-auto mb-3">
-            <img :src="backend_url + userProfile.profile_pic" alt="Avatar User" class="profile-main-avatar shadow border border-white border-opacity-20" />
+            <img :src="resolveMediaUrl(userProfile.profile_pic)" alt="Avatar User" class="profile-main-avatar shadow border border-white border-opacity-20" />
             <label class="avatar-upload-badge" title="Change Avatar Image">
               <i class="bi bi-pencil" style="font-size: 1rem;"></i>
               <input type="file" accept="image/*" class="d-none" @change="uploadAvatarImage">
@@ -116,7 +116,7 @@
         <div v-else class="glass-profile-panel p-4 p-md-5 rounded-4 border border-white border-opacity-10 shadow-sm animate-scale-up">
           <div class="d-flex align-items-center justify-content-between border-bottom border-white border-opacity-10 pb-2 mb-4 flex-wrap gap-2">
             <h5 class="fw-bold tracking-tight m-0"><i class="bi bi-hospital mx-2" style="font-size:1rem;"></i> Staff Specific Details</h5>
-            <div class="d-flex align-items-center gap-3 fs-9 text-white-50">
+            <div class="d-flex flex-wrap align-items-center gap-3 fs-9 text-white-50">
               <span>Last Updated : {{ staffProfile.updated_at }}</span>
                <span>Status : {{ staffProfile.status }}</span>
               <button @click="openStaffModal" class="btn btn-outline-light btn-xs rounded-pill px-3 py-1 fs-9 border-opacity-25">
@@ -156,10 +156,13 @@
 
     <Transition name="modal-fade">
       <div v-if="staffModalVisible" @click.self="staffModalVisible = false" class="staff-overlay-backdrop d-flex align-items-center justify-content-center">
-        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up">
+        <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-70 text-start animate-scale-up">
           
-          <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Staff Profile Matrix</h4>
-          <p class="text-white-50 small m-0 mb-4 lh-base">Configure critical emergency contact profiles and trail safety parameters.</p>
+          <div class="d-flex align-items-center justify-content-between border-bottom flex-wrap border-white border-opacity-50 pb-2 mb-4">
+            <button @click="staffModalVisible = false" class="btn-close-modal" title="Close Panel">✕</button>
+            <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Staff Profile Matrix</h4>
+            <p class="text-white-50 small m-0 mb-4 lh-base">Configure critical emergency contact profiles and trail safety parameters.</p>
+          </div>
 
           <form @submit.prevent="submitStaffForm" class="d-flex flex-column gap-3_5">
               <div class="row g-3">
@@ -263,7 +266,7 @@
               <div class="d-flex justify-content-between align-items-end mb-1">
                 <label class="input-label-tag m-0">Authorization Code (OTP)</label>
                 <button type="button" @click="requestOTP" :disabled="otpCooldown > 0" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-1 fs-9 border-opacity-50 mb-2">
-                  {{ otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Send OTP via Email' }}
+                  {{ otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Send OTP' }}
                 </button>
               </div>
               <div class="interactive-input-wrapper">
@@ -282,6 +285,16 @@
       </div>
     </Transition>
 
+    <!-- Interactive Demo Email Delivery Modal -->
+    <DemoEmailPromptModal 
+      :isOpen="showEmailModal"
+      title="Security Key OTP Email Delivery"
+      description="Experience Celery background workers and real cloud SMTP delivery by receiving password reset OTP in your inbox."
+      @close="showEmailModal = false"
+      @submit="handleLiveOtpSubmit"
+      @simulate="handleSimulateOtpSubmit"
+    />
+
   </div>
 </template>
 
@@ -290,10 +303,13 @@ import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api'
+import { resolveMediaUrl } from '@/utils/media'
+import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
 const backend_url = import.meta.env.VITE_BACKEND_URL
+const showEmailModal = ref(false)
 
 const API_BASE = 'http://127.0.0.1:5000/api/trek_staff'
 
@@ -468,12 +484,39 @@ function triggerPasswordReset() {
   passwordModalActive.value = true
 }
 
+function requestOTP() {
+  if (authStore.isDemo) {
+    showEmailModal.value = true
+    return
+  }
+  executeRequestOTP(null)
+}
+
+function handleLiveOtpSubmit(email) {
+  showEmailModal.value = false
+  executeRequestOTP(email)
+}
+
+function handleSimulateOtpSubmit() {
+  showEmailModal.value = false
+  executeRequestOTP(null)
+}
+
 // Logic to ask Flask for OTP and start UI cooldown
-async function requestOTP() {
+async function executeRequestOTP(demoDeliveryEmail = null) {
   try {
     alertStore.showAlert('Dispatching authorization request to Celery workers...', 'info')
+    const payload = {}
+    if (demoDeliveryEmail) {
+      payload.demo_delivery_email = demoDeliveryEmail
+    }
     const res = await secureFetch(`${API_BASE}/request-password-otp`, {
-      method: 'POST', headers: { 'Authorization': `Bearer ${authStore.token}` }
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     })
     
     if (res.ok) {
@@ -622,7 +665,7 @@ onMounted(() => {
 .staff-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0, 5, 2, 0.316) !important;
-  backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(13px) !important; -webkit-backdrop-filter: blur(20px) !important;
   z-index: 999 !important;
 }
 
@@ -643,6 +686,7 @@ onMounted(() => {
 .gap-3_5 { gap: 14px; }
 .fs-8 { font-size: 0.88rem; }
 .fs-9 { font-size: 0.76rem; }
+.max-vh-70 { max-height: 70vh; }
 
 /* OTP Modal Specific Styles */
 .profile-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 6, 2, 0.459); backdrop-filter: blur(5px); z-index: 999; }

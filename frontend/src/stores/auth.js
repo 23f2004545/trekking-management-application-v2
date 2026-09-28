@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
+import { resolveMediaUrl } from '@/utils/media'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: sessionStorage.getItem('access_token') || null,
     role: sessionStorage.getItem('user_role') || null,
     userName: sessionStorage.getItem('user_name') || 'User',
-    profile_pic: sessionStorage.getItem('profile_pic') || null
+    profile_pic: sessionStorage.getItem('profile_pic') || null,
+    isDemo: sessionStorage.getItem('is_demo') === 'true',
+    demoDeliveryEmail: sessionStorage.getItem('apex_demo_delivery_email') || ''
   }),
   
   getters: {
@@ -42,15 +45,11 @@ export const useAuthStore = defineStore('auth', {
     },
 
     activeAvatarUrl: (state) => {
-
-      const backendBaseUrl = import.meta.env.VITE_BACKEND_URL;
-
-      if (state.profile_pic == "null") {
-        return `${backendBaseUrl}/static/Profile_pics/${state.role}.png`
+      const fallback = `/static/Profile_pics/${state.role || 'trekker'}.png`
+      if (!state.profile_pic || state.profile_pic === 'null') {
+        return resolveMediaUrl(fallback)
       }
-      
-      // CONCATENATION GATEWAY
-      return `${backendBaseUrl}${state.profile_pic}`
+      return resolveMediaUrl(state.profile_pic, resolveMediaUrl(fallback))
     }
   },
   
@@ -60,22 +59,34 @@ export const useAuthStore = defineStore('auth', {
       this.role = payload.role
       this.userName = payload.name || 'User'
       this.profile_pic = payload.profile_pic || null
+      this.isDemo = Boolean(payload.is_demo)
 
       sessionStorage.setItem('access_token', payload.access_token)
       sessionStorage.setItem('user_role', payload.role)
       sessionStorage.setItem('user_name', this.userName)
       sessionStorage.setItem('profile_pic', this.profile_pic)
+      sessionStorage.setItem('is_demo', this.isDemo ? 'true' : 'false')
       localStorage.setItem('refresh_token', payload.refresh_token)
     },
     updateLocalAvatar(newRelativeKey) {
       this.profile_pic = newRelativeKey
       sessionStorage.setItem('profile_pic', newRelativeKey)
     },
+    setDemoDeliveryEmail(email) {
+      this.demoDeliveryEmail = email || ''
+      if (email) {
+        sessionStorage.setItem('apex_demo_delivery_email', email)
+      } else {
+        sessionStorage.removeItem('apex_demo_delivery_email')
+      }
+    },
     logoutUser() {
       this.token = null
       this.role = null
       this.userName = 'User'
       this.profile_pic = null
+      this.isDemo = false
+      this.demoDeliveryEmail = ''
       sessionStorage.clear()
       localStorage.removeItem('refresh_token')
     },

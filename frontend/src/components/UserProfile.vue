@@ -11,7 +11,7 @@
         <div class="glass-profile-panel text-center p-4 rounded-4 border border-white border-opacity-10 h-100 shadow-sm">
           
           <div class="avatar-edit-cluster position-relative d-inline-block mx-auto mb-3">
-            <img :src="BACKEND_URL + (profile.profile_pic )" alt="Avatar Profile" class="profile-main-avatar shadow border border-white border-opacity-20" />
+            <img :src="resolveMediaUrl(profile.profile_pic)" alt="Avatar Profile" class="profile-main-avatar shadow border border-white border-opacity-20" />
           </div>
 
           <h4 class="fw-bold tracking-tight mb-2">{{ profile.name }}</h4>
@@ -172,6 +172,7 @@
 <script setup>
 import { readonly } from 'vue';
 import { useConfirmStore } from '@/stores/confirm.js'
+import { resolveMediaUrl } from '@/utils/media'
 
 const confirmStore = useConfirmStore()
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL 

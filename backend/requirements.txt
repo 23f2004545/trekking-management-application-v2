@@ -6,3 +6,8 @@ Flask-Bcrypt
 Celery
 Flask-Caching
 redis
+cloudinary
+psycopg2-binary
+python-dotenv
+pytest
+gunicorn

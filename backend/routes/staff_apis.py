@@ -6,6 +6,8 @@ from controller.decorators import staff_required
 from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone
 from sqlalchemy import func,case
+from services.cloudinary_service import upload_image
+from services.demo_service import is_demo_user, is_demo_target
 import os , random
 
 
@@ -136,16 +138,9 @@ def update_profile():
     if 'profile_pic' in request.files:
         file = request.files['profile_pic']
         if file and file.filename != '':
-            # Secure file names safely to prevent path injection attacks
-            filename = f"user_{user.id}_{os.path.basename(file.filename)}"
-            save_path = os.path.join('static/' , 'Profile_pics', filename)
-            
-            # Ensure folder structure exists
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            file.save(save_path)
-
-            # Store the serving endpoint static assets path inside the database column
-            user.profile_pic = f"/static/Profile_pics/{filename}"
+            new_url = upload_image(file, folder="apex/avatars", filename_prefix=f"staff_{user.id}", local_subfolder="Profile_pics")
+            if new_url:
+                user.profile_pic = new_url
             
     try:
         db.session.commit()
@@ -315,6 +310,12 @@ def update_trek_field_data(trek_id):
     if trek.assigned_staff_id != staff.user_id:
         return make_response(jsonify({"message": "Unauthorized: Route belongs to another guide."}), 403)
 
+    if is_demo_user(user) and not is_demo_target(trek):
+        return make_response(jsonify({
+            "message": "[SIMULATED] Field update executed in simulation mode. Live route data was preserved.",
+            "simulated": True
+        }), 200)
+
     data = request.get_json()
     status_changed = False
     new_status = data.get('status')
@@ -350,13 +351,14 @@ def update_trek_field_data(trek_id):
                 booking.status = 'Completed'
                 booking.updated_at = datetime.now(timezone.utc)
                 # Fire Completion Email
-                dispatch_completion_email.delay(
-                    booking.user.email, 
-                    booking.user.name, 
-                    trek.trek_name, 
-                    trek.duration_days, 
-                    trek.max_altitude
-                )
+                if not is_demo_user(user):
+                    dispatch_completion_email.delay(
+                        booking.user.email, 
+                        booking.user.name, 
+                        trek.trek_name, 
+                        trek.duration_days, 
+                        trek.max_altitude
+                    )
                 
             elif new_status == 'Cancelled':
                 booking.status = 'Cancelled'
@@ -365,14 +367,15 @@ def update_trek_field_data(trek_id):
                 trek.cancelled_at = datetime.now(timezone.utc)
                 booking.updated_at = datetime.now(timezone.utc)
                 # Fire Cancellation Email
-                dispatch_cancellation_email.delay(
-                    booking.user.email, 
-                    booking.user.name, 
-                    trek.trek_name, 
-                    trek.duration_days, 
-                    abort_reason, 
-                    "Field Commander" 
-                )
+                if not is_demo_user(user):
+                    dispatch_cancellation_email.delay(
+                        booking.user.email, 
+                        booking.user.name, 
+                        trek.trek_name, 
+                        trek.duration_days, 
+                        abort_reason, 
+                        "Field Commander" 
+                    )
                 create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Staff", "danger")
 
     try:
@@ -455,6 +458,11 @@ def request_password_otp():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
+    data = request.get_json(silent=True) or {}
+    demo_delivery_email = None
+    if is_demo_user(user):
+        demo_delivery_email = data.get('demo_delivery_email')
+
     # Generate 6 digit string
     otp_code = str(random.randint(100000, 999999))
     
@@ -462,7 +470,7 @@ def request_password_otp():
     cache.set(f"password_otp_{user_id}", otp_code, timeout=300)
     
     # Trigger Celery to send email asynchronously
-    send_otp_email.delay(user.email, user.name, otp_code)
+    send_otp_email.delay(user.email, user.name, otp_code, demo_delivery_email=demo_delivery_email)
     
     return make_response(jsonify({"message": "OTP generated and dispatched to your email."}), 200)
 

@@ -1,5 +1,6 @@
 import csv
 import io
+import ssl
 from datetime import datetime, timedelta
 from celery import Celery
 from celery.schedules import crontab
@@ -8,13 +9,18 @@ from controller.models import User, Booking, Trek
 from routes.utils_apis import create_notification
 from sqlalchemy import func, extract
 from mail import send_html_email
+from config import config
 
-celery_app = Celery('tasks', broker='redis://localhost:6379/0')
+broker_url = config.CELERY_BROKER_URL
+result_backend = config.CELERY_RESULT_BACKEND
 
-celery_app.conf.update(
-    timezone='Asia/Kolkata',  # Standard tzdata name for IST
-    enable_utc=False,
-    beat_schedule={
+celery_app = Celery('tasks', broker=broker_url, backend=result_backend)
+
+celery_config = {
+    'timezone': 'Asia/Kolkata',  # Standard tzdata name for IST
+    'enable_utc': False,
+    'task_always_eager': config.CELERY_TASK_ALWAYS_EAGER,
+    'beat_schedule': {
         'daily-trek-reminder-8am': {
             'task': 'tasks.daily_trek_reminder',
             'schedule': crontab(hour=8, minute=0), # Fires exactly at 8:00 AM IST
@@ -24,14 +30,21 @@ celery_app.conf.update(
             'schedule': crontab(day_of_month='1', hour=9, minute=0), # 1st of month at 9:00 AM
         }
     }
-)
+}
+
+if broker_url and broker_url.startswith('rediss://'):
+    celery_config['broker_use_ssl'] = {'ssl_cert_reqs': ssl.CERT_NONE}
+    celery_config['redis_backend_use_ssl'] = {'ssl_cert_reqs': ssl.CERT_NONE}
+
+celery_app.conf.update(celery_config)
+
 
 
 # ==========================================================
 # 1. ASYNC: CSV HISTORY EXPORT (In-Memory)
 # ==========================================================
 @celery_app.task(name='tasks.export_history_csv')
-def export_history_csv(user_id, user_email, user_name):
+def export_history_csv(user_id, user_email, user_name, demo_delivery_email=None):
     from app import create_app
     app = create_app()
     with app.app_context():
@@ -51,6 +64,14 @@ def export_history_csv(user_id, user_email, user_name):
         csv_string_data = csv_buffer.getvalue()
         csv_buffer.close() # Free memory
         
+        demo_banner = ""
+        if demo_delivery_email:
+            demo_banner = f"""
+            <div style="background-color: #1e3a2b; border: 1px dashed #10b981; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #a7f3d0;">
+                [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+            </div>
+            """
+
         # Curated HTML Template
         html_body = f"""
         <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0b1f15; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #198754;">
@@ -58,6 +79,7 @@ def export_history_csv(user_id, user_email, user_name):
                 <h2 style="margin: 0; color: #ffffff; letter-spacing: 1px;">Apex Expeditions Data Core</h2>
             </div>
             <div style="padding: 30px;">
+                {demo_banner}
                 <h3 style="margin-top: 0;">Hello {user_name},</h3>
                 <p style="color: #a0aec0; line-height: 1.6;">Your requested expedition history matrix has been successfully compiled from our secure database servers.</p>
                 <p style="color: #a0aec0; line-height: 1.6;">Attached to this transmission is the CSV telemetry file containing your complete route logs, financial transactions, and basecamp authorizations.</p>
@@ -68,7 +90,8 @@ def export_history_csv(user_id, user_email, user_name):
         """
         
         filename = f"Apex_History_Log_{datetime.now().strftime('%Y%m%d')}.csv"
-        send_html_email(user_email, "Your Expedition History CSV is Ready", html_body, filename, csv_string_data)
+        target_email = demo_delivery_email or user_email
+        send_html_email(target_email, "Your Expedition History CSV is Ready", html_body, filename, csv_string_data)
 
 
 # ==========================================================
@@ -127,7 +150,7 @@ def daily_trek_reminder():
                                 </tr>
                                 <tr>
                                     <td style="padding: 8px 0; color: #94a3b8;">Assigned Guide</td>
-                                    <td style="padding: 8px 0; color: #7bf1a8; text-align: right;">👨‍✈️ {guide_name}</td>
+                                    <td style="padding: 8px 0; color: #7bf1a8; text-align: right;">{guide_name}</td>
                                 </tr>
                             </table>
                         </div>
@@ -280,9 +303,17 @@ def monthly_admin_report():
 # 4. ASYNC: OTP EMAIL FOR PASSWORD RESET
 # ==========================================================
 @celery_app.task(name='tasks.send_otp_email')
-def send_otp_email(user_email, user_name, otp_code):
+def send_otp_email(user_email, user_name, otp_code, demo_delivery_email=None):
+    demo_banner = ""
+    if demo_delivery_email:
+        demo_banner = f"""
+        <div style="background-color: #e6f4ea; border: 1px dashed #198754; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 12px; color: #0f5132;">
+            [DEMO PREVIEW] Dispatched for portfolio demonstration to {demo_delivery_email}. Your email address was not saved in our database.
+        </div>
+        """
     html_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; text-align: center; border-radius: 8px;">
+        {demo_banner}
         <h2 style="color: #1a202c; margin-top: 0;">Security Verification</h2>
         <p style="color: #4a5568;">Hello {user_name},</p>
         <p style="color: #4a5568;">A request was made to reset your Apex Expeditions security key. Your one-time authorization code is:</p>
@@ -292,7 +323,8 @@ def send_otp_email(user_email, user_name, otp_code):
         <p style="color: #a0aec0; font-size: 13px;">This code will self-destruct in exactly 5 minutes. If you did not request this, please ignore this transmission.</p>
     </div>
     """
-    send_html_email(user_email, "Apex Security: Your Password Reset Code", html_body)
+    target_email = demo_delivery_email or user_email
+    send_html_email(target_email, "Apex Security: Your Password Reset Code", html_body)
     
     
      
@@ -300,10 +332,17 @@ def send_otp_email(user_email, user_name, otp_code):
 # 5. ASYNC: SEND CREDENTIALS TO CANDIDATE
 # ==========================================================    
 @celery_app.task(name='tasks.send_staff_credentials_email')
-def send_staff_credentials_email(personal_email, staff_email, staff_password):
+def send_staff_credentials_email(personal_email, staff_email, staff_password, demo_delivery_email=None):
     from app import create_app
     app = create_app()
     with app.app_context():
+        demo_banner = ""
+        if demo_delivery_email:
+            demo_banner = f"""
+            <div style="background-color: #1e3a2b; border: 1px dashed #10b981; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #a7f3d0;">
+                [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+            </div>
+            """
         html_body = f"""
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #1e293b;">
             <div style="background-color: #198754; padding: 25px; text-align: center;">
@@ -312,6 +351,7 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password):
             </div>
             
             <div style="padding: 30px;">
+                {demo_banner}
                 <h3 style="margin-top: 0; color: #f8f9fa;">Welcome Commander,</h3>
                 <p style="color: #cbd5e1; line-height: 1.6;">Administration has provisioned your secure portal access. You are now authorized to manage expedition manifests, update live trail parameters, and clear explorer medical passports.</p>
                 
@@ -322,23 +362,32 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password):
                     <p style="margin: 0; color: #94a3b8; font-size: 14px;"><strong>Temporary Key:</strong> <span style="color: #ffda6a; font-family: monospace; font-size: 16px;">{staff_password}</span></p>
                 </div>
 
-                <p style="color: #ff8787; font-size: 12px; margin-top: 20px;">⚠️ Mandatory Compliance: You are required to mutate your security key immediately upon your first terminal login.</p>
+                <p style="color: #ff8787; font-size: 12px; margin-top: 20px;">[Notice] Mandatory Compliance: You are required to mutate your security key immediately upon your first terminal login.</p>
             </div>
         </div>
         """
-        send_html_email(personal_email, "Apex Expeditions: Guide Account Credentials", html_body)
+        target_email = demo_delivery_email or personal_email
+        send_html_email(target_email, "Apex Expeditions: Guide Account Credentials", html_body)
         
 
 # ==========================================================
 # 6. ASYNC : RAISED TICKET RESOLVED EMAIL TO USER
 # ==========================================================  
 @celery_app.task(name='tasks.dispatch_ticket_resolution')
-def dispatch_ticket_resolution(user_email, user_name, user_role, subject, original_message, admin_response):
+def dispatch_ticket_resolution(user_email, user_name, user_role, subject, original_message, admin_response, demo_delivery_email=None):
     from datetime import datetime
     
     # Adjust tone slightly based on role
     salutation = "Field Commander" if user_role == 'trek_staff' else "Explorer"
     role_color = "#ffda6a" if user_role == 'trek_staff' else "#7bf1a8"
+
+    demo_banner = ""
+    if demo_delivery_email:
+        demo_banner = f"""
+        <div style="background-color: #1e3a2b; border: 1px dashed #10b981; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #a7f3d0;">
+            [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+        </div>
+        """
 
     html_body = f"""
     <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #050a08; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #198754;">
@@ -348,6 +397,7 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
         </div>
         
         <div style="padding: 30px;">
+            {demo_banner}
             <p style="color: #cbd5e1; font-size: 15px;">Greetings {salutation} {user_name},</p>
             <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">Your recent operational query has been reviewed and resolved by Apex Administration. Please review the official directive below.</p>
             
@@ -360,7 +410,7 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
             </div>
             
             <div style="background-color: rgba(25,135,84,0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #198754; margin: 25px 0;">
-                <span style="color: #7bf1a8; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;"><span style="font-size: 14px;">✓</span> Command Directive</span>
+                <span style="color: #7bf1a8; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">Command Directive</span>
                 <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 15px; line-height: 1.6;">{admin_response}</p>
             </div>
             
@@ -371,18 +421,27 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
         </div>
     </div>
     """
-    send_html_email(user_email, f"Resolved: {subject}", html_body)
+    target_email = demo_delivery_email or user_email
+    send_html_email(target_email, f"Resolved: {subject}", html_body)
     
     
 # ==========================================================
 # 7. ASYNC : EXPORT TREK SPECIFIC INSIGHTS AFTER COMPLETION
 # ==========================================================  
 @celery_app.task(name='tasks.export_history_telemetry')
-def export_history_telemetry(admin_email, admin_name, payload):
+def export_history_telemetry(admin_email, admin_name, payload, demo_delivery_email=None):
     trek_meta = payload.get('trek_info', {})
     analytics = payload.get('analytics', {})
     staff = payload.get('staff_info', {})
     
+    demo_banner = ""
+    if demo_delivery_email:
+        demo_banner = f"""
+        <div style="background-color: #1e3a2b; border: 1px dashed #10b981; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #a7f3d0;">
+            [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+        </div>
+        """
+
     html_body = f"""
     <div style="font-family: 'Consolas', 'Courier New', monospace; max-width: 650px; margin: 0 auto; background-color: #050a08; color: #cbd5e1; border-radius: 8px; border: 1px solid #198754; overflow: hidden;">
         
@@ -392,6 +451,7 @@ def export_history_telemetry(admin_email, admin_name, payload):
         </div>
         
         <div style="padding: 30px;">
+            {demo_banner}
             <p style="color: #ffffff;">Authorized Requestor: <strong>{admin_name}</strong></p>
             <p style="font-size: 13px; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 15px;">The following data packet contains the operational yield and manifest overview for the requested historical deployment.</p>
             
@@ -444,14 +504,23 @@ def export_history_telemetry(admin_email, admin_name, payload):
         </div>
     </div>
     """
-    send_html_email(admin_email, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
+    target_email = demo_delivery_email or admin_email
+    send_html_email(target_email, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
     
     
 # ==========================================================
 # 8. ASYNC : TREK COMPLETION/CANCELLATION MAIL
 # ==========================================================  
 @celery_app.task(name='tasks.dispatch_cancellation_email')
-def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reason, cancelled_by="Administration"):
+def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reason, cancelled_by="Administration", demo_delivery_email=None):
+    demo_banner = ""
+    if demo_delivery_email:
+        demo_banner = f"""
+        <div style="background-color: #2b1e1e; border: 1px dashed #ef4444; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #fca5a5;">
+            [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+        </div>
+        """
+
     html_body = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #7f1d1d;">
         <div style="background-color: #7f1d1d; padding: 25px; text-align: center; border-bottom: 3px solid #ef4444;">
@@ -459,6 +528,7 @@ def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reas
             <p style="margin: 5px 0 0 0; color: #fca5a5; font-size: 13px;">Official Cancellation Notice</p>
         </div>
         <div style="padding: 30px;">
+            {demo_banner}
             <p style="color: #cbd5e1; font-size: 15px;">Explorer {user_name},</p>
             <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">We deeply regret to inform you that your upcoming <strong>{duration}-Day</strong> expedition to <strong>{trek_name}</strong> has been officially halted by {cancelled_by}.</p>
             
@@ -475,10 +545,19 @@ def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reas
         </div>
     </div>
     """
-    send_html_email(user_email, f"CRITICAL: {trek_name} Cancelled", html_body)
+    target_email = demo_delivery_email or user_email
+    send_html_email(target_email, f"CRITICAL: {trek_name} Cancelled", html_body)
 
 @celery_app.task(name='tasks.dispatch_completion_email')
-def dispatch_completion_email(user_email, user_name, trek_name, duration, altitude):
+def dispatch_completion_email(user_email, user_name, trek_name, duration, altitude, demo_delivery_email=None):
+    demo_banner = ""
+    if demo_delivery_email:
+        demo_banner = f"""
+        <div style="background-color: #1e3a2b; border: 1px dashed #10b981; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #a7f3d0;">
+            [DEMO PREVIEW] Dispatched for portfolio demonstration to <code>{demo_delivery_email}</code>. Your email address was not saved in our database.
+        </div>
+        """
+
     html_body = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #050a08; color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #198754;">
         <div style="background-color: #198754; padding: 25px; text-align: center; border-bottom: 3px solid #7bf1a8;">
@@ -486,6 +565,7 @@ def dispatch_completion_email(user_email, user_name, trek_name, duration, altitu
             <p style="margin: 5px 0 0 0; color: #e2e8f0; font-size: 13px;">Welcome back to Basecamp.</p>
         </div>
         <div style="padding: 30px;">
+            {demo_banner}
             <p style="color: #cbd5e1; font-size: 15px;">Congratulations {user_name},</p>
             <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">Your <strong>{duration}-Day</strong> deployment to <strong>{trek_name}</strong> has been officially marked as completed by your Field Commander.</p>
             
@@ -508,4 +588,5 @@ def dispatch_completion_email(user_email, user_name, trek_name, duration, altitu
         </div>
     </div>
     """
-    send_html_email(user_email, f"Expedition Cleared: {trek_name}", html_body)
+    target_email = demo_delivery_email or user_email
+    send_html_email(target_email, f"Expedition Cleared: {trek_name}", html_body)

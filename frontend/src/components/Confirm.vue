@@ -7,9 +7,19 @@
         
         <h5 class="fw-bold text-white mb-2 tracking-tight">System Choice Required</h5>
         
-        <p class="confirm-msg text-white-50 small mb-4 mx-auto max-w-xs lh-base">
+        <p class="confirm-msg text-white-50 small mb-3 mx-auto max-w-xs lh-base">
           {{ confirmStore.message }}
         </p>
+
+        <!-- Demo Mode Notice in confirmation dialog -->
+        <div v-if="authStore.isDemo" class="alert py-1.5 px-3 small mb-4 border-0 rounded-3 text-start mx-auto" style="background: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.3) !important; max-width: 290px;">
+          <div class="d-flex align-items-center gap-1 text-warning fw-semibold fs-9 mb-0.5">
+            <i class="bi bi-shield-check"></i> Demo Simulation Active
+          </div>
+          <p class="m-0 text-white-50" style="font-size: 0.72rem; line-height: 1.2;">
+            Real users &amp; system records are protected. Live changes only apply to (Demo) records and auto-revert.
+          </p>
+        </div>
         
         <div class="d-flex align-items-center justify-content-center gap-3">
           <button @click="confirmStore.decline" class="btn btn-danger rounded-pill px-4 py-2 fs-8 fw-semibold">
@@ -27,8 +37,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useConfirmStore } from '../stores/confirm'
+import { useAuthStore } from '../stores/auth'
 
 const confirmStore = useConfirmStore()
+const authStore = useAuthStore()
 
 const icon = computed(() => {
   return '🌲' 

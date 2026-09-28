@@ -1,7 +1,7 @@
 <template>
   <div class="admin-tickets-canvas text-white text-start p-3 animate-fade-in">
     
-    <div class="mb-5 border-bottom border-white border-opacity-10 pb-4 d-flex justify-content-between align-items-center">
+    <div class="mb-5 border-bottom border-white border-opacity-10 pb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
       <div>
         <h1 class="display-5 fw-bold tracking-tight m-0">Command Dispatch Inbox</h1>
         <p class="m-0 text-white-50 fs-8 mt-2">Process pending operational queries and field hazard reports.</p>
@@ -94,6 +94,16 @@
       </div>
     </Transition>
 
+    <!-- Interactive Demo Email Delivery Modal -->
+    <DemoEmailPromptModal 
+      :isOpen="showEmailModal"
+      title="Ticket Resolution Email Delivery"
+      description="Experience Celery background workers and real cloud SMTP delivery by receiving the official command directive in your personal inbox."
+      @close="showEmailModal = false"
+      @submit="handleLiveTicketEmailSubmit"
+      @simulate="handleSimulateTicketEmailSubmit"
+    />
+
   </div>
 </template>
 
@@ -101,15 +111,21 @@
 import { ref, onMounted, computed } from 'vue'
 import { secureFetch } from '../../utils/api.js'
 import { useAlertStore } from '../../stores/alert.js'
+import { useAuthStore } from '../../stores/auth.js'
+import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const alertStore = useAlertStore()
+const authStore = useAuthStore()
 
 const tickets = ref([])
 const activeModal = ref(null)
 const wantsToResolve = ref(false)
 const resolutionText = ref('')
 const priorityFilter = ref('All')
+
+const showEmailModal = ref(false)
+const pendingResolutionId = ref(null)
 
 const filteredTickets = computed(() => {
   if (priorityFilter.value === 'All') return tickets.value
@@ -135,21 +151,57 @@ function openResolutionModal(ticket) {
   activeModal.value = ticket
 }
 
-async function transmitResolution(id) {
+function transmitResolution(id) {
   if (!resolutionText.value.trim()) return alertStore.showAlert('Resolution cannot be empty.', 'warning')
   
+  if (authStore.isDemo) {
+    pendingResolutionId.value = id
+    showEmailModal.value = true
+    return
+  }
+  executeResolution(id, null)
+}
+
+function handleLiveTicketEmailSubmit(email) {
+  showEmailModal.value = false
+  if (pendingResolutionId.value) {
+    executeResolution(pendingResolutionId.value, email)
+    pendingResolutionId.value = null
+  }
+}
+
+function handleSimulateTicketEmailSubmit() {
+  showEmailModal.value = false
+  if (pendingResolutionId.value) {
+    executeResolution(pendingResolutionId.value, null)
+    pendingResolutionId.value = null
+  }
+}
+
+async function executeResolution(id, demoDeliveryEmail = null) {
   try {
     alertStore.showAlert('Transmitting resolution via secure channels...', 'info')
+    const payload = { response: resolutionText.value }
+    if (demoDeliveryEmail) {
+      payload.demo_delivery_email = demoDeliveryEmail
+    }
     const res = await secureFetch(`${BACKEND_URL}/api/admin/tickets/${id}/resolve`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ response: resolutionText.value })
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
     if (res.ok) {
       alertStore.showAlert('Ticket resolved and explorer notified.', 'success')
       activeModal.value = null
       await fetchTickets()
+    } else {
+      const data = await res.json()
+      alertStore.showAlert(data.message || 'Resolution failed.', 'danger')
     }
-  } catch (err) { console.error(err) }
+  } catch (err) {
+    console.error(err)
+    alertStore.showAlert(`Network error: ${err.message}`, 'danger')
+  }
 }
 
 async function rejectTicket(id) {

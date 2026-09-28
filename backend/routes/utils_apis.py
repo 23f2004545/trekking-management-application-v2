@@ -11,6 +11,18 @@ def create_notification(user_id, message, alert_type="info"):
     db.session.commit()
 
 def log_system_audit(action, details, severity="info"):
+    try:
+        from flask_jwt_extended import get_jwt_identity
+        from services.demo_service import is_demo_user
+        user_id = get_jwt_identity()
+        if user_id:
+            user = User.query.get(int(user_id))
+            if is_demo_user(user):
+                # Demo actions are simulated and do not pollute the operational audit log
+                return
+    except Exception:
+        pass
+
     new_log = AuditLog(action=action, details=details, severity=severity)
     db.session.add(new_log)
     db.session.commit()
@@ -274,13 +286,17 @@ def get_historical_treks():
 @jwt_required()
 def export_historical_data():
     from tasks import export_history_telemetry
+    from services.demo_service import is_demo_user
     
     user_id = get_jwt_identity()
     user = User.query.get_or_404(user_id)
-    payload = request.get_json()
+    payload = request.get_json() or {}
+    
+    # Extract demo email if running in demo profile mode
+    demo_delivery_email = payload.get('demo_delivery_email') if is_demo_user(user) else None
     
     # Fire the Celery worker asynchronously
-    export_history_telemetry.delay(user.email, user.name, payload)
+    export_history_telemetry.delay(user.email, user.name, payload, demo_delivery_email=demo_delivery_email)
     
     return jsonify({"message": "Telemetry export initialized. Check your encrypted inbox."}), 200
 

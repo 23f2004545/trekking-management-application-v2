@@ -1,0 +1,97 @@
+services:
+  # -------------------------------------------------------------------------
+  # 1. APEX EXPEDITIONS FLASK REST API
+  # -------------------------------------------------------------------------
+  - type: web
+    name: apex-backend-api
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CELERY_TASK_ALWAYS_EAGER
+        value: "false"
+      - key: FRONTEND_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_SENDER_EMAIL
+        sync: false
+
+  # -------------------------------------------------------------------------
+  # 2. CELERY ASYNCHRONOUS WORKER
+  # -------------------------------------------------------------------------
+  - type: worker
+    name: apex-celery-worker
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: celery -A tasks.celery_app worker --workdir backend --loglevel=info --concurrency=2
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_SENDER_EMAIL
+        sync: false
+
+  # -------------------------------------------------------------------------
+  # 3. VUE 3 CLIENT SINGLE-PAGE APPLICATION
+  # -------------------------------------------------------------------------
+  - type: static
+    name: apex-frontend-app
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    plan: free
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_BACKEND_URL
+        sync: false

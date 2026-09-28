@@ -4,6 +4,8 @@ from controller.extensions import bcrypt,db,cache
 from controller.models import User,Role
 from datetime import datetime, timezone
 from tasks import send_otp_email
+from services.cloudinary_service import upload_image
+from services.demo_service import is_demo_user
 import os , re , random
 
 auth_bp = Blueprint('auth', __name__)
@@ -35,6 +37,46 @@ def login():
     return make_response(jsonify({"message": "Invalid email or password"}), 401)
 
 
+@auth_bp.route('/demo-login', methods=['POST'])
+def demo_login():
+    """
+    Instant Access Demo Login:
+    Validates role, dynamically auto-reseeds demo dataset if needed,
+    and returns JWT credentials tagged with is_demo: True.
+    """
+    from services.demo_service import seed_or_reset_demo_data
+    
+    data = request.get_json() or {}
+    role = data.get('role', 'admin')
+    if role in ['staff', 'guide']:
+        role = 'trek_staff'
+
+    if role not in ['admin', 'trek_staff', 'trekker']:
+        return make_response(jsonify({"message": "Invalid demo role requested."}), 400)
+
+    try:
+        user = seed_or_reset_demo_data(target_role=role)
+        user.last_login_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+        access_token = create_access_token(identity=str(user.id), additional_claims={"is_demo": True})
+        refresh_token = create_refresh_token(identity=str(user.id), additional_claims={"is_demo": True})
+
+        return make_response(jsonify({
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "role": user.role.name,
+            "name": user.name,
+            "profile_pic": user.profile_pic,
+            "is_demo": True,
+            "message": f"Welcome to Apex Expeditions Demo Portal as {user.role.name.title()}!"
+        }), 200)
+    except Exception as e:
+        db.session.rollback()
+        return make_response(jsonify({"message": f"Demo auto-reseed failure: {str(e)}"}), 500)
+
+
+
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh():
@@ -63,11 +105,7 @@ def register():
     if 'profile_pic' in request.files:
         file = request.files['profile_pic']
         if file and file.filename != '':
-            filename = os.path.basename(file.filename) 
-            save_path = os.path.join('static/', 'Profile_pics', filename)
-            file.save(save_path)
-
-            profile_pic = f"/static/Profile_pics/{filename}"
+            profile_pic = upload_image(file, folder="apex/avatars", filename_prefix="user", local_subfolder="Profile_pics")
         
     # Fallback if no image uploaded
     if not profile_pic:
@@ -122,7 +160,8 @@ def register():
 @auth_bp.route('/request-login-otp', methods=['POST'])
 def request_login_otp():
     """Generates an OTP for passwordless login."""
-    email = request.json.get('email')
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
     user = User.query.filter_by(email=email).first()
     
     if not user:
@@ -135,7 +174,11 @@ def request_login_otp():
     otp_code = str(random.randint(100000, 999999))
     cache.set(f"login_otp_{email}", otp_code, timeout=300) # 5 minutes TTL
     
-    send_otp_email.delay(user.email, user.name, otp_code)
+    demo_delivery_email = None
+    if is_demo_user(user):
+        demo_delivery_email = data.get('demo_delivery_email')
+    
+    send_otp_email.delay(user.email, user.name, otp_code, demo_delivery_email=demo_delivery_email)
     
     return make_response(jsonify({"message": "If this email exists, an OTP has been sent."}), 200)
 

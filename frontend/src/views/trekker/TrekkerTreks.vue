@@ -57,7 +57,7 @@
         >
           
           <div class="card-bg-wrapper position-absolute top-0 start-0 w-100 h-100 z-0">
-            <img :src="BACKEND_URL + trek.image_url" alt="Trek Graphic" class="card-bg-img w-100 h-100 object-cover" />
+            <img :src="resolveMediaUrl(trek.image_url)" alt="Trek Graphic" class="card-bg-img w-100 h-100 object-cover" />
           </div>
 
           <div class="card-gradient-overlay position-absolute top-0 start-0 w-100 h-100 z-1"></div>
@@ -66,6 +66,9 @@
 
             <span class="badge position-absolute status-pill" :class="trek.status.toLowerCase()" style="top: 1rem; left: 1rem;">
               {{ trek.status }}
+            </span>
+            <span v-if="trek.trek_name.toLowerCase().includes('demo')" class="badge position-absolute status-pill " style="top: 3rem; left: 1rem; background: rgba(255, 193, 7, 0.8); color: black; ">
+              DEMO
             </span>
             <span class="badge position-absolute difficulty-pill" :class="trek.difficulty.toLowerCase()" style="top: 1rem; right: 1rem;">
               <i class="bi bi-activity me-1.5 opacity-50"></i> {{ trek.difficulty }}
@@ -86,7 +89,7 @@
               </div>
 
               <div class="d-flex justify-content-between align-items-end mb-1">
-                <h3 class="fw-bold text-white m-0 text-truncate pe-3 tracking-tight text-shadow-sm">{{ trek.trek_name }}</h3>
+                <h3 class="fw-bold text-white m-0 text-truncate pe-3 tracking-tight text-shadow-sm">{{ trek.trek_name.split(' ').slice(0, 2).join(' ') }}</h3>
                 <h4 class="fw-bold text-success m-0 tracking-tight text-shadow-sm">₹{{ trek.price_per_person }} / <i class="bi bi-person"></i></h4>
               </div>
 
@@ -96,17 +99,29 @@
 
               <hr class="border-white border-opacity-20 my-3" />
 
-              <div class="d-flex align-items-center justify-content-between fs-9 text-white-75 w-100 flex-nowrap">
-                <div class="d-flex align-items-center text-truncate pe-2">
-                  <i class="bi bi-clock-history me-1 opacity-50"></i> {{ trek.duration_days }} Day(s)
+              <div class="d-flex flex-row align-items-center justify-content-between fs-9 text-white-75 w-100">
+  
+                <!-- Duration: Left aligned -->
+                <div class="d-flex align-items-center pe-3">
+                  <i class="bi bi-clock-history me-1 opacity-50 "></i>
+                  <span>{{ trek.duration_days }} Day(s)</span>
                 </div>
 
-                <div class="d-flex align-items-center border-start border-end border-white border-opacity-20 px-2 text-truncate justify-content-center flex-grow-1">
-                  {{ trek.start_date }}  : {{ trek.end_date }}
+                <!-- Dates: Responsive display (Compact on mobile, full on desktop) -->
+                <div class="d-flex align-items-center  border-start border-end border-white border-opacity-20 px-2 text-truncate justify-content-center flex-grow-1">
+                  <i class="bi bi-calendar3 me-1 d-inline d-sm-none"></i>
+                  <!-- Mobile: Shows just start date -->
+                  <span class="d-inline d-sm-none">{{ trek.start_date }}</span>
+                  <!-- Desktop: Shows full date span -->
+                  <span class="d-none d-sm-inline">{{ trek.start_date }} : {{ trek.end_date }}</span>
                 </div>
-                <div class="d-flex align-items-center text-truncate ps-2 justify-content-end">
-                  <i class="bi bi-caret-up-fill me-1 text-info"></i> {{ trek.max_altitude }}m
+
+                <!-- Altitude: Right aligned -->
+                <div class="d-flex align-items-center ps-3 justify-content-end">
+                  <i class="bi bi-graph-up me-1 text-info"></i>
+                  <span>{{ trek.max_altitude }}m</span>
                 </div>
+              
               </div>
 
             </div>
@@ -126,6 +141,7 @@ import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useRouter } from 'vue-router'
 import { secureFetch } from '@/utils/api'
+import { resolveMediaUrl } from '@/utils/media'
 
 const router = useRouter()
 const alertStore = useAlertStore()

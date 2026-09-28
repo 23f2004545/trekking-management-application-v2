@@ -152,7 +152,7 @@
                   <i class="bi bi-person-badge text-success-tint fs-8"></i> Assigned Commander
                 </h6>
                 <div class="d-flex align-items-center gap-3 mb-4">
-                  <img :src="BACKEND_URL + (selectedTripForDetails.staff_info.profile_pic)" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
+                  <img :src="resolveMediaUrl(selectedTripForDetails.staff_info.profile_pic)" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
                   <div class="overflow-hidden">
                     <h5 class="fw-bold m-0 text-white tracking-tight line-clamp-1">{{ selectedTripForDetails.staff_info.name }}</h5>
                     <span class="fs-9 text-success-tint font-monospace d-block text-truncate">{{ selectedTripForDetails.staff_info.email }}</span>
@@ -274,6 +274,16 @@
       </div>
     </div>
 
+    <!-- Interactive Demo Email Delivery Modal -->
+    <DemoEmailPromptModal 
+      :isOpen="showEmailModal"
+      title="Telemetry Export Email Delivery"
+      description="Experience Celery background workers and real cloud SMTP delivery by receiving historical telemetry reports in your inbox."
+      @close="showEmailModal = false"
+      @submit="handleLiveExportSubmit"
+      @simulate="handleSimulateExportSubmit"
+    />
+
   </div>
 </template>
 
@@ -281,14 +291,19 @@
 import { ref, onMounted, computed } from 'vue'
 import { secureFetch } from '../../utils/api.js'
 import { useAlertStore } from '../../stores/alert.js'
+import { useAuthStore } from '../../stores/auth.js'
+import { resolveMediaUrl } from '@/utils/media.js'
+import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const authStore = useAuthStore()
 const historicalData = ref([])
 const selectedTripForDetails = ref(null)
 const activeDetail = ref(null)
 const alertStore = useAlertStore()
 const loading = ref(true)
 const isExporting = ref(false)
+const showEmailModal = ref(false)
 const query = ref('')
 
 console.log(historicalData)
@@ -312,19 +327,41 @@ async function fetchHistory() {
   }
 }
 
-async function triggerExport() {
+function triggerExport() {
+  if (!selectedTripForDetails.value) return
+  if (authStore.isDemo) {
+    showEmailModal.value = true
+    return
+  }
+  executeExport(null)
+}
+
+function handleLiveExportSubmit(email) {
+  showEmailModal.value = false
+  executeExport(email)
+}
+
+function handleSimulateExportSubmit() {
+  showEmailModal.value = false
+  executeExport(null)
+}
+
+async function executeExport(demoDeliveryEmail = null) {
   if (!selectedTripForDetails.value) return
   
   isExporting.value = true
   try {
+    const payload = { ...selectedTripForDetails.value }
+    if (demoDeliveryEmail) {
+      payload.demo_delivery_email = demoDeliveryEmail
+    }
     const res = await secureFetch(`${BACKEND_URL}/api/utils/export-history`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedTripForDetails.value) // Pass the whole object!
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     if (res.ok) {
-      console.log(data.message)
       alertStore.showAlert(data.message, 'success')
     } else {
       alertStore.showAlert('Export pipeline failed.', 'danger')

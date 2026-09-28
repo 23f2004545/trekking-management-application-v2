@@ -1,8 +1,46 @@
 <template>
   <div class="dashboard-viewport w-100 min-vh-100 d-flex flex-column">
 
+    <DemoWelcomeModal ref="demoWelcomeModalRef" />
+
+    <!-- FLOATING NAVIGATION ISLAND (Docked when scrolling down) -->
+    <Transition name="slide-down-fade">
+      <div v-if="isScrolled" class="apex-floating-hud position-fixed start-50 translate-middle-x z-index-top d-flex align-items-center justify-content-between gap-3 px-4 py-2 rounded-pill shadow-lg border border-white border-opacity-15">
+        
+        <!-- Logo / Brand link -->
+        <router-link to="/" class="d-flex align-items-center flex-shrink-0" title="Return to Peak Overview">
+          <img src="@/assets/logo.png" alt="Apex Logo" class="floating-logo-img" />
+        </router-link>
+
+        <!-- Desktop Nav Links (Compact) -->
+        <nav class="d-none d-lg-flex align-items-center gap-2">
+          <router-link 
+            v-for="item in reactiveMenu" 
+            :key="'hud-'+item.label" 
+            :to="item.route" 
+            class="floating-nav-link px-2 py-1 rounded-pill extra-small fw-medium text-decoration-none"
+            active-class="active"
+          >
+            {{ item.label }}
+          </router-link>
+        </nav>
+
+        <!-- Cluster: Quick Scroll-To-Top + Mobile Drawer Toggle -->
+        <div class="d-flex align-items-center gap-2">
+          <button @click="scrollToTop" class="btn-floating-action" title="Scroll to Top">
+            <i class="bi bi-arrow-up-short fs-6"></i>
+          </button>
+
+          <button class="btn-floating-action d-lg-none" @click="isMobileMenuOpen = true" title="Open Navigation Menu">
+            <i class="bi bi-list fs-6"></i>
+          </button>
+        </div>
+
+      </div>
+    </Transition>
+
     <header class="dashboard-header w-100 px-4 py-2 mt-3 z-index-top">
-      <div class="nav-container glass-pill d-flex align-items-center justify-content-between mx-auto px-4 py-1.5 shadow-sm">
+      <div class="nav-container glass-pill d-flex align-items-center justify-content-between mx-auto px-3 py-1 shadow-sm">
         
         <router-link to="/" class="brand-logo d-flex align-items-center">
           <img src="@/assets/logo.png" alt="Apex Logo" class="apex-brand-img"/>
@@ -103,6 +141,59 @@
             Sign Out <i class="bi bi-box-arrow-right ms-2"></i>
           </button>
         </li>
+
+        <!-- MOBILE QUICK DEMO ROLE SWITCHER -->
+        <li v-if="authStore.isDemo" class="mt-3 pt-3 border-top border-white border-opacity-10 text-start">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="text-info extra-small text-uppercase tracking-wider fw-semibold">Instant Demo Switch</span>
+            <button @click="demoWelcomeModalRef?.openModal(); isMobileMenuOpen = false" class="btn btn-link text-warning p-0 extra-small text-decoration-none">
+              <i class="bi bi-info-circle me-1"></i>Info
+            </button>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <button 
+              type="button"
+              @click="handleQuickSwitch('admin')" 
+              :disabled="isSwitchingRole"
+              class="btn btn-sm d-flex align-items-center justify-content-between px-3 py-2 rounded-pill w-100"
+              :class="authStore.role === 'admin' ? 'btn-danger text-white fw-bold shadow-sm' : 'btn-outline-danger'"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Admin</span>
+              </div>
+              <span v-if="authStore.role === 'admin'" class="badge bg-white text-danger rounded-pill extra-small">Active</span>
+            </button>
+
+            <button 
+              type="button"
+              @click="handleQuickSwitch('trek_staff')" 
+              :disabled="isSwitchingRole"
+              class="btn btn-sm d-flex align-items-center justify-content-between px-3 py-2 rounded-pill w-100"
+              :class="authStore.role === 'trek_staff' ? 'btn-warning text-dark fw-bold shadow-sm' : 'btn-outline-warning'"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-compass-fill"></i>
+                <span>Staff</span>
+              </div>
+              <span v-if="authStore.role === 'trek_staff'" class="badge bg-dark text-warning rounded-pill extra-small">Active</span>
+            </button>
+
+            <button 
+              type="button"
+              @click="handleQuickSwitch('trekker')" 
+              :disabled="isSwitchingRole"
+              class="btn btn-sm d-flex align-items-center justify-content-between px-3 py-2 rounded-pill w-100"
+              :class="authStore.role === 'trekker' ? 'btn-success text-dark fw-bold shadow-sm' : 'btn-outline-success'"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-fill-gear"></i>
+                <span>Trekker</span>
+              </div>
+              <span v-if="authStore.role === 'trekker'" class="badge bg-dark text-success rounded-pill extra-small">Active</span>
+            </button>
+          </div>
+        </li>
       </ul>
     </div>
     
@@ -169,6 +260,68 @@
     </Transition>
 
     <main class="workspace-area flex-grow-1 w-100 mx-auto px-md-5 pt-NAV_MARGIN mb-5">
+      <!-- DEMO MODE NOTICE BANNER & QUICK ROLE SWITCHER -->
+
+      <div v-if="authStore.isDemo && route.meta.showDemoSwitcher" class="demo-mode-alert mb-2 mx-4">
+        <div class="px-3 py-2 px-sm-4 py-sm-2 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 border border-warning border-opacity-30 rounded-4 shadow-sm" style="background: rgba(255, 193, 7, 0.08); backdrop-filter: blur(8px);">
+          
+          
+          <div class="d-flex flex-column flex-sm-row align-items-center gap-2 text-center text-sm-start">
+            <div>
+              <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded-pill fs-9">
+                <i class="bi bi-shield-lock-fill me-1"></i>DEMO MODE
+              </span>
+            </div>
+            <span class="text-white-50 fs-8 px-1">
+              Logged in as <strong class="text-warning text-capitalize">{{ authStore.role }}</strong> in Sandbox Simulation.
+            </span>
+            <button @click="demoWelcomeModalRef?.openModal()" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1 extra-small d-inline-flex align-items-center gap-1 ms-1">
+                <i class="bi bi-info-circle"></i> Info
+            </button>
+          </div>
+
+          <!-- Desktop Quick Demo Role Switcher -->
+            <div class="d-none d-md-flex align-items-center gap-2 ms-auto">
+              <span class="text-white-50 extra-small me-1">Switch:</span>
+              
+              <button 
+                type="button"
+                @click="handleQuickSwitch('admin')" 
+                :disabled="isSwitchingRole"
+                class="btn btn-sm d-flex align-items-center gap-1 px-2.5 py-1 rounded-pill extra-small"
+                :class="authStore.role === 'admin' ? 'btn-danger text-white fw-bold shadow-sm' : 'btn-outline-danger'"
+              >
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Admin</span>
+              </button>
+
+              <button 
+                type="button"
+                @click="handleQuickSwitch('trek_staff')" 
+                :disabled="isSwitchingRole"
+                class="btn btn-sm d-flex align-items-center gap-1 px-2.5 py-1 rounded-pill extra-small"
+                :class="authStore.role === 'trek_staff' ? 'btn-warning text-dark fw-bold shadow-sm' : 'btn-outline-warning'"
+              >
+                <i class="bi bi-compass-fill"></i>
+                <span>Staff</span>
+              </button>
+
+              <button 
+                type="button"
+                @click="handleQuickSwitch('trekker')" 
+                :disabled="isSwitchingRole"
+                class="btn btn-sm d-flex align-items-center gap-1 px-2.5 py-1 rounded-pill extra-small"
+                :class="authStore.role === 'trekker' ? 'btn-success text-dark fw-bold shadow-sm' : 'btn-outline-success'"
+              >
+                <i class="bi bi-person-fill-gear"></i>
+                <span>Trekker</span>
+              </button>
+            </div>
+
+        </div>
+
+      </div>
+
       <router-view />
     </main>
 
@@ -248,14 +401,16 @@
 </template>
 
 <script setup>
-import { RouterLink, useRouter } from 'vue-router'
-import { computed, ref , onMounted} from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth' 
 import { useAlertStore } from '../stores/alert'
 import { useConfirmStore } from '../stores/confirm'
 import { secureFetch } from '@/utils/api'
+import DemoWelcomeModal from '@/components/DemoWelcomeModal.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const alertStore = useAlertStore()
 const confirmStore = useConfirmStore()
@@ -263,6 +418,60 @@ const isMobileMenuOpen = ref(false)
 const activeTicket = ref(null)
 const ticketModalActive = ref(false)
 const ticketForm = ref({ subject: '', message: '', priority: 'Routine'}) 
+
+const demoWelcomeModalRef = ref(null)
+const isScrolled = ref(false)
+const isSwitchingRole = ref(false)
+
+const activePageTitle = computed(() => {
+  const current = reactiveMenu.value.find(item => item.route === route.path)
+  return current ? current.label : (authStore.role || 'Portal').toUpperCase()
+})
+
+const roleBadgeTheme = computed(() => {
+  if (authStore.role === 'admin') return 'bg-danger bg-opacity-20 text-white border border-danger border-opacity-30'
+  if (authStore.role === 'trek_staff') return 'bg-warning bg-opacity-20 text-black border border-warning border-opacity-30'
+  return 'bg-success bg-opacity-20 text-white border border-success border-opacity-30'
+})
+
+const roleDisplayName = computed(() => {
+  if (authStore.role === 'admin') return 'Apex Admin'
+  if (authStore.role === 'trek_staff') return 'Staff Guide'
+  return 'Active Trekker'
+})
+
+function handleScroll() {
+  isScrolled.value = window.scrollY > 150
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function handleQuickSwitch(newRole) {
+  if (isSwitchingRole.value || authStore.role === newRole) return
+  isSwitchingRole.value = true
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/demo-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      authStore.loginUser(data)
+      isMobileMenuOpen.value = false
+      alertStore.showAlert(`Switched to ${data.role} demo profile.`, 'success')
+      router.push(`/portal/${data.role}/dashboard`)
+    } else {
+      alertStore.showAlert('Demo profile switch failed. Try again.', 'danger')
+    }
+  } catch (err) {
+    alertStore.showAlert('Network error during demo switch.', 'danger')
+  } finally {
+    isSwitchingRole.value = false
+  }
+} 
 
 // This variable will be used to offset the scrolling content below the fixed header
 // const NAV_MARGIN = '100px';
@@ -386,6 +595,11 @@ onMounted(() => {
   handleProfilePic()
   fetchNotifications()
   fetchActiveTicket()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 </script>
@@ -637,5 +851,65 @@ onMounted(() => {
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
 .modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }
 .modal-clean-field { border: none; background: transparent; color: #ffffff; width: 100%; font-size: 0.92rem; outline: none; }
+
+/* ==========================================================================
+   FLOATING NAVIGATION ISLAND (HUD) & DEMO ACTIONS
+   ========================================================================== */
+.apex-floating-hud {
+  top: 1rem;
+  z-index: 1030 !important;
+  background: rgba(10, 18, 14, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  max-width: 94vw;
+}
+
+.floating-logo-img {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.floating-nav-link {
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+}
+
+.floating-nav-link:hover, .floating-nav-link.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-floating-action {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-floating-action:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.extra-small {
+  font-size: 0.75rem;
+}
+
+.slide-down-fade-enter-active, .slide-down-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-down-fade-enter-from, .slide-down-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -15px) !important;
+}
 
 </style>

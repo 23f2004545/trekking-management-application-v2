@@ -31,7 +31,7 @@
       <div v-for="member in filteredStaff" :key="member.id" class="staff-rect-card p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + (member.profile_pic )" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
+          <img :src="resolveMediaUrl(member.profile_pic)" alt="Guide Thumbnail" class="rect-avatar-img border border-white border-opacity-15 shadow" />
           <div>
             <div class="d-flex align-items-center gap-2">
               <h5 class="fw-bold m-0 text-white tracking-tight">{{ member.name }}</h5>
@@ -43,8 +43,8 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <button v-if="member.status == 'Active'" @click="openAssignmentWorkflow(member)" class="btn btn-sm btn-outline-success rounded-pill px-3 fs-9 border-opacity-35 text-white">
-            Assign Route
+          <button v-if="member.status == 'Active'" @click="openAssignmentWorkflow(member)" class="btn btn-outline-success rounded-pill px-3 fs-9 border-opacity-35 text-white ">
+            Assign
           </button>
           <span v-else class="badge status-tag text-uppercase fs-9" :class="member.status.toLowerCase()">
              {{ member.status }}
@@ -136,7 +136,7 @@
             <div v-for="trek in availableTreksList" :key="trek.trek_id" class="p-3 bg-opacity-5 rounded-3 border border-white border-opacity-5 d-flex align-items-center justify-content-between gap-3 fs-8">
               <div>
                 <strong class="text-white d-block">{{ trek.trek_name }}</strong>
-                <span class="text-white-50 extra-small"><i class="bi bi-geo-alt"></i> {{ trek.location }} — Current Guide: <span class="text-success">{{ trek.assigned_staff.name || 'None' }}</span></span>
+                <span class="text-white-50 extra-small "><i class="bi bi-geo-alt"></i> {{ trek.location }} <br> Current Guide : <span class="text-success">{{ trek.assigned_staff.name || 'None' }}</span></span>
               </div>
               <button @click="processStaffAssignment(trek.trek_id, false)" class="btn btn-sm btn-light text-dark fw-bold rounded-pill px-3 fs-9">
                 Assign Here
@@ -159,6 +159,7 @@ import { useAlertStore } from '../../stores/alert'
 import { useAuthStore } from '../../stores/auth'
 import { useConfirmStore } from '@/stores/confirm.js'
 import { secureFetch } from '@/utils/api.js'
+import { resolveMediaUrl } from '@/utils/media.js'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
@@ -209,10 +210,14 @@ async function syncStaffDataset() {
 
 async function submitStaffForm() {
   try {
+    const payload = { ...form.value }
+    if (authStore.isDemo && form.value.send_credentials && form.value.personal_email) {
+      payload.demo_delivery_email = form.value.personal_email.trim()
+    }
     const res = await secureFetch(`${BACKEND_URL}/api/admin/staff`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(form.value)
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     if (res.ok) {

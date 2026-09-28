@@ -2,9 +2,13 @@
 
 .venv
 *.db
+*.sqlite3
 instance/
 __pycache__/
 *.pyc
+dump.rdb
+.env
+.pytest_cache/
 
 
 

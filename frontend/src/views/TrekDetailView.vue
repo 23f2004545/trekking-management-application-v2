@@ -410,18 +410,18 @@ async function failedBooking() {
   alertStore.showAlert('Transaction failed', 'danger')
 }
 
-function triggerRemoval(id) {
+function triggerRemoval() {
   confirmStore.ask(
-    `Are you entirely sure you want to drop Expedition ID #${id} completely out of system indexes? This action is irreversible.`,
+    `Are you entirely sure you want to drop Expedition ID #${trekData.value.trek_id} completely out of system indexes? This action is irreversible.`,
     async () => {
       try {
-        const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${id}`, {
+        const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }
         })
         if (res.ok) {
           alertStore.showAlert('Expedition record purged from database successfully.', 'success')
-          await syncTrekDataset()
+          router.push('/portal/admin/treks')
         } else {
           const data = await res.json()
           alertStore.showAlert(data.message || 'Purge request rejected.', 'danger')

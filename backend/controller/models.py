@@ -12,7 +12,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     last_login_at = db.Column(db.DateTime)
-    profile_pic = db.Column(db.String(225))
+    profile_pic = db.Column(db.String(500))
     blacklisted = db.Column(db.Boolean, default=False)
     
     # Relationships
@@ -145,7 +145,7 @@ class TrekImage(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     trek_id = db.Column(db.Integer, db.ForeignKey('trek.trek_id', ondelete='CASCADE'), nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
 

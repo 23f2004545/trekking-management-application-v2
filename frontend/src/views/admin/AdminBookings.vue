@@ -1,7 +1,7 @@
 <template>
   <div class="admin-bookings-viewport text-white text-start pb-5 animate-fade-in px-3">
     
-    <div v-if="!activeAuditDetail" class="mb-4 d-flex justify-content-between align-items-center">
+    <div v-if="!activeAuditDetail" class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
       <div>
         <h2 class="fw-bold tracking-tight m-0">Global Explorer Passports</h2>
         <p class="m-0 text-white-50 fs-8 mt-1">Audit active reservations parameters and timeline flags.</p>
@@ -26,7 +26,7 @@
       <div v-else v-for="item in filteredBookings" :key="item.booking_id" class="booking-rect-row p-3 rounded-4 border border-white border-opacity-10 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm">
         
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + item.trekker.profile_pic" alt="Trekker" class="rect-profile-img shadow" />
+          <img :src="resolveMediaUrl(item.trekker.profile_pic)" alt="Trekker" class="rect-profile-img shadow" />
           <div>
             <span class="extra-small text-info opacity-40 uppercase tracking-wider">BOOKING ID : #APX-B{{ item.booking_id }}</span>
             <h5 class="fw-bold m-0 text-white tracking-tight mt-0.5">Trek : {{ item.trek_name }}</h5>
@@ -48,7 +48,7 @@
     </div>
 
     <div v-else class="immersive-deep-audit-panel max-w-4xl mx-auto">
-      <div class="mb-4 d-flex justify-content-between align-items-center">
+      <div class="mb-4 d-flex flex-wrap gap-3 justify-content-between align-items-center">
         <button @click="activeAuditDetail = null" class="btn btn-sm btn-outline-light rounded-pill px-3 fs-9 border-opacity-25">← Close Audit</button>
         <span class="badge lifecycle-tag text-uppercase fs-8" :class="activeAuditDetail.booking_status.toLowerCase()">● Status Timeline: {{ activeAuditDetail.booking_status }}</span>
       </div>
@@ -123,7 +123,7 @@
         </button>
 
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + (activeAuditDetail.trekker.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="audit-avatar-circle" />
+          <img :src="resolveMediaUrl(activeAuditDetail.trekker.profile_pic, resolveMediaUrl('/static/Profile_pics/trek_staff.png'))" alt="Staff Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.trekker.name }}</h5>
             <div>Trekker Email: <span class="text-white">{{ activeAuditDetail.trekker.email }}</span></div>
@@ -144,7 +144,7 @@
         </button>
 
         <div class="d-flex align-items-center gap-3">
-          <img :src="BACKEND_URL + (activeAuditDetail.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="audit-avatar-circle" />
+          <img :src="resolveMediaUrl(activeAuditDetail.staff.profile_pic, resolveMediaUrl('/static/Profile_pics/trek_staff.png'))" alt="Staff Avatar" class="audit-avatar-circle" />
           <div class="fs-8 text-white-50">
             <h5 class="fw-bold text-white m-0 mb-1">{{ activeAuditDetail.staff.name }}</h5>
             <div>Guide Email: <span class="text-white">{{ activeAuditDetail.staff.email }}</span></div>
@@ -205,6 +205,7 @@ import { useAlertStore } from '../../stores/alert'
 import UserProfile from '../../components/UserProfile.vue'
 import { useAuthStore } from '../../stores/auth'
 import { secureFetch } from '@/utils/api'
+import { resolveMediaUrl } from '@/utils/media'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()

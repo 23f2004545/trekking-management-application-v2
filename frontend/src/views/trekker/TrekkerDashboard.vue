@@ -4,20 +4,17 @@
     <div v-if="stats.blacklisted" class="alert alert-warning border border-danger border-opacity-30 rounded-3 p-3 mb-4 text-start bg-danger bg-opacity-10">
       <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Blacklisted :</strong> Your access profile has been blacklisted by administration. Booking submission vectors are currently offline.
     </div>
-    
+
     <!-- HERO SECTION & FOMO ALERT -->
     <div class="welcome-hero-section text-start py-4 mb-4">
       <div class="row align-items-end justify-content-between g-3">
         <div class="col-lg-7">
-          <span class="badge status-badge mb-2 px-3 py-1.5 rounded-pill fs-9 fw-semibold">
+          <span class="badge status-badge mb-2 px-3 py-1 rounded-pill fs-9 fw-semibold">
             <i class="bi bi-geo-alt"></i> TREKKER BASECAMP OPERATIONS
           </span>
           <h1 class="display-4 fw-bold tracking-tight m-0">
-            Welcome Back, <span class="text-glow">{{ authStore.userName }}</span>
+            Welcome Back, <span class="text-glow">{{ authStore.userName.split(' ')[0] }}</span>
           </h1>
-          <p class="lead opacity-75 m-0 mt-2 fs-8 max-w-xl">
-            Your telemetry markers are clean. The high-alpine season is peaking—ensure your medical clearances are up to date before deployment.
-          </p>
         </div>
         
         <div class="col-lg-5 d-flex justify-content-lg-end">
@@ -225,6 +222,10 @@ onUnmounted(() => {
 }
 .metric-glass-card:hover { transform: translateY(-3px); }
 .metric-label { letter-spacing: 1px; }
+
+.extra-small {
+  font-size: 0.75rem;
+}
 
 .cta-glass-card, .chart-glass-container {
   background: rgba(255, 255, 255, 0.05) !important;

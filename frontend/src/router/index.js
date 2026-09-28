@@ -27,7 +27,7 @@ const router = createRouter({
       component: () => import('../layouts/DashboardLayout.vue'), // One parent layout shell for all dashboard operations
       meta: { requiresAuth: true },
       children: [
-        { path: 'admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' } },
+        { path: 'admin/dashboard', name: 'admin-dashboard', component: () => import('../views/admin/AdminDashboard.vue'), meta: { role: 'admin' ,  showDemoSwitcher: true  } },
         { path: 'admin/treks', name: 'admin-treks', component: () => import('../views/admin/AdminTreks.vue'), meta: { role: 'admin' } },
         { path: 'admin/staff', name: 'admin-staff', component: () => import('../views/admin/AdminStaff.vue'), meta: { role: 'admin' } },
         { path: 'admin/trekkers', name: 'admin-trekkers', component: () => import('../views/admin/AdminTrekkers.vue'), meta: { role: 'admin' } },
@@ -37,13 +37,13 @@ const router = createRouter({
         { path: 'admin/tickets', name: 'admin-tickets', component: () => import('../views/admin/AdminTickets.vue'), meta: { role: 'admin' } },
 
 
-        { path: 'trek_staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' } },
+        { path: 'trek_staff/dashboard', name: 'staff-dashboard', component: () => import('../views/staff/StaffDashboard.vue'), meta: { role: 'trek_staff' ,  showDemoSwitcher: true  } },
         { path: 'trek_staff/profile', name: 'staff-profile', component: () => import('../views/staff/StaffProfile.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/treks', name: 'staff-treks', component: () => import('../views/staff/StaffTreks.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/participants', name: 'staff-participants', component: () => import('../views/staff/StaffParticipants.vue'), meta: { role: 'trek_staff' } },
         { path: 'trek_staff/history', name: 'staff-history', component: () => import('../views/staff/StaffHistory.vue'), meta: { role: 'trek_staff' } },
 
-        { path: 'trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' } },
+        { path: 'trekker/dashboard', name: 'trekker-dashboard', component: () => import('../views/trekker/TrekkerDashboard.vue'), meta: { role: 'trekker' ,  showDemoSwitcher: true  } },
         { path: 'trekker/profile', name: 'trekker-profile', component: () => import('../views/trekker/TrekkerProfile.vue'), meta: { role: 'trekker' } },
         { path: 'trekker/treks', name: 'trekker-treks', component: () => import('../views/trekker/TrekkerTreks.vue'), meta: { role: 'trekker' } },      
         { path: 'trekker/bookings', name: 'trekker-bookings', component: () => import('../views/trekker/TrekkerBookings.vue'), meta: { role: 'trekker' } },

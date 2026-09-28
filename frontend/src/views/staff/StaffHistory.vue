@@ -265,6 +265,16 @@
       </div>
     </div>
 
+    <!-- Interactive Demo Email Delivery Modal -->
+    <DemoEmailPromptModal 
+      :isOpen="showEmailModal"
+      title="Telemetry Export Email Delivery"
+      description="Experience Celery background workers and real cloud SMTP delivery by receiving historical telemetry reports in your inbox."
+      @close="showEmailModal = false"
+      @submit="handleLiveExportSubmit"
+      @simulate="handleSimulateExportSubmit"
+    />
+
   </div>
 </template>
 
@@ -272,8 +282,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { secureFetch } from '../../utils/api.js'
 import { useAlertStore } from '../../stores/alert.js'
+import { useAuthStore } from '../../stores/auth.js'
+import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const authStore = useAuthStore()
 const historicalData = ref([])
 const alertStore = useAlertStore()
 const selectedTripForDetails = ref(null)
@@ -281,6 +294,7 @@ const activeDetail = ref(null)
 const loading = ref(true)
 const onboarded = ref(false)
 const isExporting = ref(false)
+const showEmailModal = ref(false)
 const query = ref('')
 
 console.log(historicalData)
@@ -306,15 +320,38 @@ async function fetchHistory() {
   }
 }
 
-async function triggerExport() {
+function triggerExport() {
+  if (!selectedTripForDetails.value) return
+  if (authStore.isDemo) {
+    showEmailModal.value = true
+    return
+  }
+  executeExport(null)
+}
+
+function handleLiveExportSubmit(email) {
+  showEmailModal.value = false
+  executeExport(email)
+}
+
+function handleSimulateExportSubmit() {
+  showEmailModal.value = false
+  executeExport(null)
+}
+
+async function executeExport(demoDeliveryEmail = null) {
   if (!selectedTripForDetails.value) return
   
   isExporting.value = true
   try {
+    const payload = { ...selectedTripForDetails.value }
+    if (demoDeliveryEmail) {
+      payload.demo_delivery_email = demoDeliveryEmail
+    }
     const res = await secureFetch(`${BACKEND_URL}/api/utils/export-history`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedTripForDetails.value) // Pass the whole object!
+      body: JSON.stringify(payload)
     })
     const data = await res.json()
     if (res.ok) {

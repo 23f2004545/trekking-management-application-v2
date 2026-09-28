@@ -103,8 +103,8 @@
 
             <h6 class="fw-bold small tracking-wider opacity-50 text-uppercase mb-3">Assigned Staff Profile</h6>
             <div class="d-flex align-items-center gap-3 mb-3">
-              <img v-if="!trek.profile" :src="BACKEND_URL + (trek.staff.profile_pic || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
-              <img v-if="trek.profile" :src="BACKEND_URL + (trek.profile || '/static/Profile_pics/trek_staff.png')" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
+              <img v-if="!trek.profile" :src="resolveMediaUrl(trek.staff.profile_pic, resolveMediaUrl('/static/Profile_pics/trek_staff.png'))" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
+              <img v-if="trek.profile" :src="resolveMediaUrl(trek.profile, resolveMediaUrl('/static/Profile_pics/trek_staff.png'))" alt="Staff Avatar" class="staff-profile-thumb border border-white border-opacity-20 shadow-sm" />
               <div>
                 <h6 class="m-0 fw-bold text-white fs-8">{{ trek.staff.name }}</h6>
                 <p class="m-0 fs-9 text-white-50 opacity-75 mt-0.5">{{ trek.staff.experience || 'N/A' }} Years Experience</p>
@@ -166,6 +166,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { resolveMediaUrl } from '@/utils/media'
 
 const authStore = useAuthStore()
 const props = defineProps({ trek: { type: Object, required: true }, showCheckoutButton: { type: Boolean, default: true } })

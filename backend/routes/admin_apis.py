@@ -6,6 +6,8 @@ from controller.decorators import admin_required
 from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone , timedelta
 from sqlalchemy import func
+from services.cloudinary_service import upload_image
+from services.demo_service import is_demo_user, is_demo_target
 import os , redis , socket
 
 
@@ -223,6 +225,13 @@ def get_active_operations():
 def get_audit_logs():
 
     if request.method == 'DELETE':
+        current_user = User.query.get(int(get_jwt_identity()))
+        if is_demo_user(current_user):
+            return make_response(jsonify({
+                "message": "[SIMULATED] Audit log clearance simulated. Live operational audit trail was preserved.",
+                "simulated": True
+            }), 200)
+
         logs = AuditLog.query.all()
         for l in logs:
             db.session.delete(l)
@@ -290,6 +299,13 @@ def get_all_treks():
 @jwt_required()
 @admin_required
 def create_trek():
+    current_user = User.query.get(int(get_jwt_identity()))
+    if is_demo_user(current_user):
+        return make_response(jsonify({
+            "message": "[SIMULATED] Expedition route deployed in simulation mode. Live database was preserved.",
+            "trek_id": 99999,
+            "simulated": True
+        }), 201)
     
     data = request.form
     
@@ -354,19 +370,18 @@ def create_trek():
                 return make_response(jsonify({"message": "Platform architecture requires exactly 4 gallery images."}), 400)
             for index, file in enumerate(uploaded_files[:4]):
                 if file and file.filename != '':
-                    timestamp = int(datetime.now(timezone.utc).timestamp())
-                    filename = f"trek_{new_trek.trek_id}_img{index}_{timestamp}_{os.path.basename(file.filename)}"
-                    save_path = os.path.join('static/', 'Treks', filename)
-                    
-                    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                    file.save(save_path)
-                    
-                    # Commit row line to the child trek_images table
-                    new_image = TrekImage(
-                        trek_id=new_trek.trek_id,
-                        image_url=f"/static/Treks/{filename}"
+                    image_url = upload_image(
+                        file,
+                        folder="apex/treks",
+                        filename_prefix=f"trek_{new_trek.trek_id}_img{index}",
+                        local_subfolder="Treks"
                     )
-                    db.session.add(new_image)
+                    if image_url:
+                        new_image = TrekImage(
+                            trek_id=new_trek.trek_id,
+                            image_url=image_url
+                        )
+                        db.session.add(new_image)
 
         db.session.commit()
         if staff_id:
@@ -388,23 +403,41 @@ def manage_trek_by_id(trek_id):
     trek = Trek.query.get_or_404(trek_id)
 
     if request.method == 'DELETE':
+        current_user = User.query.get(int(get_jwt_identity()))
+        if is_demo_user(current_user) and not is_demo_target(trek):
+            return make_response(jsonify({
+                "message": "[SIMULATED] Trek deletion simulated. Live operational route was protected.",
+                "simulated": True
+            }), 200)
+
         try:
-            staff_id = None
-            if trek.assigned_staff_id and trek.assigned_staff_id != 'null':
-                staff = User.query.get(int(trek.assigned_staff_id))
+            staff = None
+            if trek.assigned_staff_id and str(trek.assigned_staff_id).lower() not in ('null', 'none', 'undefined'):
+                try:
+                    staff = User.query.get(int(trek.assigned_staff_id))
+                except (ValueError, TypeError):
+                    staff = None
             
             name = trek.trek_name
             trek.is_deleted = True
             db.session.commit()
             cache.clear()
             log_system_audit("PURGE", f"Trek {name} purged from database.", "danger")
-            create_notification(staff.id, "Your assigned trek has been purged by Admin.", "danger")
+            if staff:
+                create_notification(staff.id, "Your assigned trek has been purged by Admin.", "danger")
             return make_response(jsonify({"message": "Trekking route removed successfully"}), 200)
         except Exception as e:
             db.session.rollback()
             return make_response(jsonify({"message": f"Database dependency error: {str(e)}"}), 400)
 
     # PUT Method Execution 
+    current_user = User.query.get(int(get_jwt_identity()))
+    if is_demo_user(current_user) and not is_demo_target(trek):
+        return make_response(jsonify({
+            "message": "[SIMULATED] Route configuration updated in simulation mode. Live expedition was preserved.",
+            "simulated": True
+        }), 200)
+
     data = request.form if request.form else request.get_json()
     
     try:
@@ -441,14 +474,15 @@ def manage_trek_by_id(trek_id):
                 if new_status == 'Completed':
                     booking.status = 'Completed'
                     booking.updated_at = datetime.now(timezone.utc)
-                    # Fire Completion Email
-                    dispatch_completion_email.delay(
-                        booking.user.email, 
-                        booking.user.name, 
-                        trek.trek_name, 
-                        trek.duration_days, 
-                        trek.max_altitude
-                    )
+                    # Fire Completion Email (suppressed in demo mode)
+                    if not is_demo_user(current_user):
+                        dispatch_completion_email.delay(
+                            booking.user.email, 
+                            booking.user.name, 
+                            trek.trek_name, 
+                            trek.duration_days, 
+                            trek.max_altitude
+                        )
                     
                 elif new_status == 'Cancelled':
                     booking.status = 'Cancelled'
@@ -456,15 +490,16 @@ def manage_trek_by_id(trek_id):
                     trek.cancellation_reason = f"Admin : {abort_reason}"
                     trek.cancelled_at = datetime.now(timezone.utc)
                     booking.updated_at = datetime.now(timezone.utc)
-                    # Fire Cancellation Email
-                    dispatch_cancellation_email.delay(
-                        booking.user.email, 
-                        booking.user.name, 
-                        trek.trek_name, 
-                        trek.duration_days, 
-                        abort_reason, 
-                        "Central Administration" 
-                    )
+                    # Fire Cancellation Email (suppressed in demo mode)
+                    if not is_demo_user(current_user):
+                        dispatch_cancellation_email.delay(
+                            booking.user.email, 
+                            booking.user.name, 
+                            trek.trek_name, 
+                            trek.duration_days, 
+                            abort_reason, 
+                            "Central Administration" 
+                        )
                     create_notification(booking.user_id, f"Your trek ({trek.trek_name}) has been CANCELLED by Admin", "danger")
 
                     
@@ -498,13 +533,15 @@ def manage_trek_by_id(trek_id):
                 TrekImage.query.filter_by(trek_id=trek.trek_id).delete()
                 
                 for index, file in enumerate(uploaded_files[:4]):
-                    timestamp = int(datetime.now(timezone.utc).timestamp())
-                    filename = f"trek_update_{trek.trek_id}_img{index}_{timestamp}_{os.path.basename(file.filename)}"
-                    save_path = os.path.join('static/', 'Treks', filename)
-                    file.save(save_path)
-                    
-                    new_image = TrekImage(trek_id=trek.trek_id, image_url=f"/static/Treks/{filename}")
-                    db.session.add(new_image)
+                    image_url = upload_image(
+                        file,
+                        folder="apex/treks",
+                        filename_prefix=f"trek_update_{trek.trek_id}_img{index}",
+                        local_subfolder="Treks"
+                    )
+                    if image_url:
+                        new_image = TrekImage(trek_id=trek.trek_id, image_url=image_url)
+                        db.session.add(new_image)
 
         db.session.commit()
         if change and exist :
@@ -664,6 +701,20 @@ def add_trek_staff():
     if not all([email, password]):
         return make_response(jsonify({"message": "All fields are required"}), 400)
 
+    current_user = User.query.get(int(get_jwt_identity()))
+    if is_demo_user(current_user):
+        if send_creds:
+            demo_delivery_email = data.get('demo_delivery_email') or personal_email
+            if demo_delivery_email:
+                send_staff_credentials_email.delay(
+                    personal_email or demo_delivery_email, email, password,
+                    demo_delivery_email=demo_delivery_email
+                )
+        return make_response(jsonify({
+            "message": "[SIMULATED] Staff guide account created in simulation mode. Live database was protected.",
+            "simulated": True
+        }), 201)
+
     if User.query.filter_by(email=email).first():
         return make_response(jsonify({"message": "Email already registered"}), 400)
 
@@ -790,7 +841,16 @@ def get_single_staff_profile(staff_id):
 @admin_required
 def toggle_user_account_status(user_id):
     user = User.query.get_or_404(user_id)
-    
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(int(current_user_id)) if current_user_id else None
+
+    if is_demo_user(current_user) and not is_demo_target(user):
+        action_name = "deactivation" if request.method == 'DELETE' else "blacklist toggle"
+        return make_response(jsonify({
+            "message": f"[SIMULATED] User {action_name} executed in simulation mode. Live user data was protected.",
+            "simulated": True
+        }), 200)
+
     if request.method == 'DELETE':
         user.is_active = not user.is_active
         db.session.commit()
@@ -829,6 +889,13 @@ def assign_staff_override():
 
     if new_staff.role.name != 'trek_staff':
         return make_response(jsonify({"message": "Target user lacks verified guide credentials."}), 400)
+
+    current_user = User.query.get(int(get_jwt_identity()))
+    if is_demo_user(current_user) and not (is_demo_target(trek) and is_demo_target(new_staff)):
+        return make_response(jsonify({
+            "message": f"[SIMULATED] Staff guide assignment simulated for '{trek.trek_name}'. Live assignments were protected.",
+            "simulated": True
+        }), 200)
 
     # Intersection Alert Trigger Check: Evaluate if route already possesses an assignment
     if trek.assigned_staff_id and trek.assigned_staff_id != new_staff.id and not force_switch:
@@ -1049,6 +1116,20 @@ def resolve_ticket(ticket_id):
     
     data = request.get_json()
     ticket = DispatchTicket.query.get_or_404(ticket_id)
+
+    current_user = User.query.get(int(get_jwt_identity()))
+    if is_demo_user(current_user) and not is_demo_target(ticket):
+        demo_delivery_email = data.get('demo_delivery_email')
+        if demo_delivery_email:
+            dispatch_ticket_resolution.delay(
+                ticket.author.email, ticket.author.name, ticket.author.role.name,
+                ticket.subject, ticket.message, data.get('response', ''),
+                demo_delivery_email=demo_delivery_email
+            )
+        return make_response(jsonify({
+            "message": "[SIMULATED] Ticket resolution simulated. Live operational dispatch was protected.",
+            "simulated": True
+        }), 200)
     
     response_text = data.get('response')
     ticket.admin_response = response_text
@@ -1064,9 +1145,17 @@ def resolve_ticket(ticket_id):
     db.session.commit()
     
     # 1. Dispatch Email Task
-    dispatch_ticket_resolution.delay(
-        author_email, author_name, author_role, subject, original_message, response_text
-    )
+    if is_demo_user(current_user):
+        demo_delivery_email = data.get('demo_delivery_email')
+        if demo_delivery_email:
+            dispatch_ticket_resolution.delay(
+                author_email, author_name, author_role, subject, original_message, response_text,
+                demo_delivery_email=demo_delivery_email
+            )
+    else:
+        dispatch_ticket_resolution.delay(
+            author_email, author_name, author_role, subject, original_message, response_text
+        )
     
     # 2. Fire App Notification
     create_notification(ticket.author_id, f"Central Command has resolved your ticket: {subject}", "success")
@@ -1078,6 +1167,15 @@ def resolve_ticket(ticket_id):
 @admin_required
 def reject_ticket(ticket_id):
     ticket = DispatchTicket.query.get_or_404(ticket_id)
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(int(current_user_id)) if current_user_id else None
+
+    if is_demo_user(current_user) and not is_demo_target(ticket):
+        return make_response(jsonify({
+            "message": "[SIMULATED] Ticket rejection simulated. Live query was protected.",
+            "simulated": True
+        }), 200)
+
     db.session.delete(ticket)
     db.session.commit()
     return make_response(jsonify({"message": "Ticket purged from queue."}), 200)

@@ -1,3 +1,4 @@
+import os
 from flask import Flask 
 from controller.extensions import db, jwt, bcrypt, cache
 from controller.models import User, Role
@@ -16,9 +17,11 @@ from routes.staff_apis import trek_staff_bp
 from routes.trekker_apis import trekker_bp
 from routes.utils_apis import utils_bp
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_object(config)
+    if test_config:
+        app.config.update(test_config)
     
     jwt.init_app(app)
     bcrypt.init_app(app)
@@ -57,16 +60,27 @@ def create_app():
 
         db.session.commit()
 
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(trek_staff_bp, url_prefix='/api/trek_staff')
+    app.register_blueprint(trekker_bp, url_prefix='/api/trekker')
+    app.register_blueprint(utils_bp, url_prefix='/api/utils')
+
     return app
 
 app = create_app()
-CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5000"])
 
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(admin_bp, url_prefix='/api/admin')
-app.register_blueprint(trek_staff_bp, url_prefix='/api/trek_staff')
-app.register_blueprint(trekker_bp, url_prefix='/api/trekker')
-app.register_blueprint(utils_bp, url_prefix='/api/utils')
+cors_origins_env = os.environ.get("CORS_ORIGINS")
+if cors_origins_env:
+    allowed_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
+else:
+    frontend_url = os.environ.get("FRONTEND_URL")
+    if frontend_url:
+        allowed_origins = [frontend_url.rstrip("/"), "http://localhost:5173", "http://127.0.0.1:5000", "http://localhost:5000"]
+    else:
+        allowed_origins = "*"
+
+CORS(app, origins=allowed_origins, supports_credentials=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
