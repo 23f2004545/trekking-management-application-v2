@@ -1,11 +1,11 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from controller.extensions import bcrypt,db,cache
 from controller.models import * 
 from controller.decorators import admin_required
 from routes.utils_apis import create_notification , log_system_audit
 from datetime import datetime, timezone , timedelta
-from sqlalchemy import func
+from sqlalchemy import func, text
 from services.cloudinary_service import upload_image
 from services.demo_service import is_demo_user, is_demo_target
 import os , redis , socket
@@ -148,30 +148,76 @@ def get_system_health():
     from tasks import celery_app
     """Pings microservices to verify infrastructure stability."""
     health = {
-        "database": {"status": "Online", "color": "success"},
+        "database": {"status": "Checking...", "color": "warning"},
         "redis": {"status": "Offline", "color": "danger"},
         "celery": {"status": "Offline", "color": "danger"},
         "mailpit": {"status": "Offline", "color": "danger"}
     }
     
-    # Ping Redis
+    # 1. Database Health Check
     try:
-        r = redis.Redis(host='localhost', port=6379, db=0, socket_timeout=1)
-        if r.ping(): health["redis"] = {"status": "Online", "color": "success"}
-    except: pass
+        db.session.execute(text('SELECT 1'))
+        health["database"] = {"status": "Online", "color": "success"}
+    except Exception:
+        health["database"] = {"status": "Degraded", "color": "danger"}
 
-    # Ping Mailpit (SMTP Port 1025)
-    try:
-        with socket.create_connection(('127.0.0.1', 1025), timeout=1):
-            health["mailpit"] = {"status": "Online", "color": "success"}
-    except: pass
+    # 2. Redis Cache & Broker Check
+    redis_url = current_app.config.get('REDIS_URL') or os.environ.get('REDIS_URL')
+    redis_connected = False
+    if redis_url:
+        try:
+            r = redis.from_url(redis_url, socket_timeout=2)
+            if r.ping():
+                health["redis"] = {"status": "Online", "color": "success"}
+                redis_connected = True
+        except Exception:
+            pass
 
-    # Ping Celery Workers
+    if not redis_connected:
+        try:
+            r = redis.Redis(host='localhost', port=6379, db=0, socket_timeout=1)
+            if r.ping():
+                health["redis"] = {"status": "Online", "color": "success"}
+                redis_connected = True
+        except Exception:
+            pass
+
+    # 3. Celery Asynchronous Workers
     try:
-        # Pings active workers. If dict is empty, no workers are alive.
         inspector = celery_app.control.inspect(timeout=1)
-        if inspector.ping(): health["celery"] = {"status": "Active", "color": "success"}
-    except: pass
+        active_workers = inspector.ping() if inspector else None
+        if active_workers:
+            health["celery"] = {"status": "Active", "color": "success"}
+        elif current_app.config.get('CELERY_TASK_ALWAYS_EAGER'):
+            health["celery"] = {"status": "Eager (Sync)", "color": "warning"}
+        else:
+            health["celery"] = {"status": "Offline", "color": "danger"}
+    except Exception:
+        if current_app.config.get('CELERY_TASK_ALWAYS_EAGER'):
+            health["celery"] = {"status": "Eager (Sync)", "color": "warning"}
+        else:
+            health["celery"] = {"status": "Offline", "color": "danger"}
+
+    # 4. Email / SMTP Service
+    smtp_host = current_app.config.get('SMTP_HOST') or os.environ.get('SMTP_HOST')
+    smtp_port = current_app.config.get('SMTP_PORT') or os.environ.get('SMTP_PORT') or 587
+    email_connected = False
+
+    if smtp_host:
+        try:
+            with socket.create_connection((str(smtp_host), int(smtp_port)), timeout=2):
+                health["mailpit"] = {"status": "Connected", "color": "success"}
+                email_connected = True
+        except Exception:
+            pass
+
+    if not email_connected:
+        try:
+            with socket.create_connection(('127.0.0.1', 1025), timeout=1):
+                health["mailpit"] = {"status": "Online", "color": "success"}
+                email_connected = True
+        except Exception:
+            pass
 
     return make_response(jsonify(health), 200)
 

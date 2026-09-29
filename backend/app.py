@@ -4,6 +4,7 @@ from controller.extensions import db, jwt, bcrypt, cache
 from controller.models import User, Role
 from config import config
 from flask_cors import CORS
+from sqlalchemy import text
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
@@ -30,6 +31,52 @@ def create_app(test_config=None):
     
     with app.app_context():
         db.create_all()
+
+        # PostgreSQL schema self-healing & sequence synchronization
+        if db.engine.name == 'postgresql':
+            try:
+                db.session.execute(text("""
+                    DO $$
+                    BEGIN
+                        IF EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints tc
+                            JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name
+                            WHERE tc.table_name = 'trek' 
+                              AND tc.constraint_type = 'FOREIGN KEY'
+                              AND ccu.table_name = 'staff_profile'
+                              AND tc.constraint_name = 'trek_assigned_staff_id_fkey'
+                        ) THEN
+                            ALTER TABLE trek DROP CONSTRAINT IF EXISTS trek_assigned_staff_id_fkey;
+                            ALTER TABLE trek ADD CONSTRAINT trek_assigned_staff_id_fkey FOREIGN KEY (assigned_staff_id) REFERENCES "user"(id) ON DELETE SET NULL;
+                        END IF;
+                    END $$;
+                """))
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                app.logger.warning(f"PostgreSQL FK fix notice: {e}")
+
+            # Resync primary key sequences in case demo seeding / inserts used explicit IDs
+            tables_to_sync = [
+                ('user', 'id'),
+                ('role', 'id'),
+                ('staff_profile', 'staff_id'),
+                ('trek', 'trek_id'),
+                ('booking', 'booking_id'),
+                ('feedback', 'feedback_id'),
+                ('support_ticket', 'ticket_id'),
+                ('medical_record', 'record_id'),
+                ('review', 'review_id'),
+                ('dispatch_ticket', 'ticket_id')
+            ]
+            for tbl, col in tables_to_sync:
+                try:
+                    db.session.execute(text(f"""
+                        SELECT setval(pg_get_serial_sequence('"{tbl}"', '{col}'), COALESCE((SELECT MAX({col}) + 1 FROM "{tbl}"), 1), false);
+                    """))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
         
         admin_role = Role.query.filter_by(name='admin').first()
         if not admin_role:

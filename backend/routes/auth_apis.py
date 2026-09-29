@@ -56,7 +56,7 @@ def demo_login():
 
     try:
         user = seed_or_reset_demo_data(target_role=role)
-        user.last_login_at = datetime.now(timezone.utc)
+        user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.session.commit()
 
         access_token = create_access_token(identity=str(user.id), additional_claims={"is_demo": True})

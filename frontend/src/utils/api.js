@@ -1,5 +1,7 @@
 import { useAuthStore } from '../stores/auth'
 
+export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000').replace(/\/+$/, '')
+
 export async function secureFetch(url, options = {}) {
   const authStore = useAuthStore()
 

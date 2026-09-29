@@ -3,12 +3,16 @@ Demo Service: Seed Data, Auto-Reseed, and Safe Simulation Helpers
 Provides dedicated showcase profiles for Admin, Staff, and Trekkers with self-healing data.
 """
 
+import logging
+import traceback
 from datetime import datetime, timezone, timedelta
 from controller.extensions import db, bcrypt
 from controller.models import (
     User, Role, StaffProfile, MedicalRecord,
     Trek, TrekImage, Booking, Review, DispatchTicket
 )
+
+logger = logging.getLogger(__name__)
 
 
 DEMO_USERS = {
@@ -116,6 +120,15 @@ def seed_or_reset_demo_data(target_role=None):
     Ensures all baseline demo data (Admin, 2 Staff, 2 Trekkers, 3 Treks, Bookings, Tickets)
     exist and are intact. Automatically restores any deleted or corrupted demo records.
     """
+    try:
+        return _do_seed_demo_data(target_role)
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to seed demo data: {e}\n{traceback.format_exc()}")
+        raise e
+
+
+def _do_seed_demo_data(target_role=None):
     roles = {
         'admin': Role.query.filter_by(name='admin').first(),
         'trek_staff': Role.query.filter_by(name='trek_staff').first(),
@@ -190,7 +203,7 @@ def seed_or_reset_demo_data(target_role=None):
     staff2_user = user_instances['staff2']
 
     # 2. Seed or Restore 3 Demo Treks
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     demo_treks_specs = [
         {
             "name": "Hampta Pass Expedition (Demo)",

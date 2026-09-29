@@ -301,17 +301,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
-import { useAuthStore } from '../../stores/auth'
-import { secureFetch } from '@/utils/api'
+import { secureFetch, BACKEND_URL } from '@/utils/api'
 import { resolveMediaUrl } from '@/utils/media'
 import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
 
 const alertStore = useAlertStore()
 const authStore = useAuthStore()
-const backend_url = import.meta.env.VITE_BACKEND_URL
 const showEmailModal = ref(false)
 
-const API_BASE = 'http://127.0.0.1:5000/api/trek_staff'
+const API_BASE = `${BACKEND_URL}/api/trek_staff`
 
 // Structural layout reactive visibility boundaries variables
 const hasStaffData = ref(false)

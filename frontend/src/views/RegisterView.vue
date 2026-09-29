@@ -111,6 +111,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlertStore } from '@/stores/alert'
+import { BACKEND_URL } from '@/utils/api'
 
 const router = useRouter()
 const alertStore = useAlertStore()
@@ -232,7 +233,7 @@ async function handleRegistration() {
     formData.append('profile_pic', profileFile.value)
   }
 
-  const response = await fetch("http://127.0.0.1:5000/api/auth/register", {
+  const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: "POST",
       // Important: When using FormData, the browser automatically sets the correct Content-Type header with boundary, so we should NOT set it manually.
       body: formData

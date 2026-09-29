@@ -406,7 +406,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth' 
 import { useAlertStore } from '../stores/alert'
 import { useConfirmStore } from '../stores/confirm'
-import { secureFetch } from '@/utils/api'
+import { secureFetch, BACKEND_URL } from '@/utils/api'
 import DemoWelcomeModal from '@/components/DemoWelcomeModal.vue'
 
 const router = useRouter()
@@ -452,7 +452,7 @@ async function handleQuickSwitch(newRole) {
   if (isSwitchingRole.value || authStore.role === newRole) return
   isSwitchingRole.value = true
   try {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/demo-login`, {
+    const res = await fetch(`${BACKEND_URL}/api/auth/demo-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role: newRole })
@@ -478,7 +478,7 @@ async function handleQuickSwitch(newRole) {
 
 const reactiveMenu = computed(() => authStore.navigationMenu)
 
-const API_BASE = `http://127.0.0.1:5000/api/${authStore.role}` 
+const API_BASE = computed(() => `${BACKEND_URL}/api/${authStore.role}`)
 const profile_pic = ref('')
 
 const showNotifications = ref(false)
@@ -501,7 +501,7 @@ async function handleProfilePic() {
     }
 
     // 1. Dispatch Core User Profile Retrieval Request
-    const profileRes = await secureFetch(`${API_BASE}/profile`, { method: 'GET', headers })
+    const profileRes = await secureFetch(`${API_BASE.value}/profile`, { method: 'GET', headers })
     if (profileRes.ok) {
       const pData = await profileRes.json() // Debug log for profile data
       profile_pic.value = pData.profile_pic || '' // Update reactive profile picture state

@@ -174,6 +174,7 @@
   import { useRouter } from 'vue-router';
   import { useAlertStore } from '@/stores/alert';
   import { useAuthStore } from '@/stores/auth';
+  import { BACKEND_URL } from '@/utils/api';
   import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue';
 
   const router = useRouter();
@@ -262,7 +263,7 @@
       password: password.value
     }
 
-    const response = await fetch("http://127.0.0.1:5000/api/auth/login", {
+    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -299,7 +300,6 @@
   async function handleDemoLogin(role) {
     isDemoLoading.value = true
     activeDemoRole.value = role
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000'
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/demo-login`, {
         method: 'POST',
@@ -370,7 +370,7 @@
       if (demoDeliveryEmail) {
         payload.demo_delivery_email = demoDeliveryEmail
       }
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/request-login-otp`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/request-login-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -392,7 +392,7 @@
   async function verifyLoginOTP() {
     isProcessing.value = true
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/verify-login-otp`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/verify-login-otp`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail.value, otp: forgotOTP.value })
       })
