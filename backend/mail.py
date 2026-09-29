@@ -1,5 +1,6 @@
 import os
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -27,7 +28,10 @@ def send_html_email(to_email, subject, html_content, attachment_name=None, attac
     smtp_password = config.SMTP_PASSWORD
     smtp_use_tls = config.SMTP_USE_TLS
     smtp_use_ssl = config.SMTP_USE_SSL
-    sender_email = config.SMTP_SENDER_EMAIL
+    # Cloud providers like Brevo require sender to be a verified domain or login email
+    sender_email = config.SMTP_SENDER_EMAIL or smtp_user or "operations@apex-expeditions.com"
+    if smtp_user and ('@' in smtp_user) and sender_email == "operations@apex-expeditions.com":
+        sender_email = smtp_user
     sender_name = config.SMTP_SENDER_NAME
 
     msg = MIMEMultipart('mixed')
@@ -45,29 +49,31 @@ def send_html_email(to_email, subject, html_content, attachment_name=None, attac
         part.add_header('Content-Disposition', 'attachment', filename=attachment_name)
         msg.attach(part)
 
-    # If no SMTP_USER configured and SMTP_HOST is default/local, attempt local Mailpit;
-    # if it fails or if host is not reachable, fall back to console logging.
     try:
         if smtp_use_ssl or smtp_port == 465:
-            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+            context = ssl.create_default_context()
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, context=context, timeout=15)
         else:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
 
         with server as s:
             if smtp_use_tls or smtp_port == 587:
-                s.starttls()
+                context = ssl.create_default_context()
+                s.starttls(context=context)
 
             if smtp_user and smtp_password:
                 s.login(smtp_user, smtp_password)
 
             s.send_message(msg)
-            print(f"📧 [SMTP SUCCESS] Delivered '{subject}' to {to_email}")
+            print(f"📧 [SMTP SUCCESS] Delivered '{subject}' to {to_email} via {smtp_host}:{smtp_port}")
             return True
     except Exception as e:
         # Fallback console logger to prevent task dropping
         print(f"⚠️ [SMTP FALLBACK - SIMULATION LOG]")
         print(f"   To: {to_email}")
         print(f"   Subject: {subject}")
-        print(f"   Reason: {str(e)}")
+        print(f"   Host: {smtp_host}:{smtp_port}")
+        print(f"   Sender: {sender_email}")
+        print(f"   Error: {str(e)}")
         print(f"   Note: Email simulated successfully without dropping.")
         return True

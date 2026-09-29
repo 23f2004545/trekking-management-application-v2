@@ -224,7 +224,7 @@
                       :class="{ 'opacity-50': s.occupied, 'hover-bg-glass': !s.occupied }"
                     >
                       <div>
-                        <span class="d-block fw-bold text-white fs-8">👨‍✈️ {{ s.name }}</span>
+                        <span class="d-block fw-bold text-white fs-8"><i class="bi bi-person-badge text-success me-1"></i> {{ s.name }}</span>
                         <span class="fs-10 text-success-tint font-monospace">{{ s.email }}</span>
                       </div>
                       
@@ -243,7 +243,7 @@
                   <span class="file-name-label">{{ fileNameDisplay }}</span>
                 </div>
                 <small v-if="selectedGalleryFiles.length" class="text-success-tint mt-1 d-block fs-9 fw-medium">
-                  ✔ {{ selectedGalleryFiles.length }} image(s) selected for compilation queue.
+                  <i class="bi bi-check-lg text-success"></i> {{ selectedGalleryFiles.length }} image(s) selected for compilation queue.
                 </small>
               </div>
               <div class="col-12">
@@ -298,7 +298,7 @@
           <div class="d-flex gap-3 flex-shrink-0 mt-auto">
             <button type="button" @click="mapPickerActive = false" class="btn btn-outline-light rounded-pill px-4 py-2 flex-grow-1 fs-8">Cancel</button>
             <button type="button" @click="lockGridCoordinates" class="btn btn-success rounded-pill px-4 py-2 fw-bold text-dark flex-grow-1 fs-8 shadow-sm">
-              ✔ Lock & Transmit Grid
+              <i class="bi bi-check-lg me-1"></i> Lock & Transmit Grid
             </button>
           </div>
 
@@ -602,8 +602,8 @@ input[type="date"]::-webkit-datetime-edit-year-field { color: #fff; }
 .difficulty-pill.hard { background: rgba(220, 53, 69, 0.8); }
 
 /* Modal overlay layouts */
-.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
-.glass-modal-card { background: rgba(2, 7, 4, 0.422) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
+.admin-modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8) !important; backdrop-filter: blur(8px); z-index: 999; }
+.glass-modal-card { background: rgba(13, 20, 16, 0.96) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15) !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); width: 100%; max-width: 650px; }
 .max-vh-70 { max-height: 70vh; }
 
 .modal-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 3px; display: block; }

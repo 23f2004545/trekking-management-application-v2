@@ -95,7 +95,7 @@
                         </div>
                       </div>
                       
-                      <button @click.stop="deleteNotification(notif.id)" class="btn-close-notif text-white-50 opacity-50 border-0 bg-transparent p-0">✕</button>
+                      <button @click.stop="deleteNotification(notif.id)" class="btn-close-notif text-white-50 opacity-50 border-0 bg-transparent p-0"><i class="bi bi-x-lg" style="font-size: 0.75rem;"></i></button>
                     </div>
                   </div>
                 </div>
@@ -127,7 +127,7 @@
          =================================================================== -->
     <div class="mobile-side-drawer" :class="{ 'open': isMobileMenuOpen }">
       <div class="d-flex justify-content-end p-4 pb-2">
-        <button class="btn-close-drawer" @click="isMobileMenuOpen = false">✕</button>
+        <button class="btn-close-drawer" @click="isMobileMenuOpen = false"><i class="bi bi-x-lg"></i></button>
       </div>
       
       <ul class="mobile-nav-list d-flex flex-column gap-3 px-4 m-0 list-unstyled text-start mt-2">
@@ -210,7 +210,7 @@
       <div v-if="ticketModalActive" @click.self="ticketModalActive = false" class="query-overlay-backdrop d-flex align-items-center justify-content-center p-3" style="z-index: 1050;">
         <div class="glass-query-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start position-relative" style="max-width: 500px; width: 100%;">
           
-          <button @click="ticketModalActive = false" class="btn-dismiss-circle-cross">✕</button>
+          <button @click="ticketModalActive = false" class="btn-dismiss-circle-cross"><i class="bi bi-x-lg"></i></button>
           
           <h4 class="fw-bold text-white mb-1"><i class="bi bi-headset me-2 text-warning"></i> Command Dispatch</h4>
           
@@ -737,14 +737,15 @@ onUnmounted(() => {
   top: 0;
   right: -320px; /* Hide off-screen initially */
   width: 320px;
-  max-width: 75vw;
+  max-width: 85vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(15px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 999 ;
-  transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: rgba(12, 18, 14, 0.97) !important;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: -15px 0 40px rgba(0, 0, 0, 0.7);
+  z-index: 1040;
+  transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .mobile-side-drawer.open {
@@ -756,13 +757,16 @@ onUnmounted(() => {
   border: none; color: white;
   width: 36px; height: 36px;
   border-radius: 50%;
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
 }
 .btn-close-drawer:hover { background: rgba(255, 255, 255, 0.2); }
 
 .mobile-nav-link {
   font-size: 1.5rem;
-  opacity: 0.8;
+  opacity: 0.85;
   transition: opacity 0.2s;
 }
 .mobile-nav-link:hover, .mobile-nav-link.text-success {
@@ -772,8 +776,10 @@ onUnmounted(() => {
 .mobile-drawer-backdrop {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 998;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1035;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
@@ -824,20 +830,20 @@ onUnmounted(() => {
 
 .query-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 5, 2, 0.583) !important;
-  backdrop-filter: blur(7px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 999 !important;
+  background: rgba(8, 14, 11, 0.85) !important;
+  backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
+  z-index: 1050 !important;
 }
 
 .glass-query-card {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(18, 26, 22, 0.96) !important;
   backdrop-filter: blur(25px) !important;
   -webkit-backdrop-filter: blur(25px) !important;
-  border: 1px solid rgba(178, 183, 35, 0.922);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-  border-radius: 240px;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  border-radius: 20px !important;
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
 }
 
 .btn-dismiss-circle-cross {

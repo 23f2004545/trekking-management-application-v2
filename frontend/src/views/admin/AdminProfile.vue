@@ -31,7 +31,7 @@
                 <div class="audit-timeline-scroll pe-2">
                 
                     <div v-if="activeOperations.length === 0" class="p-5 text-center h-100 d-flex flex-column justify-content-center">
-                    <span class="fs-1 opacity-50">🏕️</span>
+                    <i class="bi bi-compass fs-1 opacity-50 text-white-50"></i>
                     <h6 class="fw-bold mt-3 mb-1">No Active Deployments</h6>
                     <p class="m-0 text-white-50 fs-9">There are currently no 'Ongoing' trails in the field.</p>
                     </div>
@@ -43,7 +43,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h5 class="fw-bold m-0 text-white tracking-tight">{{ op.name }}</h5>
-                                    <span class="fs-9 text-white-50">📍 {{ op.location }}</span>
+                                    <span class="fs-9 text-white-50"><i class="bi bi-geo-alt-fill text-success-tint me-1"></i>{{ op.location }}</span>
                                 </div>
                             <span class="badge bg-success bg-opacity-20 text-success-tint border border-success border-opacity-25 rounded-pill px-3 py-1">ONGOING</span>
                             </div>
@@ -51,7 +51,7 @@
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-end mb-2">
                                     <span class="fs-10 text-white-50 uppercase tracking-widest">Day {{ op.day_current }} of {{ op.day_total }}</span>
-                                    <span class="fs-10 text-white-50">{{ op.start_date }} ➔ {{ op.end_date }}</span>
+                                    <span class="fs-10 text-white-50">{{ op.start_date }} <i class="bi bi-arrow-right mx-1"></i> {{ op.end_date }}</span>
                                 </div>
                                 <div class="progress bg-black bg-opacity-40" style="height: 6px; border-radius: 10px;">
                                     <div class="progress-bar bg-success" role="progressbar" :style="{ width: op.progress + '%' }" :aria-valuenow="op.progress" aria-valuemin="0" aria-valuemax="100"></div>
@@ -61,8 +61,8 @@
                             <div class="bg-black bg-opacity-25 rounded-3 p-3 d-flex justify-content-between align-items-center border border-white border-opacity-5">
                                 <div>
                                     <span class="d-block fs-9 text-white-50 uppercase tracking-widest mb-1">FIELD GUIDE</span>
-                                    <span class="fw-semibold fs-8 text-white">👨‍✈️ {{ op.staff.name }}</span>
-                                    <span class="d-block fs-9 text-success-tint mt-0.5">📞 {{ op.staff.contact }}</span>
+                                    <span class="fw-semibold fs-8 text-white"><i class="bi bi-person-badge me-1 text-white-50"></i>{{ op.staff.name }}</span>
+                                    <span class="d-block fs-9 text-success-tint mt-0.5"><i class="bi bi-telephone-fill me-1"></i>{{ op.staff.contact }}</span>
                                 </div>
                             <div class="text-end border-start border-white border-opacity-10 ps-4">
                                 <span class="d-block fs-9 text-white-50 uppercase tracking-widest mb-1">HEADCOUNT</span>
@@ -93,8 +93,8 @@
               <div v-if="idx !== auditLogs.length - 1" class="timeline-line position-absolute bg-white bg-opacity-10" style="width: 2px; top: 24px; bottom: -24px; left: 11px;"></div>
               
               <div class="timeline-icon rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 z-1 shadow" :class="`bg-${log.severity}`" style="width: 24px; height: 24px;">
-                <span v-if="log.severity === 'danger'" class="text-white" style="font-size: 10px;">✕</span>
-                <span v-else-if="log.severity === 'success'" class="text-white" style="font-size: 10px;">✔</span>
+                <i v-if="log.severity === 'danger'" class="bi bi-x text-white" style="font-size: 14px;"></i>
+                <i v-else-if="log.severity === 'success'" class="bi bi-check text-white" style="font-size: 14px;"></i>
                 <span v-else class="text-white" style="font-size: 10px;">!</span>
               </div>
 

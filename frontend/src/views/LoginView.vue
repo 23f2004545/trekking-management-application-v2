@@ -2,13 +2,12 @@
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex align-items-center justify-content-center p-3">
     
     <button @click="$router.push('/')" class="btn-back-home ">
-      ← Back to Main
+      <i class="bi bi-arrow-left"></i> Back to Main
     </button>
 
     <div class="glass-login-card p-4 p-md-5 mt-5 text-center">
       
       <div class="brand-header mb-4">
-        <div class="logo-accent mx-auto mb-2">🍃</div>
         <h2 class="auth-title">Welcome Back</h2>
         <p class="auth-subtitle">Sign in to access your base camp dashboards, upcoming treks, and staff logs.</p>
       </div>
@@ -57,7 +56,7 @@
       <!-- INSTANT PORTFOLIO DEMO ACCESS SECTION -->
       <div class="demo-access-cluster mb-4">
         <div class="divider-zone mb-3">
-          <span class="divider-text">⚡ Instant Demo Access (Portfolio Preview)</span>
+          <span class="divider-text"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Instant Demo Access (Portfolio Preview)</span>
         </div>
 
         <div class="d-flex gap-2 justify-content-center">
@@ -113,7 +112,7 @@
       <div v-if="forgotModalActive" @click.self="closeForgotModal" class="login-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
           
-          <button @click="closeForgotModal" class="btn-close-modal">✕</button>
+          <button @click="closeForgotModal" class="btn-close-modal"><i class="bi bi-x-lg"></i></button>
 
           <h4 class="fw-bold tracking-tight text-white mb-1">Secure Access</h4>
           <p class="text-white-50 small mb-4">
@@ -146,7 +145,7 @@
               {{ isProcessing ? 'Verifying...' : 'Authorize & Connect' }}
             </button>
             <button type="button" @click="otpStep = 1" class="btn btn-link text-white-50 text-decoration-none fs-9 w-100 mt-1">
-              ← Use a different email
+              <i class="bi bi-arrow-left me-1"></i> Use a different email
             </button>
           </form>
 
@@ -605,8 +604,8 @@ p.helper-link {
   font-size: 0.88rem;
 }
 
-.login-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.6); backdrop-filter: blur(5px); z-index: 999; }
-.glass-modal-card { background: rgba(2, 7, 4, 0.422) !important; backdrop-filter: blur(15px); width: 100%; max-width: 650px; }
+.login-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8) !important; backdrop-filter: blur(8px); z-index: 999; }
+.glass-modal-card { background: rgba(14, 22, 17, 0.96) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15) !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); width: 100%; max-width: 650px; }
 .max-vh-90 { max-height: 90vh; }
 
 .btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }

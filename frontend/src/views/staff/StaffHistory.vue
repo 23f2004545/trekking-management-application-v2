@@ -3,14 +3,14 @@
 
     <div v-if="!onboarded" class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 animate-slide-down">
       <div class="d-flex align-items-center gap-3">
-        <span class="fs-2">🛠️</span>
+        <i class="bi bi-tools fs-2 text-warning"></i>
         <div>
           <h5 class="m-0 fw-bold text-warning tracking-tight">Profile Onboarding Required</h5>
           <p class="m-0 fs-8 text-white-50 mt-1">Your profile details are currently marked as default parameters. Please configure your operational field specifications.</p>
         </div>
       </div>
       <button @click="$router.push('/portal/trek_staff/profile')" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 py-2 fs-8 shadow-sm hover-grow">
-        Complete Profile Setup →
+        Complete Profile Setup <i class="bi bi-arrow-right ms-1"></i>
       </button>
     </div>
 
@@ -36,7 +36,7 @@
       <div :class="{ 'onboarding-blurred-zone': !onboarded }">
       <!-- Empty State -->
       <div v-if="filteredData.length === 0" class="text-center py-5 my-5 glass-card-clean rounded-4 border border-white border-opacity-5">
-        <span class="fs-1 opacity-25 d-block mb-2">🏔️</span>
+        <i class="bi bi-compass fs-1 opacity-25 d-block mb-2"></i>
         <h6 class="fw-bold text-white tracking-widest uppercase">No Archived Logs Found</h6>
         <p class="text-white-50 fs-9 m-0">No completed expeditions match your current security clearance.</p>
       </div>
@@ -55,7 +55,7 @@
               </div>
 
               <div class="pt-2 mt-2 border-top border-white border-opacity-10 d-flex justify-content-between align-items-center">
-                <span class="fs-10 font-monospace text-white-50">{{ trek.trek_info.start_date }} ➔ {{ trek.trek_info.end_date }}</span>
+                <span class="fs-10 font-monospace text-white-50">{{ trek.trek_info.start_date }} <i class="bi bi-arrow-right mx-1"></i> {{ trek.trek_info.end_date }}</span>
                 <span class="fs-9 fw-bold text-success-tint d-flex align-items-center gap-1">Inspect <i class="bi bi-arrow-right"></i></span>
               </div>
 
@@ -73,7 +73,7 @@
       <!-- Top Navigation Bar -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom border-white border-opacity-10 gap-3">
         <button @click="selectedTripForDetails = null" class="btn btn-sm btn-outline-light rounded-pill px-2 py-1 fs-9 border-opacity-25 hover-white">
-          ← Return to Archives
+          <i class="bi bi-arrow-left me-1"></i> Return to Archives
         </button>
         <button v-if="selectedTripForDetails.trek_info.status == 'Completed'" @click="triggerExport" :disabled="isExporting" class="btn btn-sm btn-success rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm d-flex align-items-center gap-2 transition-all">
           <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status"></span>

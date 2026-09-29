@@ -29,6 +29,10 @@ def log_system_audit(action, details, severity="info"):
 
 utils_bp = Blueprint('utils', __name__)
 
+@utils_bp.route('/ping', methods=['GET'])
+def ping_service():
+    return jsonify({"status": "active", "core": "apex-telemetry-online"}), 200
+
 
 @utils_bp.route('/trek-extremes', methods=['GET'])
 def get_trek_extremes():

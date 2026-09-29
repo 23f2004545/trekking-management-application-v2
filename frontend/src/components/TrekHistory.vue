@@ -23,7 +23,7 @@
       
       <!-- CONDITION A: Review Already Submitted (Render Read-Only Frame) -->
       <div v-if="booking.review_submitted" class="read-only-review-display bg-opacity-5 p-4 rounded-3 border border-white border-opacity-5">
-        <span class="badge completed-badge mb-3 text-uppercase fs-10">✔ Evaluation Added </span>
+        <span class="badge completed-badge mb-3 text-uppercase fs-10"><i class="bi bi-check2-circle text-success me-1"></i> Evaluation Added </span>
         
         <div class="row g-4">
           <div class="col-md-6 border-end border-white border-opacity-10">

@@ -81,36 +81,66 @@ DEMO_USERS = {
 }
 
 
-def is_demo_user(user):
-    """Checks whether the given User model instance or email string is a demo account."""
+def is_demo_user(user=None):
+    """
+    Checks whether the current request/session or user model instance is a demo account.
+    Prioritizes the JWT additional claims ('is_demo') so any demo token is strictly isolated.
+    """
+    try:
+        from flask_jwt_extended import get_jwt
+        claims = get_jwt()
+        if claims and claims.get('is_demo'):
+            return True
+    except Exception:
+        pass
+
     if not user:
         return False
+
     if isinstance(user, str):
         email = user.lower()
-        return email.startswith('demo.') or '@demo.' in email or '.demo.' in email
+        return email.startswith('demo.') or '@demo.' in email or '.demo.' in email or 'demo' in email
+
     email = (getattr(user, 'email', '') or '').lower()
-    name = getattr(user, 'name', '') or ''
-    return email.startswith('demo.') or '@demo.' in email or '.demo.' in email or '(Demo)' in name
+    name = (getattr(user, 'name', '') or '').lower()
+    return (
+        email.startswith('demo.') or
+        '@demo.' in email or
+        '.demo.' in email or
+        'demo' in email or
+        '(demo)' in name or
+        'demo' in name
+    )
 
 
 def is_demo_target(entity):
     """
-    Checks whether a database entity (User, Trek, Booking, Ticket) is tagged as Demo.
+    Checks whether a specific database entity (User, Trek, Booking, Ticket) is a demo record.
+    NOTE: This strictly inspects the record itself, NOT the active JWT claims, ensuring real user/staff
+    records are never mistaken for demo targets.
     """
     if not entity:
         return False
 
     if isinstance(entity, User):
-        return is_demo_user(entity)
+        email = (getattr(entity, 'email', '') or '').lower()
+        name = (getattr(entity, 'name', '') or '').lower()
+        return (
+            email.startswith('demo.') or
+            '@demo.' in email or
+            '.demo.' in email or
+            'demo' in email or
+            '(demo)' in name
+        )
 
     if isinstance(entity, Trek):
-        return '(Demo)' in (entity.trek_name or '')
+        return '(demo)' in (entity.trek_name or '').lower()
 
     if isinstance(entity, Booking):
-        return is_demo_user(entity.user) or is_demo_target(entity.trek)
+        return is_demo_target(entity.user) or is_demo_target(entity.trek)
 
     if isinstance(entity, DispatchTicket):
-        return '(Demo)' in (entity.subject or '') or is_demo_user(entity.author)
+        return '(demo)' in (entity.subject or '').lower() or is_demo_target(entity.author)
 
     return False
 

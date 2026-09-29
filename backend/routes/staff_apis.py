@@ -382,7 +382,10 @@ def update_trek_field_data(trek_id):
         db.session.commit()
         admin = User.query.filter_by(name='admin').first()
         create_notification(admin.id, f"{user.name} has modified TREK : {trek.trek_name}", "warning")
-        cache.clear()
+        try:
+            cache.clear()
+        except Exception:
+            pass
         return make_response(jsonify({
             "message": "Field operational parameters synchronized.", 
             "new_status": trek.status

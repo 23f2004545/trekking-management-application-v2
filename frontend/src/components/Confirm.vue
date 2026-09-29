@@ -3,7 +3,7 @@
     <div v-if="confirmStore.visible" class="confirm-modal-backdrop d-flex align-items-center justify-content-center">
       <div class="glass-confirm-card p-4 text-center rounded-4 border border-white border-opacity-15 shadow-lg animate-scale-up">
         
-        <div class="confirm-icon mb-2 fs-3">{{ icon }}</div>
+        <div class="confirm-icon mb-2"><i class="bi bi-shield-check text-success fs-1"></i></div>
         
         <h5 class="fw-bold text-white mb-2 tracking-tight">System Choice Required</h5>
         
@@ -41,23 +41,22 @@ import { useAuthStore } from '../stores/auth'
 
 const confirmStore = useConfirmStore()
 const authStore = useAuthStore()
-
-const icon = computed(() => {
-  return '🌲' 
-})
 </script>
 
 <style scoped>
-/* Transfer and use EXACTLY the same styling and keyframes as provided earlier */
 .confirm-modal-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(10, 18, 14, 0.45) !important;
-  backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(15px) !important;
+  background: rgba(8, 14, 11, 0.85) !important;
+  backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
   z-index: 9999 !important;
 }
 .glass-confirm-card {
-  background: rgba(255, 255, 255, 0.1) !important; backdrop-filter: blur(5px);
-  width: 90%; max-width: 360px;
+  background: rgba(18, 26, 22, 0.96) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  width: 90%; max-width: 380px;
 }
 .confirm-icon { opacity: 0.8; }
 .max-w-xs { max-width: 260px; }

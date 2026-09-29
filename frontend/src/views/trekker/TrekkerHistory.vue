@@ -42,7 +42,7 @@
     <div v-else class="extended-history-details-flow">
       <div class="mb-4">
         <button @click="selectedTripForDetails = null" class="btn btn-outline-light rounded-pill px-3 py-1 fs-9 border-opacity-25">
-          ← Return to History Logs
+          <i class="bi bi-arrow-left me-1"></i> Return to History Logs
         </button>
       </div>
 

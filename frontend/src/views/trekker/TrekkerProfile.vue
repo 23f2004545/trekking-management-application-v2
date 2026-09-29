@@ -157,7 +157,7 @@
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 overflow-y-auto shadow-lg text-start max-vh-70 animate-scale-up">
           
           <div class="d-flex align-items-center justify-content-between border-bottom flex-wrap border-white border-opacity-50 pb-2 mb-4">
-            <button @click="medicalModalVisible = false" class="btn-close-modal" title="Close Panel">✕</button>
+            <button @click="medicalModalVisible = false" class="btn-close-modal" title="Close Panel"><i class="bi bi-x-lg"></i></button>
             <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Field Medical Matrix</h4>
             <p class="text-white-50 small m-0 mb-4 lh-base extra-small">Configure critical emergency contact profiles and trail safety parameters parameters.</p>
           </div>
@@ -232,7 +232,7 @@
       <div v-if="passwordModalActive" @click.self="passwordModalActive = false" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-profile-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
           
-          <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel">✕</button>
+          <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel"><i class="bi bi-x-lg"></i></button>
 
           <h4 class="fw-bold tracking-tight text-white mb-1">Update Security Key</h4>
           <p class="text-white-50 small mb-4">Request a 6-digit authorization code to your registered email to process this mutation.</p>
@@ -669,14 +669,16 @@ onMounted(() => {
 
 .medical-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 5, 2, 0.316) !important;
-  backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 999 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1050 !important;
 }
 
 .glass-modal-card {
-  background: rgba(0, 0, 0, 0.206) !important;
-  backdrop-filter: blur(6px);
+  background: rgba(14, 22, 17, 0.97) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   width: 92%; max-width: 580px;
 }
 
@@ -693,8 +695,8 @@ onMounted(() => {
 .extra-small { font-size: 0.68rem; }
 
 /* OTP Modal Specific Styles */
-.profile-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 6, 2, 0.459); backdrop-filter: blur(5px); z-index: 999; }
-.glass-profile-card { background: rgba(1, 1, 1, 0.383) !important; backdrop-filter: blur(10px); }
+.profile-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8) !important; backdrop-filter: blur(8px); z-index: 1050 !important; }
+.glass-profile-card { background: rgba(14, 22, 17, 0.97) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15) !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); }
 .btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
 .tracking-widest { letter-spacing: 4px; }

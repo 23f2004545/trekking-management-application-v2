@@ -53,7 +53,7 @@
       <div v-if="auditTargetProfile" @click.self="auditTargetProfile = null" class="audit-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg max-vh-65 overflow-y-auto position-relative">
           
-          <button @click="auditTargetProfile = null" class="btn-close-modal">✕</button>
+          <button @click="auditTargetProfile = null" class="btn-close-modal"><i class="bi bi-x-lg"></i></button>
           
           <UserProfile 
             :profile="auditTargetProfile" 
@@ -176,8 +176,8 @@ onMounted(() => {
 .clean-field:focus { outline: none; }
 
 /* Modal layer specifications */
-.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(1, 4, 2, 0.341); backdrop-filter: blur(10px); z-index: 999; }
-.glass-modal-card { background: rgba(2, 16, 9, 0.323) !important; backdrop-filter: blur(15px); width: 100%; max-width: 850px; }
+.audit-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8) !important; backdrop-filter: blur(8px); z-index: 999; }
+.glass-modal-card { background: rgba(14, 22, 17, 0.96) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15) !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); width: 100%; max-width: 850px; }
 .max-vh-65 { max-height: 65vh; }
 
 .btn-close-modal { position: absolute; top: 0.25rem; right: 0.5rem; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }

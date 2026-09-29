@@ -3,7 +3,9 @@
     <div v-if="isVisible" class="demo-welcome-overlay d-flex align-items-center justify-content-center p-3" @click.self="closeModal">
       <div class="glass-welcome-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-2xl text-start position-relative animate-scale-up" style="max-width: 540px; width: 100%;">
         
-        <button @click="closeModal" class="btn-dismiss-circle" title="Close Overview">✕</button>
+        <button @click="closeModal" class="btn-dismiss-circle" title="Close Overview">
+          <i class="bi bi-x-lg"></i>
+        </button>
 
         <!-- Role Badge & Header -->
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -205,14 +207,14 @@ defineExpose({
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 18, 14, 0.6) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   z-index: 1060 !important;
 }
 
 .glass-welcome-card {
-  background: rgba(18, 28, 22, 0.85) !important;
+  background: rgba(16, 24, 20, 0.96) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }

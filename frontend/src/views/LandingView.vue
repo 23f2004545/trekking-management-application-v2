@@ -1,6 +1,9 @@
 <template>
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-2 position-relative overflow-hidden">
     
+    <!-- INTERACTIVE MINIMAL COLD-BOOT WARMUP PRELOADER -->
+    <ColdBootSplash :backendUrl="BACKEND_URL" />
+
     <!-- FLOATING PERSISTENT SIGN-IN PILL (Docked when scrolling down) -->
     <Transition name="slide-down-fade">
       <div v-if="isScrolled" class="apex-floating-landing-pill position-fixed start-50 translate-middle-x d-flex align-items-center justify-content-between gap-3 px-3 py-2 rounded-pill shadow-lg border border-white border-opacity-15">
@@ -44,7 +47,7 @@
 
     <main class="hero-center-container mt-1 pt-5">
       <div class="badge-wrapper animate-fade-up" style="animation-delay: 0.1s;">
-        <span class="glass-badge">🏔️ The Global Alpine Network</span>
+        <span class="glass-badge"><i class="bi bi-compass text-success-tint me-1"></i> The Global Alpine Network</span>
       </div>
       <h1 class="display-headline animate-fade-up mt-4 " style="animation-delay: 0.2s;">
         <i>Find Your Path In A <br>Constantly Connected World</i>
@@ -333,7 +336,9 @@
           <h6 class="m-0 fw-bold text-white fs-8">Demand Alert</h6>
           <p class="m-0 text-white-50 fs-9 mt-0.5 lh-sm">{{ fomoMessage }}</p>
         </div>
-        <button @click="fomoActive = false" class="btn-close-toast align-self-start ms-2">✕</button>
+        <button @click="fomoActive = false" class="btn-close-toast align-self-start ms-2">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
     </Transition>
 
@@ -342,6 +347,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import ColdBootSplash from '../components/ColdBootSplash.vue'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 

@@ -59,7 +59,7 @@
         <div class="glass-audit-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg position-relative text-start animate-scale-up">
           
           <!-- Circle Cross Dismiss Trigger Button -->
-          <button @click="modalTarget = null" class="btn-dismiss-circle-cross" title="Close Context Panel">✕</button>
+          <button @click="modalTarget = null" class="btn-dismiss-circle-cross" title="Close Context Panel"><i class="bi bi-x-lg"></i></button>
 
           <h4 class="fw-bold tracking-tight text-white mb-1">Reservation Passport Context</h4>
           <p class="text-white-50 small mb-4">Complete logistical registry metrics and verified guide assignment info.</p>
@@ -125,7 +125,7 @@
               Cancel Booking
             </button>
             <div v-else class="text-center text-white-50 small opacity-40 italic py-1">
-              🔒 This transaction record has been finalized and locked against mutations.
+              <i class="bi bi-lock-fill me-1"></i> This transaction record has been finalized and locked against mutations.
             </div>
           </div>
 
@@ -224,11 +224,11 @@ onMounted(() => {
 /* Immersive Audit Modal Box elements */
 .bookings-modal-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(1, 8, 5, 0.454) !important;
-  backdrop-filter: blur(6px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 999 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1050 !important;
 }
-.glass-audit-card { background: rgba(0, 0, 0, 0.2) !important; backdrop-filter: blur(6px); width: 100%; max-width: 580px; }
+.glass-audit-card { background: rgba(14, 22, 17, 0.97) !important; backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15) !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); width: 100%; max-width: 580px; }
 
 .modal-thumbnail-wrapper { height: 155px; }
 .object-cover { width: 100%; height: 100%; object-fit: cover; }

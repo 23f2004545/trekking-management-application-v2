@@ -28,7 +28,16 @@ class config:
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "super-secret-production-key")
     JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES", 300))
     
-    CACHE_TYPE = os.environ.get("CACHE_TYPE", "RedisCache")
+    # Redis & Message Broker Configuration
+    REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("UPSTASH_REDIS_URL")
+    if REDIS_URL:
+        CACHE_TYPE = os.environ.get("CACHE_TYPE", "RedisCache")
+        CACHE_REDIS_URL = REDIS_URL
+    else:
+        # Graceful local development fallback to in-memory cache when Redis is not running
+        CACHE_TYPE = os.environ.get("CACHE_TYPE", "SimpleCache")
+        REDIS_URL = "redis://localhost:6379/0"
+
     CACHE_REDIS_HOST = os.environ.get("CACHE_REDIS_HOST", "localhost")
     CACHE_REDIS_PORT = int(os.environ.get("CACHE_REDIS_PORT", 6379))
     CACHE_REDIS_DB = int(os.environ.get("CACHE_REDIS_DB", 0))
@@ -38,8 +47,7 @@ class config:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join(BASE_DIR, "static"))
     
-    # Redis & Celery Message Broker
-    REDIS_URL = os.environ.get("REDIS_URL") or os.environ.get("UPSTASH_REDIS_URL") or "redis://localhost:6379/0"
+    # Celery Message Broker
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL") or REDIS_URL
     CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND") or REDIS_URL
     CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "False").lower() in ("true", "1")
@@ -57,5 +65,6 @@ class config:
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", None)
     SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "False").lower() in ("true", "1")
     SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "False").lower() in ("true", "1")
-    SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL", "operations@apex-expeditions.com")
+    # For Brevo and authenticated SMTP, sender email must match verified sender or login email
+    SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL") or os.environ.get("SMTP_USER") or "operations@apex-expeditions.com"
     SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME", "Apex Expeditions")

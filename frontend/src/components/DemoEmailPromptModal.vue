@@ -145,15 +145,16 @@ function handleSimulate() {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(1, 6, 3, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px);
   z-index: 1060;
 }
 
 .glass-email-modal {
-  background: rgba(10, 25, 18, 0.85) !important;
+  background: rgba(13, 22, 17, 0.97) !important;
   backdrop-filter: blur(20px);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
 }
 
 .btn-close-modal {

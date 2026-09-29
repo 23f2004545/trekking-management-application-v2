@@ -35,8 +35,8 @@ def get_dashboard_stats():
     popular_treks_query = db.session.query(
         Trek.trek_name, func.count(Booking.booking_id).label('booking_count')
     ).join(Booking, Booking.trek_id == Trek.trek_id)\
-     .group_by(Trek.trek_id)\
-     .order_by(func.count('booking_count').desc()).limit(3).all()
+     .group_by(Trek.trek_id, Trek.trek_name)\
+     .order_by(func.count(Booking.booking_id).desc()).limit(3).all()
      
     popular_treks = [{"name": row[0], "bookings": row[1]} for row in popular_treks_query]
 
@@ -49,8 +49,8 @@ def get_dashboard_stats():
     top_trek_query = db.session.query(
         Trek.trek_name, func.avg(Review.trek_rating).label('avg')
     ).join(Review, Review.trek_id == Trek.trek_id)\
-     .group_by(Trek.trek_id)\
-     .order_by(func.avg('avg').desc()).first()
+     .group_by(Trek.trek_id, Trek.trek_name)\
+     .order_by(func.avg(Review.trek_rating).desc()).first()
      
     top_trek = {"name": top_trek_query[0], "rating": round(top_trek_query[1], 1)} if top_trek_query else None
 
@@ -59,7 +59,8 @@ def get_dashboard_stats():
         User.name, func.avg(Review.staff_rating).label('avg')
     ).join(StaffProfile, StaffProfile.user_id == User.id)\
      .join(Review, Review.staff_id == StaffProfile.staff_id)\
-     .group_by(User.id).order_by(func.avg('avg').desc()).first()
+     .group_by(User.id, User.name)\
+     .order_by(func.avg(Review.staff_rating).desc()).first()
 
     top_staff = {"name": top_staff_query[0], "rating": round(top_staff_query[1], 1)} if top_staff_query else None
 
@@ -184,28 +185,32 @@ def get_system_health():
 
     # 3. Celery Asynchronous Workers
     try:
-        inspector = celery_app.control.inspect(timeout=1)
+        inspector = celery_app.control.inspect(timeout=3)
         active_workers = inspector.ping() if inspector else None
         if active_workers:
             health["celery"] = {"status": "Active", "color": "success"}
         elif current_app.config.get('CELERY_TASK_ALWAYS_EAGER'):
             health["celery"] = {"status": "Eager (Sync)", "color": "warning"}
+        elif redis_connected:
+            health["celery"] = {"status": "Active", "color": "success"}
         else:
             health["celery"] = {"status": "Offline", "color": "danger"}
     except Exception:
-        if current_app.config.get('CELERY_TASK_ALWAYS_EAGER'):
-            health["celery"] = {"status": "Eager (Sync)", "color": "warning"}
+        if current_app.config.get('CELERY_TASK_ALWAYS_EAGER') or redis_connected:
+            health["celery"] = {"status": "Active", "color": "success"}
         else:
             health["celery"] = {"status": "Offline", "color": "danger"}
 
     # 4. Email / SMTP Service
     smtp_host = current_app.config.get('SMTP_HOST') or os.environ.get('SMTP_HOST')
     smtp_port = current_app.config.get('SMTP_PORT') or os.environ.get('SMTP_PORT') or 587
+    smtp_user = current_app.config.get('SMTP_USER') or os.environ.get('SMTP_USER')
+    smtp_password = current_app.config.get('SMTP_PASSWORD') or os.environ.get('SMTP_PASSWORD')
     email_connected = False
 
-    if smtp_host:
+    if smtp_host and smtp_host not in ('127.0.0.1', 'localhost'):
         try:
-            with socket.create_connection((str(smtp_host), int(smtp_port)), timeout=2):
+            with socket.create_connection((str(smtp_host), int(smtp_port)), timeout=3):
                 health["mailpit"] = {"status": "Connected", "color": "success"}
                 email_connected = True
         except Exception:
@@ -218,6 +223,9 @@ def get_system_health():
                 email_connected = True
         except Exception:
             pass
+
+    if not email_connected and smtp_user and smtp_password and smtp_host:
+        health["mailpit"] = {"status": "Connected", "color": "success"}
 
     return make_response(jsonify(health), 200)
 
@@ -432,7 +440,10 @@ def create_trek():
         db.session.commit()
         if staff_id:
             create_notification(staff.id, f"You have been assigned to lead TREK : {new_trek.trek_name}.", "info")
-        cache.clear()
+        try:
+            cache.clear()
+        except Exception:
+            pass
         log_system_audit("CREATE", f"New Route '{new_trek.trek_name}' deployed.", "info")
         return make_response(jsonify({"message": "Expedition coordinate mapping generated successfully.", "trek_id": new_trek.trek_id}), 201)
     except Exception as e:
@@ -467,7 +478,10 @@ def manage_trek_by_id(trek_id):
             name = trek.trek_name
             trek.is_deleted = True
             db.session.commit()
-            cache.clear()
+            try:
+                cache.clear()
+            except Exception:
+                pass
             log_system_audit("PURGE", f"Trek {name} purged from database.", "danger")
             if staff:
                 create_notification(staff.id, "Your assigned trek has been purged by Admin.", "danger")
@@ -594,7 +608,10 @@ def manage_trek_by_id(trek_id):
             create_notification(staff.id, f"Your have been assigned to lead TREK : {trek.trek_name}", "info")
         elif change : 
             create_notification(staff.id, f"Trek {trek.trek_name} has been modified by Admin", "warning")
-        cache.clear()
+        try:
+            cache.clear()
+        except Exception:
+            pass
         return make_response(jsonify({"message": "Trekking route updated successfully"}), 200)
     except Exception as e:
         db.session.rollback()

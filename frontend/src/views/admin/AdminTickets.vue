@@ -46,7 +46,9 @@
       <div v-if="activeModal" @click.self="activeModal = null" class="query-overlay-backdrop d-flex align-items-center justify-content-center p-3" style="z-index: 1050;">
         <div class="glass-query-card p-4 p-md-5 rounded-4 shadow-lg text-start" style="max-width: 600px; width: 100%;">
           
-          <button @click="activeModal = null" class="btn-dismiss-circle-cross">✕</button>
+          <button @click="activeModal = null" class="btn-dismiss-circle-cross">
+            <i class="bi bi-x-lg"></i>
+          </button>
           
           <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-white border-opacity-10">
             <div>
@@ -221,20 +223,21 @@ onMounted(() => fetchTickets())
 <style scoped>
 .query-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 5, 2, 0.519) !important;
-  backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(20px) !important;
-  z-index: 999 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important;
+  z-index: 1050 !important;
 }
 
 .glass-query-card {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-  border: 1px solid rgba(178, 183, 35, 0.922);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-  border-radius: 240px;
+  background: rgba(14, 22, 17, 0.97) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
   width: 100%;
-  max-width: 460px;
+  max-width: 600px;
+  position: relative;
 }
 
 .btn-dismiss-circle-cross {

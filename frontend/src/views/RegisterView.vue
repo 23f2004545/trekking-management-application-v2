@@ -2,13 +2,12 @@
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex align-items-center justify-content-center p-2 p-md-3">
     
     <button @click="$router.push('/')" class="btn-back-home">
-      ← Back to Main
+      <i class="bi bi-arrow-left me-1"></i> Back to Main
     </button>
 
     <div class="glass-register-card p-4 text-center my-3">
       
       <div class="brand-header mb-4">
-        <div class="logo-accent mx-auto mb-2">🥾</div>
         <h2 class="auth-title">Create Trekker Account</h2>
         <p class="auth-subtitle">Set up your profile to start exploring paths, secure high-alpine slot bookings, and track safety logs.</p>
       </div>
@@ -64,7 +63,7 @@
               <input v-model.lazy="confirmPassword" type="password" placeholder="Retype password" class="auth-clean-input" @change="validatePassword">
             </div>
             <div v-if="passwordMismatch" class="input-label my-2 text-warning">
-              ⚠️ Passwords do not match.
+              <i class="bi bi-exclamation-triangle-fill me-1"></i> Passwords do not match.
             </div>
           </div>
         </div>

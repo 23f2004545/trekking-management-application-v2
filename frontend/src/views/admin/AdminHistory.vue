@@ -41,7 +41,7 @@
             </div>
 
             <div class="pt-2 mt-2 border-top border-white border-opacity-10 d-flex justify-content-between align-items-center">
-              <span class="fs-10 font-monospace text-white-50">{{ trek.trek_info.start_date }} ➔ {{ trek.trek_info.end_date }}</span>
+              <span class="fs-10 font-monospace text-white-50">{{ trek.trek_info.start_date }} <i class="bi bi-arrow-right mx-1"></i> {{ trek.trek_info.end_date }}</span>
               <span class="fs-9 fw-bold text-success-tint d-flex align-items-center gap-1">Inspect <i class="bi bi-arrow-right"></i></span>
             </div>
 
@@ -58,7 +58,7 @@
       <!-- Top Navigation Bar -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom border-white border-opacity-10 gap-3">
         <button @click="selectedTripForDetails = null" class="btn btn-sm btn-outline-light rounded-pill px-2 py-1 fs-9 border-opacity-25 hover-white">
-          ← Return to Archives
+          <i class="bi bi-arrow-left me-1"></i> Return to Archives
         </button>
         <button v-if="selectedTripForDetails.trek_info.status == 'Completed'" @click="triggerExport" :disabled="isExporting" class="btn btn-sm btn-success rounded-pill px-2 py-1 fs-9 fw-bold text-dark shadow-sm d-flex align-items-center gap-2 transition-all">
           <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status"></span>

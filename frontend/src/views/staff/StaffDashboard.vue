@@ -3,14 +3,14 @@
 
     <div v-if="!stats.is_onboarded && stats.is_loaded" class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 animate-slide-down">
       <div class="d-flex align-items-center gap-3">
-        <span class="fs-2">🛠️</span>
+        <i class="bi bi-tools fs-2 text-warning"></i>
         <div>
           <h5 class="m-0 fw-bold text-warning tracking-tight">Profile Onboarding Required</h5>
           <p class="m-0 fs-8 text-white-50 mt-1">Your profile details are currently marked as default parameters. Please configure your operational field specifications.</p>
         </div>
       </div>
       <button @click="$router.push('/portal/trek_staff/profile')" class="btn btn-warning text-dark font-weight-bold rounded-pill px-4 py-2 fs-8 shadow-sm hover-grow">
-        Complete Profile Setup →
+        Complete Profile Setup <i class="bi bi-arrow-right ms-1"></i>
       </button>
     </div>
 
@@ -32,7 +32,7 @@
         
         <div class="col-lg-4 d-flex justify-content-lg-end">
           <div class="deployment-glass-alert p-3 rounded-3 border border-white border-opacity-15 d-flex align-items-center gap-3">
-            <span class="fs-2">⏱️</span>
+            <i class="bi bi-stopwatch fs-2 text-success-tint"></i>
             <div class="text-start">
               <h6 class="m-0 fw-bold text-white small tracking-tight text-uppercase">Next Deployment</h6>
               <p class="m-0 fs-8 text-success fw-bold mt-1">{{ stats.next_deployment }}</p>
@@ -79,7 +79,7 @@
         </div>
 
         <div v-if="stats.active_roster.length === 0" class="empty-state-glass p-5 text-center rounded-4 border border-white border-opacity-10">
-          <span class="fs-1">🏕️</span>
+          <i class="bi bi-compass fs-1 text-white-50"></i>
           <h5 class="fw-bold mt-2 mb-1">No Active Deployments Scheduled</h5>
           <p class="m-0 text-white-50 small">Administration has not assigned any upcoming active grids to your profile.</p>
         </div>

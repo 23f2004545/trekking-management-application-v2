@@ -3,7 +3,7 @@
     
     <div class="mb-4">
       <button @click="$router.back()" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1 fs-9 border-opacity-25">
-        ← Back to List
+        <i class="bi bi-arrow-left me-1"></i> Back to List
       </button>
     </div>
 
@@ -46,7 +46,7 @@
       <div v-if="checkoutActive" @click.self="checkoutActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative">
           
-          <button @click="checkoutActive = false" class="btn-close-modal">✕</button>
+          <button @click="checkoutActive = false" class="btn-close-modal"><i class="bi bi-x-lg"></i></button>
           <h4 class="fw-bold tracking-tight text-center text-white m-0 mb-4">Book your trek</h4>
 
           <form @submit.prevent="submitBookingRequest" class="d-flex flex-column gap-3">
@@ -99,7 +99,7 @@
       <div v-if="modifyModalActive" @click.self="modifyModalActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-12 text-start" style="max-width: 35rem; max-height: 45rem;">
           
-          <button @click="modifyModalActive = false" class="btn-close-modal">✕</button>
+          <button @click="modifyModalActive = false" class="btn-close-modal"><i class="bi bi-x-lg"></i></button>
           <h4 class="fw-bold tracking-tight text-white m-0 mb-4 text-center">Modify Trek Matrix</h4>
 
           <form @submit.prevent="submitModificationForm" class="d-flex flex-column gap-3">
@@ -195,7 +195,7 @@
                       :class="{ 'opacity-50': s.occupied, 'hover-bg-glass': !s.occupied }"
                     >
                       <div>
-                        <span class="d-block fw-bold text-white fs-8">👨‍✈️ {{ s.name }}</span>
+                        <span class="d-block fw-bold text-white fs-8"><i class="bi bi-person-badge text-success me-1"></i> {{ s.name }}</span>
                         <span class="fs-10 text-success-tint font-monospace">{{ s.email }}</span>
                       </div>
                       
@@ -215,7 +215,7 @@
                   <span class="file-name-label">{{ fileNameDisplay }}</span>
                 </div>
                 <small v-if="updateGalleryFiles.length" class="text-success-tint mt-1 d-block fs-9 fw-medium">
-                  ✔ {{ updateGalleryFiles.length }} image(s) selected for compilation queue.
+                  <i class="bi bi-check-lg text-success"></i> {{ updateGalleryFiles.length }} image(s) selected for compilation queue.
                 </small>
               </div>
               <div class="col-12">
@@ -241,7 +241,7 @@
       <div v-if="staffModifyModalActive" @click.self="staffModifyModalActive = false" class="checkout-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-checkout-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-90 text-start" style="max-width: 500px;">
           
-          <button @click="staffModifyModalActive = false" class="btn-close-modal">✕</button>
+          <button @click="staffModifyModalActive = false" class="btn-close-modal"><i class="bi bi-x-lg"></i></button>
           <h4 class="fw-bold tracking-tight text-white m-0 mb-4 text-center">Field Operations Override</h4>
           <p class="text-white-50 small text-center mb-4">Adjust real-time tracking parameters for your currently assigned trail.</p>
 
@@ -492,10 +492,13 @@ async function submitModificationForm() {
     const res = await secureFetch(`${BACKEND_URL}/api/admin/treks/${trekData.value.trek_id}`, {
       method: 'PUT', headers: { 'Authorization': `Bearer ${authStore.token}` }, body: formData
     })
+    const data = await res.json()
     if (res.ok) {
-      alertStore.showAlert('Expedition record variables patched inside core tables.', 'success')
+      alertStore.showAlert(data.message || 'Expedition record variables patched inside core tables.', 'success')
       modifyModalActive.value = false
       await fetchLiveTrekDetails() // Re-fetch fields cleanly
+    } else {
+      alertStore.showAlert(data.message || 'Expedition update rejected by server.', 'danger')
     }
   } catch (err) { alertStore.showAlert(`Patch drop: ${err.message}`, 'danger') }
 }
@@ -618,8 +621,20 @@ input[type="date"]::-webkit-datetime-edit-day-field { color: #fff; }
 input[type="date"]::-webkit-datetime-edit-year-field { color: #fff; }
 
 
-.checkout-overlay-backdrop { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.456) !important; backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(20px) !important; z-index: 999 !important; }
-.glass-checkout-card { background: rgba(6, 27, 11, 0.452) !important; backdrop-filter: blur(9px); width: 100%; max-width: 440px; }
+.checkout-overlay-backdrop {
+  position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(8, 14, 11, 0.85) !important;
+  backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
+  z-index: 1050 !important;
+}
+.glass-checkout-card {
+  background: rgba(18, 26, 22, 0.96) !important;
+  backdrop-filter: blur(25px) !important;
+  -webkit-backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  width: 100%; max-width: 520px;
+}
 .form-group-capsule { display: flex; flex-direction: column; text-align: left; }
 .modal-input-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.6); font-weight: 500; margin-bottom: 4px; }
 .modal-input-wrapper { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; }

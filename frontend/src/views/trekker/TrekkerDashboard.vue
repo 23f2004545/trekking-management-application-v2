@@ -21,7 +21,7 @@
           <Transition name="slide-fade" mode="out-in">
             <!-- LIVE FOMO TICKER -->
             <div :key="activeFomoEvent.user" class="fomo-glass-alert p-3 rounded-3 border border-success border-opacity-20 d-flex align-items-center gap-3">
-              <span class="fs-3">📡</span>
+              <i class="bi bi-broadcast fs-3 text-success-tint"></i>
               <div class="text-start">
                 <h6 class="m-0 fw-bold text-success-tint small tracking-tight">Live Trail Network</h6>
                 <p class="m-0 fs-9 text-white-50 mt-1">

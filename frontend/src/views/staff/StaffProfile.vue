@@ -102,7 +102,7 @@
         
         <div v-if="!hasStaffData" class="medical-alert-pill p-3 px-4 rounded-pill border border-warning border-opacity-20 d-flex align-items-center justify-content-between shadow-sm">
           <div class="d-flex align-items-center gap-3">
-            <span class="fs-4">🚨</span>
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
             <div>
               <h6 class="m-0 fw-bold text-warning tracking-tight">System Staff Profile Missing</h6>
               <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-0.5">Staff profile information is required to manage your trekking assignments and ensure safety protocols are followed.</p>
@@ -159,7 +159,7 @@
         <div class="glass-modal-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg overflow-y-auto max-vh-70 text-start animate-scale-up">
           
           <div class="d-flex align-items-center justify-content-between border-bottom flex-wrap border-white border-opacity-50 pb-2 mb-4">
-            <button @click="staffModalVisible = false" class="btn-close-modal" title="Close Panel">✕</button>
+            <button @click="staffModalVisible = false" class="btn-close-modal" title="Close Panel"><i class="bi bi-x-lg"></i></button>
             <h4 class="fw-bold tracking-tight text-white m-0 mb-1">Staff Profile Matrix</h4>
             <p class="text-white-50 small m-0 mb-4 lh-base">Configure critical emergency contact profiles and trail safety parameters.</p>
           </div>
@@ -239,7 +239,7 @@
       <div v-if="passwordModalActive" @click.self="passwordModalActive = false" class="profile-overlay-backdrop d-flex align-items-center justify-content-center p-3">
         <div class="glass-profile-card p-4 p-md-5 rounded-4 border border-white border-opacity-15 shadow-lg text-start animate-scale-up position-relative" style="max-width: 450px; width: 100%;">
           
-          <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel">✕</button>
+          <button @click="passwordModalActive = false" class="btn-close-modal" title="Close Panel"><i class="bi bi-x-lg"></i></button>
 
           <h4 class="fw-bold tracking-tight text-white mb-1">Update Security Key</h4>
           <p class="text-white-50 small mb-4">Request a 6-digit authorization code to your registered email to process this mutation.</p>
@@ -301,6 +301,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAlertStore } from '../../stores/alert'
+import { useAuthStore } from '../../stores/auth'
 import { secureFetch, BACKEND_URL } from '@/utils/api'
 import { resolveMediaUrl } from '@/utils/media'
 import DemoEmailPromptModal from '@/components/DemoEmailPromptModal.vue'
@@ -660,16 +661,19 @@ onMounted(() => {
   border: 1px solid rgba(255, 193, 7, 0.18) !important;
 }
 
-.staff-overlay-backdrop {
+.staff-overlay-backdrop, .profile-overlay-backdrop {
   position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 5, 2, 0.316) !important;
-  backdrop-filter: blur(13px) !important; -webkit-backdrop-filter: blur(20px) !important;
+  background: rgba(8, 14, 11, 0.85) !important;
+  backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important;
   z-index: 999 !important;
 }
 
-.glass-modal-card {
-  background: rgba(0, 0, 0, 0.206) !important;
-  backdrop-filter: blur(6px);
+.glass-modal-card, .glass-profile-card {
+  background: rgba(18, 26, 22, 0.96) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
   width: 92%; max-width: 580px;
 }
 
@@ -686,10 +690,7 @@ onMounted(() => {
 .fs-9 { font-size: 0.76rem; }
 .max-vh-70 { max-height: 70vh; }
 
-/* OTP Modal Specific Styles */
-.profile-overlay-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 6, 2, 0.459); backdrop-filter: blur(5px); z-index: 999; }
-.glass-profile-card { background: rgba(1, 1, 1, 0.383) !important; backdrop-filter: blur(10px); }
-.btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.btn-close-modal { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: rgba(255,255,255,0.6); font-size: 1.1rem; cursor: pointer; }
 .btn-close-modal:hover { color: white; }
 .tracking-widest { letter-spacing: 4px; }
 </style>
