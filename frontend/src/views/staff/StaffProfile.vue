@@ -223,10 +223,10 @@
 
             <div class="mt-4 d-flex align-items-center justify-content-end gap-3">
               <button type="button" @click="staffModalVisible = false" class="btn btn-outline-light rounded-pill px-4 py-2 fs-8">
-                Aborted
+                Abort
               </button>
               <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fs-8 fw-semibold text-dark">
-                Submit File Coordinates
+                Submit
               </button>
             </div>
           </form>
