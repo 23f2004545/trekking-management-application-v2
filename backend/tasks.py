@@ -1,5 +1,7 @@
 import csv
 import io
+import os
+import base64
 import ssl
 from datetime import datetime, timedelta
 from celery import Celery
@@ -10,6 +12,8 @@ from routes.utils_apis import create_notification
 from sqlalchemy import func, extract
 from mail import send_html_email
 from config import config
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 broker_url = config.CELERY_BROKER_URL
 result_backend = config.CELERY_RESULT_BACKEND
@@ -37,6 +41,52 @@ if broker_url and broker_url.startswith('rediss://'):
     celery_config['redis_backend_use_ssl'] = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 celery_app.conf.update(celery_config)
+
+
+def send_brevo_email(target_email, target_name, subject, html_body, filename=None, file_string_data=None):
+    """
+    Unified HTTP Email Delivery Engine using Brevo SDK.
+    Bypasses SMTP port blocks automatically.
+    """
+    # 1. Configure the API client
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = os.environ.get("BREVO_API_KEY")
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+    
+    # 2. Build Sender and Recipient envelopes
+    # Ensure this email matches your verified sender in the Brevo Dashboard!
+    sender_details = {"name": "Apex Expeditions", "email": "operations@apex-expeditions.com"}
+    recipient_details = [{"email": target_email, "name": target_name}]
+    
+    # 3. Handle File Attachment if present
+    attachments = []
+    if filename and file_string_data:
+        file_bytes = file_string_data.encode('utf-8')
+        b64_content = base64.b64encode(file_bytes).decode('utf-8')
+        attachments.append({
+            "name": filename,
+            "content": b64_content
+        })
+        
+    # 4. Compile the transaction payload
+    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=recipient_details,
+        sender=sender_details,
+        subject=subject,
+        html_content=html_body,
+        attachment=attachments if attachments else None
+    )
+    
+    # 5. Dispatch over safe HTTPS (Port 443)
+    try:
+        api_response = api_instance.send_transac_email(send_smtp_email)
+        print(f"[BREVO SUCCESS] Transmission acknowledged! MessageID: {api_response.message_id}")
+        return True
+    except ApiException as e:
+        print(f"[BREVO FAILURE] Failed to push payload through API gateway: {e}")
+        # Global fallback print so logs don't completely swallow data during testing
+        print(f"⚠️ [SMTP FALLBACK] To: {target_email} | Subject: {subject}")
+        return False
 
 
 
@@ -91,7 +141,7 @@ def export_history_csv(user_id, user_email, user_name, demo_delivery_email=None)
         
         filename = f"Apex_History_Log_{datetime.now().strftime('%Y%m%d')}.csv"
         target_email = demo_delivery_email or user_email
-        send_html_email(target_email, "Your Expedition History CSV is Ready", html_body, filename, csv_string_data)
+        send_brevo_email(target_email, user_name, "Your Expedition History CSV is Ready", html_body, filename, csv_string_data)
 
 
 # ==========================================================
@@ -161,9 +211,8 @@ def daily_trek_reminder():
                     </div>
                 </div>
                 """
-                send_html_email(b.user.email, f"Apex Departure: {trek.trek_name} Starts Tomorrow", html_body)
-                
-                
+                send_brevo_email(b.user.email, b.user.name, f"Apex Departure: {trek.trek_name} Starts Tomorrow", html_body)
+
 # ==========================================================
 # 3. SCHEDULED BEAT: MONTHLY ADMIN REPORT
 # ==========================================================
@@ -295,7 +344,7 @@ def monthly_admin_report():
         
         admin = User.query.filter(User.role.has(name='admin')).first()
         create_notification(admin.id, "Monthly executive report generated and emailed.", "info")
-        send_html_email(admin.email, f"Platform Audit Report: {month_name}", html_body)
+        send_brevo_email(admin.email, admin.name, f"Platform Audit Report: {month_name}", html_body)
         
         
 
@@ -324,9 +373,8 @@ def send_otp_email(user_email, user_name, otp_code, demo_delivery_email=None):
     </div>
     """
     target_email = demo_delivery_email or user_email
-    send_html_email(target_email, "Apex Security: Your Password Reset Code", html_body)
-    
-    
+    send_brevo_email(target_email, user_name, "Apex Security: Your Password Reset Code", html_body)
+
      
 # ==========================================================
 # 5. ASYNC: SEND CREDENTIALS TO CANDIDATE
@@ -367,7 +415,7 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password, de
         </div>
         """
         target_email = demo_delivery_email or personal_email
-        send_html_email(target_email, "Apex Expeditions: Guide Account Credentials", html_body)
+        send_brevo_email(target_email, "Apex Expeditions: Guide Account Credentials", html_body)
         
 
 # ==========================================================
@@ -422,9 +470,9 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
     </div>
     """
     target_email = demo_delivery_email or user_email
-    send_html_email(target_email, f"Resolved: {subject}", html_body)
-    
-    
+    send_brevo_email(target_email, user_name, f"Resolved: {subject}", html_body)
+
+
 # ==========================================================
 # 7. ASYNC : EXPORT TREK SPECIFIC INSIGHTS AFTER COMPLETION
 # ==========================================================  
@@ -505,9 +553,9 @@ def export_history_telemetry(admin_email, admin_name, payload, demo_delivery_ema
     </div>
     """
     target_email = demo_delivery_email or admin_email
-    send_html_email(target_email, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
-    
-    
+    send_brevo_email(target_email, admin_name, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
+
+
 # ==========================================================
 # 8. ASYNC : TREK COMPLETION/CANCELLATION MAIL
 # ==========================================================  
@@ -546,7 +594,7 @@ def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reas
     </div>
     """
     target_email = demo_delivery_email or user_email
-    send_html_email(target_email, f"CRITICAL: {trek_name} Cancelled", html_body)
+    send_brevo_email(target_email, user_name, f"CRITICAL: {trek_name} Cancelled", html_body)
 
 @celery_app.task(name='tasks.dispatch_completion_email')
 def dispatch_completion_email(user_email, user_name, trek_name, duration, altitude, demo_delivery_email=None):
@@ -589,4 +637,4 @@ def dispatch_completion_email(user_email, user_name, trek_name, duration, altitu
     </div>
     """
     target_email = demo_delivery_email or user_email
-    send_html_email(target_email, f"Expedition Cleared: {trek_name}", html_body)
+    send_brevo_email(target_email, user_name, f"Expedition Cleared: {trek_name}", html_body)
