@@ -108,7 +108,7 @@ class TestSMTPFallbackAndDispatch:
 
 
 class TestDemoDeliveryEmailRouting:
-    @patch('tasks.send_html_email')
+    @patch('tasks.send_brevo_email')
     def test_export_history_csv_routes_to_demo_delivery_email(self, mock_send, app_instance):
         """If demo_delivery_email is specified, export_history_csv routes to it."""
         with app_instance.app_context():
@@ -118,10 +118,10 @@ class TestDemoDeliveryEmailRouting:
             mock_send.assert_called_once()
             called_args = mock_send.call_args[0]
             assert called_args[0] == "visitor@portfolio.com"
-            assert "Your Expedition History CSV is Ready" in called_args[1]
-            assert "DEMO PREVIEW" in called_args[2]
+            assert "Your Expedition History CSV is Ready" in called_args[2]
+            assert "DEMO PREVIEW" in called_args[3]
 
-    @patch('tasks.send_html_email')
+    @patch('tasks.send_brevo_email')
     def test_export_history_csv_routes_to_real_user_email_when_none(self, mock_send, app_instance):
         """For real registered users, delivery email remains strictly their DB email."""
         with app_instance.app_context():
@@ -131,19 +131,19 @@ class TestDemoDeliveryEmailRouting:
             mock_send.assert_called_once()
             called_args = mock_send.call_args[0]
             assert called_args[0] == "john@realuser.com"
-            assert "DEMO PREVIEW" not in called_args[2]
+            assert "DEMO PREVIEW" not in called_args[3]
 
-    @patch('tasks.send_html_email')
+    @patch('tasks.send_brevo_email')
     def test_send_otp_email_demo_delivery(self, mock_send):
         """send_otp_email routes to demo_delivery_email if provided."""
         tasks.send_otp_email("trekker@demo.apex.com", "Demo User", "123456", demo_delivery_email="visitor@portfolio.com")
         mock_send.assert_called_once()
         called_args = mock_send.call_args[0]
         assert called_args[0] == "visitor@portfolio.com"
-        assert "123456" in called_args[2]
-        assert "DEMO PREVIEW" in called_args[2]
+        assert "123456" in called_args[3]
+        assert "DEMO PREVIEW" in called_args[3]
 
-    @patch('tasks.send_html_email')
+    @patch('tasks.send_brevo_email')
     def test_send_staff_credentials_email_demo_delivery(self, mock_send, app_instance):
         """send_staff_credentials_email routes to demo_delivery_email if provided."""
         with app_instance.app_context():
@@ -154,10 +154,10 @@ class TestDemoDeliveryEmailRouting:
             mock_send.assert_called_once()
             called_args = mock_send.call_args[0]
             assert called_args[0] == "visitor@portfolio.com"
-            assert "staff_new@apex.com" in called_args[2]
-            assert "DEMO PREVIEW" in called_args[2]
+            assert "staff_new@apex.com" in called_args[3]
+            assert "DEMO PREVIEW" in called_args[3]
 
-    @patch('tasks.send_html_email')
+    @patch('tasks.send_brevo_email')
     def test_dispatch_ticket_resolution_demo_delivery(self, mock_send):
         """dispatch_ticket_resolution routes to demo_delivery_email if provided."""
         tasks.dispatch_ticket_resolution(
@@ -168,8 +168,8 @@ class TestDemoDeliveryEmailRouting:
         mock_send.assert_called_once()
         called_args = mock_send.call_args[0]
         assert called_args[0] == "visitor@portfolio.com"
-        assert "Where is checkpoint B?" in called_args[2]
-        assert "DEMO PREVIEW" in called_args[2]
+        assert "Where is checkpoint B?" in called_args[3]
+        assert "DEMO PREVIEW" in called_args[3]
 
 
 class TestEndpointDemoDeliveryPropagation:

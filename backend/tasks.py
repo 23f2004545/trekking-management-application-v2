@@ -42,26 +42,35 @@ if broker_url and broker_url.startswith('rediss://'):
 
 celery_app.conf.update(celery_config)
 
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://trekking-management-application-v2-snowy.vercel.app").rstrip("/")
+
 
 def send_brevo_email(target_email, target_name, subject, html_body, filename=None, file_string_data=None):
     """
     Unified HTTP Email Delivery Engine using Brevo SDK.
     Bypasses SMTP port blocks automatically.
     """
+    api_key = config.BREVO_API_KEY or os.environ.get("BREVO_API_KEY")
+    if not api_key:
+        print(f"⚠️ [BREVO UNCONFIGURED] BREVO_API_KEY is not set. Falling back to SMTP/Console logger.")
+        return send_html_email(target_email, subject, html_body, filename, file_string_data.encode('utf-8') if isinstance(file_string_data, str) else file_string_data)
+
     # 1. Configure the API client
     configuration = sib_api_v3_sdk.Configuration()
-    configuration.api_key['api-key'] = os.environ.get("BREVO_API_KEY")
+    configuration.api_key['api-key'] = api_key
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
     
     # 2. Build Sender and Recipient envelopes
-    # Ensure this email matches your verified sender in the Brevo Dashboard!
-    sender_details = {"name": "Apex Expeditions", "email": "operations@apex-expeditions.com"}
-    recipient_details = [{"email": target_email, "name": target_name}]
+    # Cloud providers like Brevo require the sender email to match a verified sender address
+    sender_email = config.BREVO_SENDER_EMAIL or config.SMTP_SENDER_EMAIL or config.SMTP_USER or "nohara1887@gmail.com"
+    sender_name = config.BREVO_SENDER_NAME or config.SMTP_SENDER_NAME or "Apex Expeditions"
+    sender_details = {"name": sender_name, "email": sender_email}
+    recipient_details = [{"email": target_email, "name": target_name or target_email}]
     
     # 3. Handle File Attachment if present
     attachments = []
     if filename and file_string_data:
-        file_bytes = file_string_data.encode('utf-8')
+        file_bytes = file_string_data.encode('utf-8') if isinstance(file_string_data, str) else file_string_data
         b64_content = base64.b64encode(file_bytes).decode('utf-8')
         attachments.append({
             "name": filename,
@@ -80,12 +89,15 @@ def send_brevo_email(target_email, target_name, subject, html_body, filename=Non
     # 5. Dispatch over safe HTTPS (Port 443)
     try:
         api_response = api_instance.send_transac_email(send_smtp_email)
-        print(f"[BREVO SUCCESS] Transmission acknowledged! MessageID: {api_response.message_id}")
+        print(f"[BREVO SUCCESS] Transmission acknowledged! MessageID: {api_response.message_id} -> {target_email} from {sender_email}")
         return True
     except ApiException as e:
         print(f"[BREVO FAILURE] Failed to push payload through API gateway: {e}")
         # Global fallback print so logs don't completely swallow data during testing
         print(f"⚠️ [SMTP FALLBACK] To: {target_email} | Subject: {subject}")
+        return False
+    except Exception as e:
+        print(f"[BREVO UNEXPECTED ERROR] {e}")
         return False
 
 
@@ -206,7 +218,7 @@ def daily_trek_reminder():
                         </div>
                         
                         <div style="text-align: center; margin-top: 35px;">
-                            <a href="http://localhost:5173/portal/trekker/bookings" style="background-color: #ffffff; color: #0f172a; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px;">Show Details</a>
+                            <a href="{FRONTEND_URL}/portal/trekker/bookings" style="background-color: #10b981; color: #022c22; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block;">View Reservation Details</a>
                         </div>
                     </div>
                 </div>
@@ -329,8 +341,8 @@ def monthly_admin_report():
                 </table>
 
                 <div style="text-align: center; margin-top: 40px;">
-                    <a href="http://localhost:5173/portal/admin/dashboard" 
-                       style="background-color: #ffffff; color: #0f172a; padding: 14px 35px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <a href="{FRONTEND_URL}/portal/admin/dashboard" 
+                       style="background-color: #10b981; color: #022c22; padding: 14px 35px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                        Access Command Center Analytics
                     </a>
                 </div>
@@ -405,7 +417,7 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password, de
                 
                 <div style="background-color: #1e293b; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #10b981;">
                     <h4 style="margin: 0 0 15px 0; color: #7bf1a8; border-bottom: 1px solid #334155; padding-bottom: 10px;">Initial Access Credentials</h4>
-                    <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 14px;"><strong>Portal Node:</strong> <span style="color: #fff;">http://localhost:5173/login</span></p>
+                    <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 14px;"><strong>Portal Node:</strong> <a href="{FRONTEND_URL}/login" style="color: #7bf1a8; text-decoration: underline;">{FRONTEND_URL}/login</a></p>
                     <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 14px;"><strong>Assigned Email:</strong> <span style="color: #fff;">{staff_email}</span></p>
                     <p style="margin: 0; color: #94a3b8; font-size: 14px;"><strong>Temporary Key:</strong> <span style="color: #ffda6a; font-family: monospace; font-size: 16px;">{staff_password}</span></p>
                 </div>
@@ -415,7 +427,7 @@ def send_staff_credentials_email(personal_email, staff_email, staff_password, de
         </div>
         """
         target_email = demo_delivery_email or personal_email
-        send_brevo_email(target_email, "Apex Expeditions: Guide Account Credentials", html_body)
+        send_brevo_email(target_email, "Field Staff Candidate", "Apex Expeditions: Guide Account Credentials", html_body)
         
 
 # ==========================================================
@@ -478,9 +490,10 @@ def dispatch_ticket_resolution(user_email, user_name, user_role, subject, origin
 # ==========================================================  
 @celery_app.task(name='tasks.export_history_telemetry')
 def export_history_telemetry(admin_email, admin_name, payload, demo_delivery_email=None):
-    trek_meta = payload.get('trek_info', {})
+    trek_meta = payload.get('trek_info') or payload.get('trek') or {}
     analytics = payload.get('analytics', {})
-    staff = payload.get('staff_info', {})
+    staff = payload.get('staff_info') or payload.get('staff') or {}
+    trek_name = trek_meta.get('name') or trek_meta.get('trek_name') or 'Expedition'
     
     demo_banner = ""
     if demo_delivery_email:
@@ -503,48 +516,50 @@ def export_history_telemetry(admin_email, admin_name, payload, demo_delivery_ema
             <p style="color: #ffffff;">Authorized Requestor: <strong>{admin_name}</strong></p>
             <p style="font-size: 13px; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 15px;">The following data packet contains the operational yield and manifest overview for the requested historical deployment.</p>
             
-            <h3 style="color: #ffffff; margin-top: 25px; border-left: 3px solid #7bf1a8; padding-left: 10px;">SECTOR: {trek_meta.get('name')}</h3>
+            <h3 style="color: #ffffff; margin-top: 25px; border-left: 3px solid #7bf1a8; padding-left: 10px;">SECTOR: {trek_name}</h3>
             <table style="width: 100%; font-size: 13px; margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 10px;">
                 <tr>
-                    <td style="padding: 5px 0; color: #64748b;">DURATION:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('duration')} Days</td>
+                    <td style="padding: 5px 0; color: #64748b;">DURATION:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('duration', 'N/A')} Days</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px 0; color: #64748b;">ALTITUDE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('altitude')}m</td>
+                    <td style="padding: 5px 0; color: #64748b;">ALTITUDE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('altitude', 'N/A')}m</td>
                 </tr>
                 <tr>
-                    <td style="padding: 5px 0; color: #64748b;">TIMELINE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('start_date')} to {trek_meta.get('end_date')}</td>
+                    <td style="padding: 5px 0; color: #64748b;">TIMELINE:</td><td style="color: #ffffff; text-align: right;">{trek_meta.get('start_date', 'N/A')} to {trek_meta.get('end_date', 'N/A')}</td>
                 </tr>
             </table>
 
             <h3 style="color: #ffffff; margin-top: 25px; border-left: 3px solid #198754; padding-left: 10px;">ASSIGNED COMMANDER</h3>
-            <p style="margin: 5px 0; font-size: 14px; color: #7bf1a8;">{staff.get('name')}</p>
-            <p style="margin: 0; font-size: 12px; color: #94a3b8;">ID: {staff.get('email')} | Clearance: {staff.get('certification')}</p>
+            <p style="margin: 5px 0; font-size: 14px; color: #7bf1a8;">{staff.get('name', 'Unassigned')}</p>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">ID: {staff.get('email', 'N/A')} | Clearance: {staff.get('certification', 'Standard')}</p>
 
             <h3 style="color: #ffffff; margin-top: 35px; border-bottom: 1px solid #1e293b; padding-bottom: 5px;">OPERATIONAL YIELD</h3>
             
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <div style="width: 48%; background: #0b1f15; padding: 15px; border: 1px solid #198754; border-radius: 4px; text-align: center;">
-                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px;">GROSS REVENUE</span>
-                    <strong style="font-size: 20px; color: #ffffff;">INR {analytics.get('total_revenue')}</strong>
-                </div>
-                <div style="width: 48%; background: #1e1b15; padding: 15px; border: 1px solid #9a3412; border-radius: 4px; text-align: center;">
-                    <span style="display: block; font-size: 10px; color: #fdba74; letter-spacing: 1px;">DROPS / CANCELLATIONS</span>
-                    <strong style="font-size: 20px; color: #ffffff;">{analytics.get('cancelled_participants')} Pax</strong>
-                </div>
-            </div>
+            <table style="width: 100%; border-collapse: separate; border-spacing: 10px 0; margin-top: 15px;">
+                <tr>
+                    <td style="width: 50%; background: #0b1f15; padding: 15px; border: 1px solid #198754; border-radius: 6px; text-align: center;">
+                        <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px;">GROSS REVENUE</span>
+                        <strong style="font-size: 18px; color: #ffffff;">INR {analytics.get('total_revenue', 0)}</strong>
+                    </td>
+                    <td style="width: 50%; background: #1e1b15; padding: 15px; border: 1px solid #9a3412; border-radius: 6px; text-align: center;">
+                        <span style="display: block; font-size: 10px; color: #fdba74; letter-spacing: 1px;">DROPS / CANCELLATIONS</span>
+                        <strong style="font-size: 18px; color: #ffffff;">{analytics.get('cancelled_participants', 0)} Pax</strong>
+                    </td>
+                </tr>
+            </table>
             
             <table style="width: 100%; font-size: 13px; margin-top: 20px;">
                 <tr>
                     <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Explorers Cleared:</td>
-                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('completed_participants')}</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('completed_participants', 0)}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Distinct Passports:</td>
-                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('accounts_booked')}</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #ffffff;">{analytics.get('accounts_booked', 0)}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; border-bottom: 1px dotted #334155;">Completion Rate:</td>
-                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #7bf1a8;">{analytics.get('completion_rate')}%</td>
+                    <td style="text-align: right; border-bottom: 1px dotted #334155; color: #7bf1a8;">{analytics.get('completion_rate', 100)}%</td>
                 </tr>
             </table>
 
@@ -553,7 +568,7 @@ def export_history_telemetry(admin_email, admin_name, payload, demo_delivery_ema
     </div>
     """
     target_email = demo_delivery_email or admin_email
-    send_brevo_email(target_email, admin_name, f"Archived Telemetry: {trek_meta.get('name')}", html_body)
+    send_brevo_email(target_email, admin_name, f"Archived Telemetry: {trek_name}", html_body)
 
 
 # ==========================================================
@@ -588,7 +603,7 @@ def dispatch_cancellation_email(user_email, user_name, trek_name, duration, reas
             <p style="color: #94a3b8; font-size: 13px;">Your payment status has been shifted to the refund pipeline. We apologize for the operational disruption. True alpine environments require absolute safety compliance.</p>
             
             <div style="text-align: center; margin-top: 35px;">
-                <a href="http://localhost:5173/" style="background-color: #ffffff; color: #000000; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Explore Alternate Routes</a>
+                <a href="{FRONTEND_URL}/" style="background-color: #ffffff; color: #000000; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Explore Alternate Routes</a>
             </div>
         </div>
     </div>
@@ -617,21 +632,23 @@ def dispatch_completion_email(user_email, user_name, trek_name, duration, altitu
             <p style="color: #cbd5e1; font-size: 15px;">Congratulations {user_name},</p>
             <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">Your <strong>{duration}-Day</strong> deployment to <strong>{trek_name}</strong> has been officially marked as completed by your Field Commander.</p>
             
-            <div style="display: flex; justify-content: space-between; margin: 25px 0;">
-                <div style="width: 48%; background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase;">Peak Altitude</span>
-                    <strong style="font-size: 20px; color: #ffffff;">{altitude}m</strong>
-                </div>
-                <div style="width: 48%; background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
-                    <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase;">Status</span>
-                    <strong style="font-size: 20px; color: #ffffff;">CLEARED</strong>
-                </div>
-            </div>
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; border-collapse: separate; border-spacing: 10px 0;">
+                <tr>
+                    <td width="50%" style="background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
+                        <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase; font-weight: bold;">Peak Altitude</span>
+                        <strong style="font-size: 20px; color: #ffffff;">{altitude}m</strong>
+                    </td>
+                    <td width="50%" style="background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; text-align: center;">
+                        <span style="display: block; font-size: 10px; color: #7bf1a8; letter-spacing: 1px; text-transform: uppercase; font-weight: bold;">Status</span>
+                        <strong style="font-size: 20px; color: #ffffff;">CLEARED</strong>
+                    </td>
+                </tr>
+            </table>
             
             <p style="color: #94a3b8; font-size: 13px; text-align: center;">Your telemetry data assists future explorers. We request you log an official terrain and commander evaluation.</p>
             
             <div style="text-align: center; margin-top: 25px;">
-                <a href="http://localhost:5173/portal/trekker/history" style="background-color: #7bf1a8; color: #0b1f15; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Log Official Review</a>
+                <a href="{FRONTEND_URL}/portal/trekker/history" style="background-color: #7bf1a8; color: #0b1f15; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 13px; display: inline-block;">Log Official Review</a>
             </div>
         </div>
     </div>

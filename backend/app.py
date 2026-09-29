@@ -93,12 +93,12 @@ def create_app(test_config=None):
             trekker_role = Role(name='trekker')
             db.session.add(trekker_role)
             
-        admin = User.query.filter_by(name='admin').first()
+        admin = User.query.filter_by(name='Admin').first()
         if not admin:
             admin = User(
-                name='admin',
-                email='admin@gmail.com',
-                password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
+                name='Admin',
+                email='nohara1887@gmail.com',
+                password=bcrypt.generate_password_hash('haruki87').decode('utf-8'),
                 contact='1234567890',
                 profile_pic="/static/Profile_pics/admin.png",
                 role=admin_role,
@@ -112,6 +112,30 @@ def create_app(test_config=None):
     app.register_blueprint(trek_staff_bp, url_prefix='/api/trek_staff')
     app.register_blueprint(trekker_bp, url_prefix='/api/trekker')
     app.register_blueprint(utils_bp, url_prefix='/api/utils')
+
+    # Global JSON Error Handlers (Prevents raw HTML <!DOCTYPE> syntax errors in frontend)
+    @app.errorhandler(400)
+    def handle_bad_request(e):
+        return jsonify({"message": getattr(e, 'description', 'Bad request.'), "status": 400}), 400
+
+    @app.errorhandler(404)
+    def handle_not_found(e):
+        return jsonify({"message": "Requested endpoint not found.", "status": 404}), 404
+
+    @app.errorhandler(405)
+    def handle_method_not_allowed(e):
+        return jsonify({"message": "HTTP Method not allowed for this route.", "status": 405}), 405
+
+    @app.errorhandler(500)
+    def handle_server_error(e):
+        return jsonify({"message": "Internal server error.", "status": 500}), 500
+
+    @app.errorhandler(Exception)
+    def handle_generic_exception(e):
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify({"message": e.description or str(e), "status": e.code}), e.code
+        return jsonify({"message": "Server encountered an operational exception.", "details": str(e), "status": 500}), 500
 
     return app
 

@@ -58,7 +58,11 @@ class config:
     CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", None)
     CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", None)
 
-    # Cloud Email / SMTP Settings (Brevo / Gmail / Resend / Local Mailpit)
+    # Cloud Email / Brevo HTTP API & SMTP Settings
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY", None)
+    BREVO_SENDER_EMAIL = os.environ.get("BREVO_SENDER_EMAIL") or os.environ.get("SMTP_SENDER_EMAIL") or os.environ.get("SMTP_USER") or "nohara1887@gmail.com"
+    BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME") or os.environ.get("SMTP_SENDER_NAME", "Apex Expeditions")
+
     SMTP_HOST = os.environ.get("SMTP_HOST", "127.0.0.1")
     SMTP_PORT = int(os.environ.get("SMTP_PORT", 1025))
     SMTP_USER = os.environ.get("SMTP_USER", None)
@@ -66,5 +70,5 @@ class config:
     SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "False").lower() in ("true", "1")
     SMTP_USE_SSL = os.environ.get("SMTP_USE_SSL", "False").lower() in ("true", "1")
     # For Brevo and authenticated SMTP, sender email must match verified sender or login email
-    SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL") or os.environ.get("SMTP_USER") or "operations@apex-expeditions.com"
-    SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME", "Apex Expeditions")
+    SMTP_SENDER_EMAIL = os.environ.get("SMTP_SENDER_EMAIL") or os.environ.get("BREVO_SENDER_EMAIL") or os.environ.get("SMTP_USER") or "nohara1887@gmail.com"
+    SMTP_SENDER_NAME = os.environ.get("SMTP_SENDER_NAME") or os.environ.get("BREVO_SENDER_NAME", "Apex Expeditions")
