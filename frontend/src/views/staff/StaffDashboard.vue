@@ -3,7 +3,6 @@
 
     <div v-if="!stats.is_onboarded && stats.is_loaded" class="onboarding-glass-banner p-4 rounded-4 mb-4 border border-warning border-opacity-25 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 animate-slide-down">
       <div class="d-flex align-items-center gap-3">
-        <i class="bi bi-tools fs-2 text-warning"></i>
         <div>
           <h5 class="m-0 fw-bold text-warning tracking-tight">Profile Onboarding Required</h5>
           <p class="m-0 fs-8 text-white-50 mt-1">Your profile details are currently marked as default parameters. Please configure your operational field specifications.</p>

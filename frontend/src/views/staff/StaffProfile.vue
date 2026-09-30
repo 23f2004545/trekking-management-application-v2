@@ -100,16 +100,16 @@
     <div class="row mx-0 text-start">
       <div class="col-12 p-0">
         
-        <div v-if="!hasStaffData" class="medical-alert-pill p-3 px-4 rounded-pill border border-warning border-opacity-20 d-flex align-items-center justify-content-between shadow-sm">
+        <div v-if="!hasStaffData" class="medical-alert-pill p-3 rounded-4 border border-warning border-opacity-20 d-flex flex-column flex-md-row align-items-center justify-content-between shadow-sm">
           <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+          
             <div>
               <h6 class="m-0 fw-bold text-warning tracking-tight">System Staff Profile Missing</h6>
-              <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-0.5">Staff profile information is required to manage your trekking assignments and ensure safety protocols are followed.</p>
+              <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-1">Staff profile information is required to manage your trekking assignments and ensure safety protocols are followed.</p>
             </div>
           </div>
-          <button @click="openStaffModal" class="btn btn-warning rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm">
-            Complete Profile
+          <button @click="openStaffModal" class="btn btn-warning rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm mt-3 mt-md-0">
+            Complete Profile Setup <i class="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
 

@@ -81,6 +81,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     logoutUser() {
+      const bootSeen = sessionStorage.getItem('apex_boot_seen')
       this.token = null
       this.role = null
       this.userName = 'User'
@@ -88,6 +89,9 @@ export const useAuthStore = defineStore('auth', {
       this.isDemo = false
       this.demoDeliveryEmail = ''
       sessionStorage.clear()
+      if (bootSeen) {
+        sessionStorage.setItem('apex_boot_seen', bootSeen)
+      }
       localStorage.removeItem('refresh_token')
     },
     async attemptTokenRefresh() {

@@ -2,7 +2,7 @@
   <div class="public-bg-wrapper w-100 min-vh-100 d-flex flex-column justify-content-between p-2 position-relative overflow-hidden">
     
     <!-- INTERACTIVE MINIMAL COLD-BOOT WARMUP PRELOADER -->
-    <ColdBootSplash :backendUrl="BACKEND_URL" />
+    <ColdBootSplash :backendUrl="BACKEND_URL" @finish="loadLandingData" />
 
     <!-- FLOATING PERSISTENT SIGN-IN PILL (Docked when scrolling down) -->
     <Transition name="slide-down-fade">

@@ -182,8 +182,8 @@ def _do_seed_demo_data(target_role=None):
                 is_active=True,
                 blacklisted=False
             )
-            if role_obj and role_obj not in user.roles:
-                user.roles.append(role_obj)
+
+            user.role = role_obj
                 
             db.session.add(user)
             db.session.flush()
@@ -193,9 +193,8 @@ def _do_seed_demo_data(target_role=None):
             user.is_active = True
             user.blacklisted = False
             
-            if role_obj and role_obj not in user.roles:
-                user.roles.append(role_obj)
-            user.role = role_obj
+            if user.role != role_obj:
+                user.role = role_obj
 
         # Staff Profile
         if spec['role'] == 'trek_staff':

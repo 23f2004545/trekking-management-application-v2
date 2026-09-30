@@ -103,7 +103,7 @@
     <div class="row mx-0 text-start">
       <div class="col-12 p-0">
         
-        <div v-if="!hasMedicalData" class="medical-alert-pill p-3 px-4 rounded-pill border border-warning border-opacity-20 d-flex align-items-center justify-content-between shadow-sm">
+        <div v-if="!hasMedicalData" class="medical-alert-pill p-3 rounded-4 border border-warning border-opacity-20 d-flex flex-column flex-md-row align-items-center justify-content-between shadow-sm">
           <div class="d-flex align-items-center gap-3">
 
             <div>
@@ -111,8 +111,8 @@
               <p class="m-0 fs-9 text-white-50 fw-medium opacity-80 mt-0.5">Emergency coordinates are mandatory to secure active booking slots on the high trail. Please update your telemetry layout.</p>
             </div>
           </div>
-          <button @click="openMedicalModal" class="btn btn-warning rounded-pill px-2 py-1 fs-9 fw-bold text-dark shadow-sm">
-            Complete Registry
+          <button @click="openMedicalModal" class="btn btn-warning rounded-pill px-4 py-2 fs-9 fw-bold text-dark shadow-sm mt-3 mt-md-0">
+            Complete Profile Setup <i class="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
 
